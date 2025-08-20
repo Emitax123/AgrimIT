@@ -1,0 +1,473 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% block form %}
+  <link rel="stylesheet" type="text/css" href="{% static 'css/project.css' %}" />
+    <div class="cont-project-div">
+      {% if not project.pk %}
+        <div class="error-container">
+          <h2>Error: Proyecto no encontrado</h2>
+          <p>El proyecto que está intentando ver no existe o no tiene permisos para accederlo.</p>
+          <a href="{% url 'projects' %}" class="toggle-btn active">Volver a la lista de proyectos</a>
+        </div>
+      {% else %}
+
+    <div class="project-div">
+      <!-- Delete button -->
+      <div class="delete-container">
+        {% if project.pk %}
+        <form method="post" action="{% url 'delete' pk=project.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="toggle-btn red" onclick="return confirm('¿Estás seguro que deseas eliminar este proyecto?')">
+            Eliminar
+          </button>
+        </form>
+        {% else %}
+        <button type="button" class="toggle-btn red" disabled>
+          Eliminar (ID no válido)
+        </button>
+        {% endif %}
+      </div>
+      <div class="project-title">
+
+        <div><span class="title">{{ project.type|default:"N/A" }}</span><span class="date">{{ project.created|date:"d/m/Y"|default:"N/A" }}</span><span class="id">ID:{{ project.pk|default:"N/A" }} </span></div>
+
+        {% if project.type == "Mensura" %}
+          <h3>{{ project.mens|default:"" }}</h3>
+        {% endif %}
+      </div>
+      
+      
+      {% if not project.titular_name%}
+      <div class="fix-show-box" style="" id="client-titular" >
+      {% else %}
+      <div class="fix-show-box" style="" id="client-titular" >
+      {% endif %}
+        {% if not project.titular_name %}
+        <div style="" class="fix-info-box">
+        {% else %}
+        <div style="padding-bottom: 10px;" class="fix-info-box">
+        {% endif %}
+     
+          <!-- Datos Cliente -->
+            <div class="client-box" id="client-data" >
+                <h3 >Cliente</h3>
+              <span>Nombre: {{project.client.name}} </span>
+              <span>Telefono: {{project.client.phone}} </span>
+              <div >
+              {% if not project.titular_name %}
+              
+                <div >
+                <form class="client-form" method="post" action="{% url 'modification' pk=project.pk %}">
+                  {% csrf_token %}
+                  <input class="visually-hidden" type="text" name="client-data" />
+                  <button type="submit" class="toggle-btn">¿Es titular?</button>
+                </form>
+                </div>
+              {%endif %}
+              {% if project.client.flag %}
+              {% if not project.contact_name %}
+              <div class="contact-form">
+                <button class="toggle-btn active client-btn">Agregar Contacto</button>
+                <form  method="post" action="{% url 'modification' pk=project.pk %}">
+                  {% csrf_token %}
+                  <div >
+                    <input class="contact-input" required placeholder="Nombre de contacto" type="text" name="contact_name" />
+                    <input class="contact-input" required placeholder="Teléfono de contacto" type="tel" name="contact_phone" />
+                  </div>
+                  
+                  <button  class="toggle-btn active" type="submit">Hecho</button>
+                </form>
+              </div>
+              {% endif %}
+              {% endif %}
+            </div>
+            </div>
+            
+            <!-- Datos Titular -->
+            <div class="client-box" id="titular-data" >
+             <h3 >Titular</h3>
+              <div  >
+                <span>Nombre: <span class="client-span1">{{project.titular_name}}</span> </span> 
+                {% if project.titular_name %}
+                <button class="toggle-btn client-btn">Modificar</button>
+                {% endif %}
+                <form  method="post" action="{% url 'modification' pk=project.pk %}">
+                  {% csrf_token %}
+                  <input class="titular-input" required placeholder="Nuevo titular" type="text" name="titular" />
+                  <button class="toggle-btn active" type="submit">Hecho</button>
+                </form>
+              </div>
+              <div  >
+                <span> Telefono: <span class="client-span1">{{project.titular_phone}} </span></span>
+                {% if project.titular_name %}
+                <button class="toggle-btn client-btn">Modificar</button>
+                {% endif %}
+                <form  method="post" action="{% url 'modification' pk=project.pk %}" >
+                  {% csrf_token %}
+                  <input class="titular-input" required placeholder="Nuevo telefono" type="tel" name="titular_phone" />
+                  <button class="toggle-btn active" type="submit">Hecho</button>
+                </form>
+              </div>
+            </div>
+            <!-- FIN Datos Titular -->
+            <!-- Datos contacto (solo si cliente es fijo) -->
+            
+            <!-- FIN Datos Contacto -->
+        </div>
+      </div>
+      <!-- Nomenclatura -->
+      <div class="show-box" id="nomenclatura" >
+        <span class="slide-text">Nomenclatura </span>
+        <!--<button class="arrow-button" >
+          <img src="{% static 'img/arrow-down-svgrepo-com.svg' %}" alt="down-arrow">
+        </button>-->
+        {% with p=project %}
+        <div class="info-box" >
+          <div class="nomen-data">
+            <div class="mid-range"  >
+            <span class="fw-400">Partido: {{p.partido}}</span>
+          </div>
+          <div  class="mid-range" >
+            <span class="fw-400">Partida: {{p.partida}}</span>
+          </div>
+          <div  >
+             <span class="fw-400">Circuns.: {{p.circuns}}</span>
+             <span class="fw-400">Fracción: {{p.fraccion_num}} {{p.fraccion_letra}} </span>
+             <span class="fw-400">Quinta: {{p.quinta_num}} {{p.quinta_letra}}</span>
+          </div>
+          <div class="small-range" >
+            <span class="fw-400">Sección: {{p.seccion}}</span>
+            <span class="fw-400">Chacra: {{p.chacra_num}} {{p.chacra_letra}} </span>
+
+            <span class="fw-400">Manzana: {{p.manzana_num}} {{p.manzana_letra}} </span>
+          </div>
+          <div class="small-range" >
+            <span class="fw-400">Parcela: {{p.parcela_num}} {{p.parcela_letra}} </span>
+            <span class="fw-400">Subparcela: {{p.subparcela}} </span>
+          </div>
+          </div>
+          
+        <div class="dir-data">
+          <div class="small-range" >
+              <span class="fw-400">Calle: {{p.direction}} </span>
+              <span class="fw-400">Altura: {{p.direction_number}} </span>
+              <span class="fw-400">Piso:{{p.floor}}</span>
+              <span class="fw-400">Departamento:{{p.depto}} </span>
+            </div>
+        </div>
+            
+            
+            {% endwith %}
+        
+        </div>
+      </div>
+      <div class="mini-div first">
+        
+        <span>N° de Tramite: {{ project.procedure }}</span>
+        <button class="toggle-btn modify">Modificar</button>
+        <form  method="post" action="{% url 'modification' pk=project.pk %}" id="proc-form">
+          {% csrf_token %}
+          <input required autocomplete="off" placeholder="N° Tramite" type="number" name="proc" />
+          <button class="toggle-btn active" type="submit">Hecho</button>
+        </form>
+      </div>
+
+      <div class="mini-div">
+        <span>Inscripcion: {{ project.inscription_type }}</span>
+        <button class="toggle-btn modify">Modificar</button>
+        <form  method="post" action="{% url 'modification' pk=project.pk %}" id="insctype-form">
+          {% csrf_token %}
+          <select id="incstype" name="insctype" required>
+            <option value="">----------</option>
+            <option value="Folio">Folio</option>
+            <option value="Matricula">Matricula</option>
+          </select>
+          <button class="toggle-btn active" type="submit">Hecho</button>
+        </form>
+      </div>
+
+      <div class="mini-div">
+        <span>Presupuesto: ${{ account.estimated }}</span>
+        <button class="toggle-btn modify">Modificar</button>
+        <form  method="post" action="{% url 'modification' pk=project.pk %}" id="price-form">
+          {% csrf_token %}
+          <input required placeholder="Presupuesto" type="number" name="price" />
+          <button class="toggle-btn active" type="submit">Hecho</button>
+        </form>
+      </div>
+
+      <div class="mini-div">
+        <span>Adelanto: ${{ account.advance }}</span>
+        <button class="toggle-btn modify">Modificar</button>
+        <form  method="post" action="{% url 'modification' pk=project.pk %}" id="adv-form">
+          {% csrf_token %}
+          <input required placeholder="Nuevo adelanto" type="number" name="adv" />
+          <button class="toggle-btn active" type="submit">Hecho</button>
+        </form>
+      </div>
+
+      <div class="mini-div">
+        <span>Gastos: ${{ account.expense }}</span>
+        <button class="toggle-btn modify">Modificar</button>
+        <form  method="post" action="{% url 'modification' pk=project.pk %}" id="gasto-form">
+          {% csrf_token %}
+          <input required placeholder="Nuevo gasto" type="number" name="gasto" />
+          <button class="toggle-btn active" type="submit">Hecho</button>
+        </form>
+      </div>
+      <div class="mini-div">
+        <form method="post" action="{% url 'accounting_display' pk=project.pk %}" id="gasto-form">
+          {% csrf_token %}
+          <button class="toggle-btn" type="submit">Ver Detalle</button>
+        </form>
+      </div>
+      {% if project.client.flag %}
+      {% if project.contact_name %}
+      <div class="contact-box">
+        <div >
+          <span class="fw-600" >Contacto</span>
+          <div  >
+            <span>Nombre: <span class="client-span1">{{project.contact_name}}</span> </span> 
+            <span>Telefono: <span class="client-span1">{{project.contact_phone}}</span> </span> 
+          </div>
+        </div>           
+
+      </div>
+      {% endif %}
+      {% endif %}
+      
+    </div>
+   
+      
+      
+    </div>
+    <div class="end-btn-container" >
+      {% if file_url%}
+      <div class="file-box">
+        {% if project.pk %}
+        <button class="toggle-btn active" onclick="window.location.href='{% url "download" pk=project.pk %}'">Archivo</button>
+        <button class="toggle-btn red" 
+          onclick="window.location.href='{% url "deletefile" pk=project.pk %}'">
+          Eliminar archivo
+        </button>
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="file-box">
+        <button class="toggle-btn modify" id="upload-btn">Cargar archivo</button>
+        <button class="toggle-btn" onclick="window.location.href='{% url 'accform' pk=project.pk %}'">Nuevo Mov.</button>
+        {% if project.pk %}
+        <form enctype="multipart/form-data" style="display: none;" method="post" action="{% url 'upload' pk=project.pk %}" id="file-form">
+        {% else %}
+        <form enctype="multipart/form-data" style="display: none;" method="post" action="#" id="file-form">
+        {% endif %}
+          {% csrf_token %}
+          {% for field in form %}
+            <label for="id_file_field" id="file-label" class="toggle-btn">Seleccionar archivo</label>
+            <input type="file" name="file_field" required id="id_file_field" style="display: none;" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt">
+            <span id="file-name">Ningún archivo seleccionado</span>
+          {% endfor %}
+          <input class="toggle-btn active" type="submit" value="Guardar">
+        </form>
+      </div>
+      {% endif %}
+      <div >
+        {% if project.pk %}
+        <button class="toggle-btn active" onclick="window.location.href='{% url 'fullmodification' pk=project.pk %}'" class="full-modify-btn">
+        {% else %}
+        <button class="toggle-btn active" onclick="alert('Error: ID de proyecto no válido')" class="full-modify-btn">
+        {% endif %}
+        Modificación completa
+        </button>
+      </div>
+      {% if not project.closed %}
+      <div >
+        {% if project.pk %}
+        <button class="toggle-btn green" onclick="window.location.href='{% url 'close' pk=project.pk %}'" class="full-modify-btn">
+        {% else %}
+        <button class="toggle-btn green" onclick="alert('Error: ID de proyecto no válido')" class="full-modify-btn">
+        {% endif %}
+        Terminar
+        </button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+      {% endif %}
+
+ 
+ 
+ 
+
+  <script>
+    
+    /*var buttonArrow = document.querySelectorAll('button.arrow-button');
+    
+    buttonArrow.forEach(function (button){
+      var flag = true;
+      button.addEventListener('click', function(){
+        var div = button.nextElementSibling; 
+        var parentDiv = button.parentNode;
+        var divChilds = div.querySelectorAll('*');
+        if (flag){
+          div.style.transition = 'all 1s ease-in-out';
+          div.style.opacity = '1';
+          parentDiv.classList.toggle('marginb100');
+          divChilds.forEach(function(child){
+            console.log(child);
+            child.style.display = 'flex';
+          });
+          flag = false;
+        } else {
+          div.style.display = 'flex';
+          div.style.transition = 'all 0.5s ';
+          div.style.opacity = '0';
+          divChilds.forEach(function(child){
+            console.log(child);
+            child.style.display = 'none';
+          });
+          parentDiv.classList.remove('marginb100');
+          flag = true;
+        }
+      });
+    });*/
+
+    // File upload functionality
+    const uploadBtn = document.getElementById('upload-btn');
+    const fileForm = document.getElementById('file-form');
+    const fileInput = document.getElementById('id_file_field');
+    const fileLabel = document.getElementById('file-label');
+    const fileNameSpan = document.getElementById('file-name');
+
+    console.log('File upload elements:', {
+      uploadBtn: uploadBtn,
+      fileForm: fileForm,
+      fileInput: fileInput,
+      fileLabel: fileLabel,
+      fileNameSpan: fileNameSpan
+    });
+
+    // Show file form when upload button is clicked
+    if (uploadBtn && fileForm) {
+      uploadBtn.addEventListener('click', function(event) {
+        event.preventDefault();
+        console.log('Upload button clicked');
+        uploadBtn.style.display = 'none';
+        fileForm.style.display = 'flex';
+        fileForm.style.flexDirection = 'column';
+        fileForm.style.gap = '10px';
+        fileForm.style.padding = '15px';
+        fileForm.style.border = '1px solid #ddd';
+        fileForm.style.borderRadius = '8px';
+        fileForm.style.backgroundColor = '#f9f9f9';
+      });
+    }
+
+    // Handle file selection
+    if (fileLabel && fileInput) {
+      fileLabel.addEventListener('click', function(event) {
+        event.preventDefault();
+        console.log('File label clicked');
+        fileInput.click();
+      });
+    }
+
+    // Display selected file name
+    if (fileInput && fileNameSpan) {
+      fileInput.addEventListener('change', function() {
+        console.log('File input changed:', fileInput.files);
+        if (fileInput.files.length > 0) {
+          const fileName = fileInput.files[0].name;
+          const fileSize = (fileInput.files[0].size / 1024 / 1024).toFixed(2); // Size in MB
+          fileNameSpan.textContent = `${fileName} (${fileSize} MB)`;
+          fileNameSpan.style.color = '#27ae60';
+          fileNameSpan.style.fontWeight = 'bold';
+          console.log('File selected:', fileName);
+        } else {
+          fileNameSpan.textContent = "Ningún archivo seleccionado";
+          fileNameSpan.style.color = '#666';
+          fileNameSpan.style.fontWeight = 'normal';
+        }
+      });
+    }
+
+    // Form submission validation
+    if (fileForm) {
+      fileForm.addEventListener('submit', function(event) {
+        console.log('Form submission attempted');
+        if (!fileInput.files.length) {
+          event.preventDefault();
+          alert('Por favor seleccione un archivo antes de guardar.');
+          console.log('Form submission prevented - no file selected');
+          return false;
+        }
+        
+        // Optional: Check file size (e.g., max 10MB)
+        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+        if (fileInput.files[0].size > maxSize) {
+          event.preventDefault();
+          alert('El archivo es demasiado grande. El tamaño máximo permitido es 10MB.');
+          console.log('Form submission prevented - file too large');
+          return false;
+        }
+        
+        console.log('Form submission allowed');
+      });
+    }
+
+
+    
+    var buttons = document.querySelectorAll('button.modify')
+    buttons.forEach(function (button) {
+      button.addEventListener('click', function (event) {
+        event.preventDefault()
+        // Hide the button and show the form next to button
+
+        var form = button.nextElementSibling
+        if (form && form.tagName === 'FORM') {
+          form.style.display = 'flex'
+          button.style.display = 'none'
+        }
+      })
+    })
+    // Handle client-btn buttons
+    const clientButtons = document.querySelectorAll('.client-btn');
+    clientButtons.forEach(button => {
+      button.addEventListener('click', function(event) {
+        event.preventDefault();
+        const form = this.nextElementSibling;
+        if (form && form.tagName === 'FORM') {
+          form.style.display = 'flex';
+          button.style.display = 'none';
+          // Get the value span and input field
+          const valueSpan = button.parentElement.querySelector('.client-span1');
+          const input = form.querySelector('.titular-input');
+          
+          if (valueSpan && input) {
+            input.placeholder = valueSpan.textContent.trim();
+            valueSpan.style.display = 'none';
+
+          }
+        }
+      });
+    });
+    /*const modifyClientButton = document.getElementById('modify-client-button');
+    modifyClientButton.addEventListener('click', function(event) {
+      event.preventDefault();
+      const form = this.nextElementSibling;
+      if (form && form.tagName === 'FORM') {
+        form.style.display = 'flex';
+        modifyClientButton.style.display = 'none'
+        console.log(form.querySelector('input').placeholder);
+        const inputField = document.getElementById('input-client-name');
+        //change inputField placeholder to the current value of the span with class client-span1
+
+        const currentTitular = document.querySelector('.client-span1').textContent;
+        inputField.placeholder = currentTitular;
+        //get the client-span1 and change its style to display: none
+        const clientSpan = document.querySelector('.client-span1');
+        clientSpan.style.display = 'none';
+      }
+    });*/
+  </script>
+{% endblock %}

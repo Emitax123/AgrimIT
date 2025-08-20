@@ -1,0 +1,36 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% block form %}
+  <link rel="stylesheet" type="text/css" href="{% static 'css/history.css' %}" />
+  {% for year, months in yearlist.items %}
+    {% for month, items in months.items %}
+      <div class="history-cont">
+        <div class="history-cont-header">
+          <p style="margin-right: 10px;">{{ year }}</p>
+          <p>{{ month }}</p>
+        </div>
+
+        {% for i in items %}
+          <div class="history-item">
+            {% if i.link %}
+              {% if i.project_pk %}
+                <a href="{% url 'projectview' pk=i.project_pk %}">
+                  <span>{{ i.time|date:'d/m/Y' }}</span>
+                  <span>{{ i.msg }}</span>
+                </a>
+              {% else %}
+                <a href="{% url 'clients' %}">
+                  <span>{{ i.time|date:'d/m/Y' }}</span>
+                  <span>{{ i.msg }}</span>
+                </a>
+              {% endif %}
+            {% else %}
+              <span>{{ i.time|date:'d/m/Y' }}</span>
+              <span>{{ i.msg }}</span>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  {% endfor %}
+{% endblock %}

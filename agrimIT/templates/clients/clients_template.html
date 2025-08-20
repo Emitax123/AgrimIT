@@ -1,0 +1,56 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% block form %}
+  <link rel="stylesheet" href="{% static 'css/clients.css' %}" />
+  <div class="create-client-cont">
+    <a href="{% url 'clientcreate' %}" class="toggle-btn">Crear cliente</a>
+  </div>
+
+  <div class="client-list-cont">
+    {% for client in clients %}
+      <div class="client-container">
+        <div>
+          <span>{{ client.name }}</span>
+        </div>
+
+        <div class="client-buttons">
+          <div>
+            <a href="{% url 'projectslist' pk=client.pk %}" class="toggle-btn active">Ver proyectos</a>
+          </div>
+          <div>
+            <a href="{% url 'clientprojectcreate' pk=client.pk %}" class="toggle-btn active">Crear proyecto</a>
+          </div>
+          <div>
+            <a href="{% url 'deleteclient' pk=client.pk %}" class="toggle-btn red">Eliminar cliente</a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Find all delete buttons
+      const deleteButtons = document.querySelectorAll('a.red')
+    
+      // Add click event listener to each delete button
+      deleteButtons.forEach(function (button) {
+        button.addEventListener('click', function (event) {
+          // Prevent default action (navigation)
+          event.preventDefault()
+    
+          // Get the client name from the parent container
+          const clientContainer = this.closest('.client-container')
+          const clientName = clientContainer.querySelector('span').textContent
+    
+          // Show confirmation dialog
+          const confirmed = confirm(`¿Está seguro que desea eliminar al cliente "${clientName}"? Esta accion borra todos los proyectos asociados al cliente.`)
+    
+          // If confirmed, navigate to the delete URL
+          if (confirmed) {
+            window.location.href = this.getAttribute('href')
+          }
+        })
+      })
+    })
+  </script>
+{% endblock %}

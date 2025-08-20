@@ -1,0 +1,106 @@
+ .container-form {
+     margin-bottom: 20px;
+ }
+
+ .title {
+     font-size: 2rem;
+     font-weight: bold;
+
+ }
+
+ div.form-group.mod-form span.project-type {
+     font-size: 1.5rem;
+     font-weight: 600;
+     text-decoration: none;
+
+ }
+
+ .form-field {
+     width: 33%;
+     display: flex;
+     flex-flow: column;
+ }
+
+ input {
+     width: 100%;
+     padding: 10px;
+     border: 1px solid #ddd;
+     border-radius: 4px;
+     font-size: 14px;
+     box-sizing: border-box;
+ }
+
+ div.mini-gp label,
+ div.data-gp label,
+ div.inmide-data label,
+ div.direction-gp label {
+     display: block;
+     width: 100%;
+     min-width: 150px;
+     margin-bottom: 8px;
+     font-weight: bold;
+     color: #333;
+ }
+
+
+
+ div.form-group.mod-form {
+     display: flex;
+     flex-flow: column;
+     margin-top: 20px;
+ }
+
+ div.form-group.mod-form span {
+     width: 100%;
+     font-size: 1.5rem;
+     font-weight: 800;
+     text-decoration: none;
+     margin-bottom: 1rem;
+ }
+
+ div.form-group.mod-form div {
+     display: flex;
+     flex-flow: wrap;
+     padding-bottom: 10px;
+ }
+
+ div.form-group.mod-form>div::after {
+     content: '';
+     display: block;
+     border-bottom: 2px solid #3498db;
+     width: 100%;
+     margin: 0 auto;
+     width: 90%;
+ }
+
+ div.form-group div.mini-gp {
+     display: flex;
+     flex-flow: wrap;
+
+ }
+
+ div.form-group div.mini-gp div {
+     display: flex;
+     flex-flow: column;
+     margin-right: 1em;
+
+ }
+
+ div.form-group div.data-gp {
+     display: flex;
+     flex-flow: column;
+
+ }
+
+ div.data-gp div.inside-data {
+     display: flex;
+     flex-flow: column;
+ }
+
+ div.form-field.btn {
+     display: flex;
+     flex-flow: wrap;
+     justify-content: center;
+     padding: 10px;
+     width: 100%;
+ }

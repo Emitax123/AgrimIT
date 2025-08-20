@@ -1,0 +1,59 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% block index %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/project_list.css' %}" />
+<div id="galeria-work" class="galeria-work">
+
+  <div class="projects-cont">
+    {% if not projects %}
+      <span style="font-weight: bold;">No se encontraron resultados</span>
+    {% else %}
+    {% for Project in projects %}
+    <div class="project" >
+      <a href="{% url 'projectview' pk=Project.pk %}">
+        
+        <div {% if Project.closed %} style="background-color:rgb(183, 239, 184);"{% endif %} class="cont-work">
+                <span class="project-title1">{{Project.type}}</span>
+                {% if Project.mens %}
+                  <h3>{{Project.mens}}</h3>
+                {% endif %}
+                
+                <div>
+                  <span style="width: 80%;">
+                    <h5>Partido: {{Project.partido}} </h5> 
+                    <h5>Partida: {{Project.partida}}</h5>
+                    <h5>Cliente: {{Project.client.name}}</h5>
+                    <h5>Dir: {{Project.direction}} {{Project.direction_number}}</h5>
+                    <h5>Fecha: {{Project.created|date:"d/m/Y" }}</h5>
+                  </span>
+                  <div style="display: flex; justify-content: end; align-items:flex-end; width: 100%;">
+                    <span style="font-weight: bold;">{{ Project.pk }} </span>
+                  </div>
+                  
+                </div>
+                
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  
+  </div>    
+</div>
+{% if pages.num_pages > 1 %}
+<div class="pagination-cont" >
+  {% for page in pages.page_range %}
+   {% if request.GET.page|default:"1" == page|stringformat:"s" %} 
+   <a class="active" href="?page={{page}}">{{page}}</a>
+   {% else %}
+    <a href="?page={{page}}">{{page}}</a>
+   {% endif %}
+   
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endif %}
+
+
+
+{% endblock %}

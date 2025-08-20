@@ -1,0 +1,174 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% block graph %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/balance.css' %}" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<div class="balance-cont">
+{{ chart_data|json_script:'chart-data' }}
+<div style="display: none;" id="chartdatacont"></div>
+<div class="month-selector" >
+    <form name="month" action="{% url 'balance' %}" method="post">
+        {% csrf_token %}
+        <input id="date-input" name="date" type="month">
+        <button id="submit-date" class="toggle-btn active" type="submit">Hecho</button>
+    </form>
+</div>
+{% if non_exist %}
+    <p>No existen registros en la fecha indicada</p>
+{% else %}
+<div class="board-container ">
+    <div class="board" >
+    </div>
+    <div class="charts">
+        <div class="chart1-cont">
+            <span>Ganancias por tipo</span>
+            <canvas id="myChart"></canvas>
+        </div>
+         <div class="chart2-cont">
+            <span>Ganancias anual</span>
+            <canvas id="myChart2"></canvas>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="anual-data-cont">
+    <div class="monthly-summary">
+        <div class="top-title"><h2>{{year}} - Neto Anual $ {{neto_anual}} </h2></div>
+        {% for month in monthly_totals %}
+        {% with currentMonth=forloop.counter %}
+        <div class="month-data">
+            <div class="month-details title"><span>Mes</span><span>Proyectos</span><span>Ganancia Neta</span></div>
+            <div class="month-details"><span>{{month.month}} </span><span> {{month.project_count}} </span><span style="font-weight: bold;"> ${{ month.total_networth }}</span></div>
+           
+        </div>
+         {% endwith %}
+        {% endfor %}
+    </div>
+</div>
+
+<!-- charts/templates/chart.html -->
+
+<script>
+// This script initializes the charts with embedded data
+    document.addEventListener('DOMContentLoaded', function () {
+        // Chart references
+        let chart1, chart2;
+          function initializeCharts() {
+            console.log("Initializing charts with embedded data...");
+            
+            try {
+                // Get the chart data from the embedded script tag
+                // Django's json_script creates a script tag with the specified ID
+                const chartData = JSON.parse(document.getElementById('chart-data').textContent);
+                console.log("Using embedded chart data:", chartData);
+                
+                if (chartData && chartData.labels1 && chartData.values1 && chartData.labels2 && chartData.values2) {
+                    // Create charts with the embedded data
+                    createCharts(chartData);
+                } else {
+                    console.error('Incomplete embedded chart data:', chartData);
+                }
+            } catch (error) {
+                console.error('Error parsing embedded chart data:', error);
+                console.log("Trying alternative method to get chart data...");
+                try {
+                    // Try getting chart data from the data-chart attribute as a fallback
+                    const chartDataContainer = document.getElementById('chartdatacont');
+                    if (chartDataContainer) {
+                        // No need to JSON.parse here as json_script already provides the script element
+                        console.log("Chart data container found:", chartDataContainer);
+                    }
+                } catch (fallbackError) {
+                    console.error('Error in fallback chart data retrieval:', fallbackError);
+                }
+            }
+        }
+        
+        function createCharts(data) {
+            // Circle chart (doughnut or pie)
+            const ctx = document.getElementById('myChart').getContext('2d');
+            
+            if (chart1) {
+                chart1.destroy(); // Destroy existing chart if it exists
+            }
+            
+            chart1 = new Chart(ctx, {
+                type: 'pie', // or 'doughnut'
+                data: {
+                    labels: data.labels2,
+                    datasets: [{
+                        label: data.label2,
+                        data: data.values2,
+                        backgroundColor: ['#2997D6', '#CB372B', '#2FCA06', '#F2C94C', '#9B51E0'],
+                        hoverOffset: 4
+                    }]
+                },
+                
+            });
+            
+            const ctxx = document.getElementById('myChart2').getContext('2d');
+            
+            if (chart2) {
+                chart2.destroy(); // Destroy existing chart if it exists
+            }
+            
+            // Bar Chart
+
+            chart2 = new Chart(ctxx, {
+                
+                type: 'bar',
+                data: {
+                    labels: data.labels1,
+                    datasets: [{
+                        label: '',
+                        data: data.values1,
+                        backgroundColor: '#6366F1',  // Rose
+                        hoverOffset: 4,
+                        hoverBackgroundColor: '#818CF8',
+                        hoverBorderColor: '#6366F1',
+                        hoverBorderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: false,
+                        },
+                        title: {
+                            display: false,
+                            text: data.label1
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false,                   // Hide vertical grid lines
+                                color: '#E5E7EB'                  // Grid line color
+                            },
+                            ticks: {
+                                maxRotation: 0,                   // Set text to horizontal
+                                minRotation: 0                    // Ensure text stays horizontal
+                            }
+                         }
+                    }
+                }
+                
+            });
+        }
+        
+        // Initialize charts when page loads
+        initializeCharts();
+        
+        // Handle submit button click - validate that date is not empty
+        document.getElementById('submit-date').addEventListener('click', (event) => {
+            const dateInput = document.getElementById('date-input');
+            if (dateInput.value === "") {
+                event.preventDefault();
+            }
+        });
+    });
+</script>
+{% endblock %}

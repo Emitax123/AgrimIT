@@ -1,0 +1,103 @@
+.fila {
+    padding: 2rem 2rem 0rem 2rem;
+    min-width: 50%;
+}
+
+select {
+    padding: 0.5em;
+    outline: none;
+
+}
+
+.toggle-btn.red {
+    width: 5rem;
+    height: 1.5rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+div.form-location span.form-title {
+    font-weight: bold;
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 1em;
+
+}
+
+div.form-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+}
+
+div.form-group span.form-subtitle {
+    font-weight: bold;
+    font-size: 1.5rem;
+    color: #555;
+
+}
+
+div.form-group div.content {
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    font-size: 1rem;
+    margin-top: 1em;
+    padding: 1em 0;
+    border-top: 2px solid #3498db;
+}
+
+#content1 {
+    margin-top: 1em;
+}
+
+div.form-group div.content div {
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    font-size: 1.2rem;
+}
+
+div.form-group div.fields div.input-field {
+    width: 50%;
+    margin-top: 0.5em;
+}
+
+div.form-group div.fields div.input-field input {
+    font-size: 1rem;
+    padding: 0.2em;
+
+}
+
+div.form-group #client-list {
+    margin-top: 0.5em;
+
+}
+
+div.client-list-cont {
+    max-width: 50%;
+}
+
+div.sub-input input:first-child {
+    margin-bottom: 0.5em;
+
+}
+
+div.directions {
+    border-top: 2px solid #3498db;
+    padding-top: 1em;
+}
+
+div.secciones {
+    margin-bottom: 1em;
+}
+
+div.container-button {
+    margin-top: 1em;
+    max-width: 5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-self: center;
+}

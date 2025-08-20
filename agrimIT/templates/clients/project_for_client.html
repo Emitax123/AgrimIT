@@ -1,0 +1,462 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% block form %}
+  <link rel="stylesheet" href="{% static 'css/projectform.css' %}" />
+  <div class="container-form">
+    <div class="form-location">
+      <form action="" method="POST" enctype="multipart/form-data">
+        <span class="form-title">Crear un nuevo proyecto</span>
+        {% csrf_token %}
+        <div class="form-group">
+          <!-- Content 1 -->
+          <div class="content" id="content1">
+            <div class="fields">
+              <span class="form-subtitle">Tipo de Proyecto</span>
+              <div class="input-field">
+                <label for="{{ form.type.id_for_label }}">{{ form.type.label }}</label>
+                {{ form.type }}
+              </div>
+              <div class="input-field">
+                <label for="{{ form.type_mens.id_for_label }}">{{ form.type_mens.label }}</label>
+                {{ form.type_mens }}
+              </div>
+            </div>
+          </div>
+          <!-- End Content 1 -->
+          <!-- Content 2 -->
+
+          <!-- Content 3 -->
+          <div class="content" id="content3">
+            <span class="form-subtitle">Nomenclatura</span>
+            <div class="nomen-cont fields">
+              <div>
+                <div class="input-field">
+                  <label for="{{ form.partido.id_for_label }}">{{ form.partido.label }}</label>
+                  {{ form.partido|attr:'placeholder:Partido' }}
+                </div>
+                <div class="input-field">
+                  <label for="{{ form.partida.id_for_label }}">{{ form.partida.label }}</label>
+                  {{ form.partida|attr:'placeholder:Partido' }}
+                </div>
+                <div class="input-field">
+                  <label for="{{ form.circuns.id_for_label }}">{{ form.circuns.label }}</label>
+                  {{ form.circuns|attr:'placeholder:Cricunscripcion' }}
+                </div>
+                <div class="input-field">
+                  <label for="{{ form.seccion.id_for_label }}">{{ form.seccion.label }}</label>
+                  {{ form.seccion|attr:'placeholder:Seccion' }}
+                </div>
+              </div>
+
+              <div class="secciones">
+                <div class="input-field">
+                  <label for="">Chacra</label>
+                  <div class="sub-input">
+                    <input name="chacra_num" type="text" placeholder="Numero" maxlength="10" id="id_chacra_num" />
+                    <input name="chacra_letra" type="text" placeholder="Letra" maxlength="10" id="id_chacra_letra" />
+                  </div>
+                </div>
+                <div class="input-field">
+                  <label for="">Quinta</label>
+                  <div class="sub-input">
+                    <input name="quinta_num" type="text" placeholder="Numero" maxlength="10" id="id_quinta_num" />
+                    <input name="quinta_letra" type="text" placeholder="Letra" maxlength="10" id="id_quinta_letra" />
+                  </div>
+                </div>
+                <div class="input-field">
+                  <label for="">Fraccion</label>
+                  <div class="sub-input">
+                    <input name="fraccion_num" type="text" placeholder="Numero" maxlength="10" id="id_fraccion_num" />
+                    <input name="fraccion_letra" type="text" placeholder="Letra" maxlength="10" id="id_fraccion_letra" />
+                  </div>
+                </div>
+                <div class="input-field">
+                  <label for="">Manzana</label>
+                  <div class="sub-input">
+                    <input name="manzana_num" type="text" placeholder="Numero" maxlength="10" id="id_manzana_num" />
+                    <input name="manzana_letra" type="text" placeholder="Letra" maxlength="10" id="id_manzana_letra" />
+                  </div>
+                </div>
+                <div class="input-field">
+                  <label for="">Parcela</label>
+                  <div class="sub-input">
+                    <input name="parcela_num" type="text" placeholder="Numero" maxlength="10" id="id_parcela_num" />
+                    <input name="parcela_letra" type="text" placeholder="Letra" maxlength="10" id="id_parcela_letra" />
+                  </div>
+                </div>
+                <div class="input-field">
+                  <label for="">Subparcela</label>
+                  <div class="sub-input">
+                    <input name="subparcela" type="text" placeholder="Subparcela" maxlength="10" id="id_subparcela" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="directions">
+                <span class="form-subtitle">Direccion</span>
+                <div class="input-field">
+                  <label for="">Calle</label>
+                  <div class="sub-input">
+                    <input name="direction" type="text" placeholder="Calle" id="id_direction" />
+                  </div>
+                </div>
+                <div class="input-field">
+                  <label for="">Altura</label>
+                  <div class="sub-input">
+                    <input name="direction_number" type="text" placeholder="Altura" id="id_direction_number" />
+                  </div>
+                </div>
+                <div class="input-field">
+                  <label for="">Piso</label>
+                  <div class="sub-input">
+                    <input name="floor" type="text" placeholder="Piso" maxlength="10" id="id_floor" />
+                  </div>
+                </div>
+                <div class="input-field">
+                  <label for="">Departamento</label>
+                  <div class="sub-input">
+                    <input name="depto" type="text" placeholder="Departamento" maxlength="10" id="id_depto" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="container-button">
+              <button type="submit" class="toggle-btn active" name="save_and_backhome">Guardar</button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const projectTypleSelect = document.getElementById('id_type')
+    projectTypleSelect.addEventListener('change', function () {
+      const mensElement = document.getElementById('id_type_mens')
+      if (this.value === 'Mensura') {
+        mensElement.disabled = false
+        mensElement.style.backgroundColor = ''
+        mensElement.style.color = ''
+        mensElement.style.cursor = ''
+      } else {
+        mensElement.value = '' // Clear the value if not Mensura
+        mensElement.disabled = true
+        mensElement.style.backgroundColor = '#f0f0f0'
+        mensElement.style.color = '#999'
+        mensElement.style.cursor = 'not-allowed'
+      }
+    })
+    
+    // Function to display error messages
+    const showError = (field, errorText) => {
+      if (!field) return
+      field.classList.add('error')
+    
+      // Remove existing error first
+      const container = field.closest('.input-field') || field.parentElement
+      const existingError = container.querySelector('.error-text')
+      if (existingError) {
+        existingError.remove()
+      }
+    
+      const errorElement = document.createElement('small')
+      errorElement.classList.add('error-text')
+      errorElement.innerText = errorText
+      errorElement.style.color = 'red'
+      errorElement.style.fontSize = '12px'
+      container.appendChild(errorElement)
+    }
+    const removeError = (field) => {
+      if (!field) return
+      if (field.classList.contains('error')) {
+        field.classList.remove('error')
+        const container = field.closest('.input-field') || field.parentElement
+        const errorText = container.querySelector('.error-text')
+        if (errorText) {
+          errorText.remove()
+        }
+      }
+    }
+    
+    const clientInputs = document.getElementById('clien-data').querySelectorAll('input[type="text"]')
+    const selectedOption = document.getElementById('id_type')
+    //JS for content1
+    selectedOption.addEventListener('change', () => {
+      if (selectedOption.value !== '') {
+        removeError(selectedOption)
+      }
+    })
+    
+    const selectElement = document.getElementById('client-list')
+    selectElement.addEventListener('change', function () {
+      if (this.value !== '') {
+        clientInputs.forEach((input) => {
+          input.value = ''
+          input.style.backgroundColor = '#f0f0f0'
+          input.style.color = '#999'
+          input.style.cursor = 'not-allowed'
+        })
+      } else {
+        clientInputs.forEach((input) => {
+          input.style.backgroundColor = ''
+          input.style.color = ''
+          input.style.cursor = ''
+        })
+      }
+      clientInputs.forEach((input) => (input.disabled = selectElement.value !== ''))
+      clientInputs.forEach((input) => {
+        removeError(input)
+      })
+    })
+    
+    // Script to handle the removal of clients
+    const removeClientButton = document.getElementById('remove-client')
+    const clientList = document.getElementById('client-list')
+    removeClientButton.addEventListener('click', function (event) {
+      event.preventDefault()
+      const selectedClientId = clientList.value
+      if (selectedClientId) {
+        const clientName = clientList.options[clientList.selectedIndex].text
+        const confirmed = confirm(`¿Está seguro que desea eliminar al cliente "${clientName}"? Esta accion borra todos los proyectos asociados al cliente.`)
+        if (confirmed) {
+          fetch(`deleteclient/${selectedClientId}`)
+            .then((response) => {
+              if (response.ok) {
+                clientList.value = ''
+                const optionToRemove = clientList.querySelector(`option[value="${selectedClientId}"]`)
+                if (optionToRemove) {
+                  optionToRemove.remove()
+                }
+              }
+            })
+            .catch((error) => console.error('Error:', error))
+        }
+      }
+    })
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.querySelector('form')
+      const clientList = document.getElementById('client-list')
+      const clientNameInput = document.getElementById('client-name')
+      const clientPhoneInput = document.getElementById('client-phone')
+      const submitButton = document.querySelector('button[type="submit"]')
+    
+      // Function to show error message
+      function showError(field, message) {
+        // Remove any existing error
+        removeError(field)
+    
+        field.classList.add('error')
+        const errorElement = document.createElement('small')
+        errorElement.classList.add('error-text')
+        errorElement.textContent = message
+        errorElement.style.color = 'red'
+        errorElement.style.fontSize = '12px'
+    
+        // Find the right container to append the error
+        const container = field.closest('.input-field') || field.parentElement
+        container.appendChild(errorElement)
+      }
+    
+      // Function to remove error message
+      function removeError(field) {
+        field.classList.remove('error')
+        const container = field.closest('.input-field') || field.parentElement
+        const existingError = container.querySelector('.error-text')
+        if (existingError) {
+          existingError.remove()
+        }
+      } // Function to validate client data
+      function validateClientData() {
+        const hasSelectedClient = clientList.value.trim() !== ''
+        const hasClientName = clientNameInput.value.trim() !== ''
+        const hasClientPhone = clientPhoneInput.value.trim() !== ''
+    
+        console.log('Validation check:', {
+          hasSelectedClient,
+          hasClientName,
+          hasClientPhone,
+          clientListValue: `"${clientList.value}"`,
+          clientNameValue: `"${clientNameInput.value}"`,
+          clientPhoneValue: `"${clientPhoneInput.value}"`
+        })
+    
+        // Clear previous errors
+        removeError(clientList)
+        removeError(clientNameInput)
+        removeError(clientPhoneInput)
+    
+        // Case 1: Client is selected from dropdown
+        if (hasSelectedClient) {
+          console.log('Client selected from dropdown - validation passed')
+          return true
+        }
+    
+        // Case 2: No client selected, check if manual input is provided
+        if (!hasSelectedClient) {
+          if (!hasClientName && !hasClientPhone) {
+            // Neither client selected nor manual data entered
+            console.log('No client data provided - validation failed')
+            showError(clientList, 'Debe seleccionar un cliente o ingresar los datos manualmente')
+            return false
+          }
+    
+          if (!hasClientName) {
+            console.log('Client name missing - validation failed')
+            showError(clientNameInput, 'El nombre es requerido')
+            return false
+          }
+    
+          if (!hasClientPhone) {
+            console.log('Client phone missing - validation failed')
+            showError(clientPhoneInput, 'El teléfono es requerido')
+            return false
+          }
+        }
+    
+        console.log('All validations passed')
+        return true
+      }
+    
+      // Function to validate project type
+      function validateProjectType() {
+        const projectTypeSelect = document.getElementById('id_type')
+        if (!projectTypeSelect) {
+          console.log('Project type selector not found')
+          return true
+        }
+    
+        const hasProjectType = projectTypeSelect.value.trim() !== ''
+        console.log('Project type validation:', {
+          hasProjectType,
+          projectTypeValue: `"${projectTypeSelect.value}"`
+        })
+    
+        // Clear previous errors
+        removeError(projectTypeSelect)
+    
+        if (!hasProjectType) {
+          console.log('Project type missing - validation failed')
+          showError(projectTypeSelect, 'Debe seleccionar un tipo de proyecto')
+          return false
+        }
+    
+        console.log('Project type validation passed')
+        return true
+      }
+    
+      // Combined validation function
+      function validateForm() {
+        const clientValid = validateClientData()
+        const projectTypeValid = validateProjectType()
+    
+        console.log('Form validation results:', {
+          clientValid,
+          projectTypeValid,
+          overallValid: clientValid && projectTypeValid
+        })
+    
+        return clientValid && projectTypeValid
+      }
+      // Form submission validation
+      form.addEventListener(
+        'submit',
+        function (event) {
+          console.log('Form submit event triggered')
+          console.log('Client list value:', clientList.value)
+          console.log('Client name value:', clientNameInput.value)
+          console.log('Client phone value:', clientPhoneInput.value)
+    
+          const isValid = validateForm()
+          console.log('Overall validation result:', isValid)
+    
+          if (!isValid) {
+            console.log('Validation failed - preventing form submission')
+            event.preventDefault()
+            event.stopPropagation()
+            event.stopImmediatePropagation()
+    
+            // Disable submit button temporarily
+            if (submitButton) {
+              submitButton.disabled = true
+              setTimeout(() => {
+                submitButton.disabled = false
+              }, 2000)
+            }
+    
+            alert('Por favor complete todos los campos requeridos antes de enviar el formulario')
+            return false
+          }
+    
+          console.log('Validation passed - allowing form submission')
+          return true
+        },
+        true
+      ) // Use capture phase to ensure this runs first
+    
+      // Additional backup prevention on button click
+      if (submitButton) {
+        submitButton.addEventListener(
+          'click',
+          function (event) {
+            console.log('Submit button clicked')
+            if (!validateForm()) {
+              console.log('Button click validation failed')
+              event.preventDefault()
+              event.stopPropagation()
+              event.stopImmediatePropagation()
+              alert('Por favor complete todos los campos requeridos antes de enviar el formulario')
+              return false
+            }
+          },
+          true
+        )
+      }
+      // Real-time validation when client list changes
+      clientList.addEventListener('change', function () {
+        if (this.value !== '') {
+          // Client selected, clear and disable manual inputs
+          clientNameInput.value = ''
+          clientPhoneInput.value = ''
+          clientNameInput.disabled = true
+          clientPhoneInput.disabled = true
+    
+          // Remove any errors
+          removeError(clientNameInput)
+          removeError(clientPhoneInput)
+          removeError(clientList)
+        } else {
+          // No client selected, enable manual inputs
+          clientNameInput.disabled = false
+          clientPhoneInput.disabled = false
+        }
+      })
+    
+      // Real-time validation for project type
+      const projectTypeSelect = document.getElementById('id_type')
+      if (projectTypeSelect) {
+        projectTypeSelect.addEventListener('change', function () {
+          if (this.value !== '') {
+            removeError(this)
+          }
+        })
+      }
+    
+      // Remove errors when user starts typing
+      clientNameInput.addEventListener('input', function () {
+        if (this.value.trim() !== '') {
+          removeError(this)
+          removeError(clientList)
+        }
+      })
+    
+      clientPhoneInput.addEventListener('input', function () {
+        if (this.value.trim() !== '') {
+          removeError(this)
+        }
+      })
+    })
+  </script>
+{% endblock %}

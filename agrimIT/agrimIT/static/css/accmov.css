@@ -1,0 +1,229 @@
+div.fila {
+    width: 60rem;
+    /* Max width constraint */
+}
+
+div.acc-global-cont div div.list-movs {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-between;
+    width: fit-content;
+    margin-bottom: 1.5em;
+    padding: 0.1em;
+    border-radius: 4px;
+    background-color: #3498db;
+    font-weight: bold;
+    color: white;
+    transition: background-color 0.3s ease;
+}
+
+div.acc-global-cont div div.list-movs:hover {
+    background-color: #2980b9;
+}
+
+input[type="date"] {
+
+    border: 2px solid #e0e0e0;
+    border-radius: 4px;
+    font-size: 1rem;
+    background-color: transparent;
+    transition: all 0.3s ease;
+}
+
+input[type="date"]:hover {
+    outline: none;
+    border-color: #2196f3;
+    box-shadow: 0 2px 4px rgba(33, 150, 243, 0.2);
+}
+
+input[type="date"]:focus {
+    outline: none;
+    border-color: #2196f3;
+    box-shadow: 0 2px 4px rgba(33, 150, 243, 0.2);
+}
+
+button.toggle-btn {
+    height: 1.5em;
+    display: flex;
+    align-items: center;
+    margin-left: 0.5em;
+}
+
+.acc-global-cont {
+    display: flex;
+    flex-flow: column;
+    justify-content: center;
+    width: 100%;
+
+
+}
+
+.date-select-cont {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: start;
+    width: 100%;
+    margin-bottom: 1.5em;
+    font-weight: bold;
+}
+
+.date-select-cont label {
+
+    display: flex;
+    align-items: end;
+    margin-right: 1em;
+    font-size: 1rem;
+}
+
+
+
+.acc-container {
+    flex-direction: column;
+    width: 100%;
+    margin-bottom: 2em;
+    background-color: white;
+    border-radius: 20px;
+    color: black;
+
+}
+
+.acc-data-cont {
+    display: flex;
+    flex-flow: column;
+    width: 100%;
+    border-color: #ccc;
+    border-style: solid;
+    border-width: 1px 0px 0px 0px;
+}
+
+.first.acc-row {
+    font-weight: bold;
+}
+
+.acc-row {
+    display: flex;
+    /* Permite que las filas se expandan */
+    justify-content: space-between;
+    flex-flow: row wrap;
+    /* Permite que las filas se ajusten */
+    width: 100%;
+    border-color: #ccc;
+    border-style: solid;
+    border-width: 0px 0px 1px 1px;
+}
+
+.acc-row span.acc-data {
+    flex: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 8px;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border-color: #ccc;
+    border-style: solid;
+    border-width: 0px 1px 0px 0px;
+}
+
+.acc-row span.first.acc-data {
+    flex: 1;
+}
+
+.acc-row span.acc-data.link {
+    padding: 1em;
+}
+
+/* ===========================================
+   RESPONSIVE MEDIA QUERIES - ACCOUNTING MOVEMENTS
+   =========================================== */
+
+/* Large Desktop (1200px+) */
+@media (min-width: 1200px) {}
+
+/* Desktop (1024px - 1199px) */
+@media (max-width: 1199px) {}
+
+/* Tablet Large (896px - 1023px) */
+@media (max-width: 1023px) {}
+
+/* Tablet (768px - 895px) */
+@media (max-width: 895px) {}
+
+/* Mobile Large (481px - 767px) */
+@media (max-width: 767px) {
+    .acc-container {
+        font-size: 0.75rem;
+    }
+
+    .date-select-cont {
+        justify-content: center;
+    }
+
+    .date-select-cont form#date-filter-form {
+        flex-flow: column !important;
+        gap: 1em;
+    }
+
+    .acc-row span:nth-child(3) {
+        display: none !important;
+    }
+
+
+}
+
+/* Mobile Standard (376px - 480px) */
+@media (max-width: 480px) {
+    .acc-container {
+        font-size: 0.75rem;
+    }
+
+    .date-select-cont {
+        justify-content: center;
+    }
+
+    .date-select-cont form#date-filter-form {
+        flex-flow: column !important;
+        gap: 1em;
+    }
+
+    .acc-row span.acc-data:nth-child(3) {
+        display: none !important;
+    }
+
+
+}
+
+/* Mobile Small (≤ 375px) */
+@media (max-width: 375px) {
+    .acc-container {
+        font-size: 0.75rem;
+    }
+
+    .date-select-cont {
+        justify-content: center;
+    }
+
+    .date-select-cont form#date-filter-form {
+        flex-flow: column !important;
+        gap: 1em;
+    }
+
+    .acc-row span.acc-data:nth-child(3) {
+        display: none !important;
+    }
+
+
+}
+
+/* Landscape orientation adjustments */
+@media (max-height: 500px) and (orientation: landscape) {}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2),
+(min-resolution: 192dpi) {}
+
+/* Print styles */
+@media print {}

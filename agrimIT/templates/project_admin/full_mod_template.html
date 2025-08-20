@@ -1,0 +1,160 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% block form %}
+  <link rel="stylesheet" href="{% static 'css/fullform.css' %}" />
+  <div class="container-form">
+    <div class="form-location">
+      <form action="" method="POST" enctype="multipart/form-data">
+        <span class="title">Modificacion de proyecto {{ project.pk }}</span>
+        {% csrf_token %}
+        <div class="form-group mod-form">
+          <div>
+            <div class="mini-gp">
+              <span class="project-type">{{ project.type }} <span></span> <span class="project-type">{{ project.type_mens }}</span></span>
+            </div>
+          </div>
+
+          <div>
+            <span style="width: 100%;">Nomenclatura</span>
+            <div class="mini-gp">
+              <div>
+                <label for="id_partido">Partido</label>
+                {{ form.partido|add_class:'form-control'|attr:'placeholder:Seleccione el partido' }}
+              </div>
+              <div>
+                <label for="id_partida">Partida</label>
+                {{ form.partida|add_class:'form-control'|attr:'placeholder:Número de partida' }}
+              </div>
+            </div>
+            <div class="mini-gp">
+              <div>
+                <label for="id_circuns">Circunscripción</label>
+                {{ form.circ|add_class:'form-control'|attr:'placeholder:Número de circunscripción' }}
+              </div>
+              <div>
+                <label for="id_seccion">Sección</label>
+                {{ form.sect|add_class:'form-control'|attr:'placeholder:Número de sección' }}
+              </div>
+            </div>
+          </div>
+
+          <div class="data-gp">
+            <!-- div 2 -->
+            <span style="width: 100%;">Otros datos</span>
+            <div class="inside-data">
+              <div class="mini-gp">
+                <div>
+                  <label for="id_chacra_num">Chacra Numero</label>
+                  {{ form.chacra_num|add_class:'form-control'|attr:'placeholder:Número de chacra' }}
+                </div>
+                <div>
+                  <label for="id_chacra_letra">Chacra Letra</label>
+                  {{ form.chacra_let|add_class:'form-control'|attr:'placeholder:Letra de chacra' }}
+                </div>
+              </div>
+              <div class="mini-gp">
+                <div>
+                  <label for="id_quinta_num">Quinta Numero</label>
+                  {{ form.quinta_num|add_class:'form-control'|attr:'placeholder:Número de quinta' }}
+                </div>
+
+                <div>
+                  <label for="id_quinta_letra">Quinta Letra</label>
+                  {{ form.quinta_let|add_class:'form-control'|attr:'placeholder:Letra de quinta' }}
+                </div>
+              </div>
+              <div class="mini-gp">
+                <div>
+                  <label for="id_fraccion_num">Fraccion Numero</label>
+                  {{ form.fraccion_num|add_class:'form-control'|attr:'placeholder:Número de fracción' }}
+                </div>
+                <div>
+                  <label for="id_fraccion_letra">Fraccion Letra</label>
+                  {{ form.fraccion_let|add_class:'form-control'|attr:'placeholder:Letra de fracción' }}
+                </div>
+              </div>
+            </div>
+
+            <div class="inside-data">
+              <div class="mini-gp">
+                <div>
+                  <label for="id_manzana_num">Manzana Numero</label>
+                  {{ form.manzana_num|add_class:'form-control'|attr:'placeholder:Número de manzana' }}
+                </div>
+                <div>
+                  <label for="id_manzana_letra">Manzana Letra</label>
+                  {{ form.manzana_let|add_class:'form-control'|attr:'placeholder:Letra de manzana' }}
+                </div>
+              </div>
+              <div class="mini-gp">
+                <div>
+                  <label for="id_parcela_num">Parcela Numero</label>
+                  {{ form.parcela_num|add_class:'form-control'|attr:'placeholder:Número de parcela' }}
+                </div>
+                <div>
+                  <label for="id_parcela_letra">Parcela Letra</label>
+                  {{ form.parcela_let|add_class:'form-control'|attr:'placeholder:Letra de parcela' }}
+                </div>
+              </div>
+              <div class="mini-gp">
+                <div>
+                  <label for="id_subparcela">Subparcela</label>
+                  {{ form.subparcela|add_class:'form-control'|attr:'placeholder:Número de subparcela' }}
+                </div>
+              </div>
+            </div>
+            <!-- fin mini div 2 -->
+          </div>
+          <!-- fin div 2 -->
+
+          <div>
+            <!-- div 3 -->
+            <span style="width: 100%;">Direccion</span>
+            <div class="mini-gp">
+              <div>
+                <label for="id_street">Calle</label>
+                {{ form.street|add_class:'form-control'|attr:'placeholder:Nombre de la calle' }}
+              </div>
+              <div>
+                <label for="id_street_num">Altura</label>
+                {{ form.street_num|add_class:'form-control'|attr:'placeholder:Número de altura' }}
+              </div>
+              <div>
+                <label for="id_floor">Piso</label>
+                {{ form.floor|add_class:'form-control'|attr:'placeholder:Número de piso' }}
+              </div>
+              <div>
+                <label for="id_depto">Departamento</label>
+                {{ form.dept|add_class:'form-control'|attr:'placeholder:Departamento (ej. A, 1)' }}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-field btn">
+          <button class="toggle-btn active" type="submit">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script>
+    const projectTypleSelect = document.getElementById('id_type')
+    const mensElement = document.getElementById('id_mens')
+    
+    // Check initial state
+    if (projectTypleSelect.value === 'Mensura') {
+      mensElement.disabled = false
+    } else {
+      mensElement.value = ''
+      mensElement.disabled = true
+    }
+    projectTypleSelect.addEventListener('change', function () {
+      if (this.value === 'Mensura') {
+        mensElement.disabled = false
+      } else {
+        mensElement.value = '' // Clear the value if not Mensura
+        mensElement.disabled = true
+      }
+    })
+  </script>
+{% endblock %}

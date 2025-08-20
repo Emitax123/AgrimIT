@@ -1,0 +1,31 @@
+div.fila {
+    min-width: 20rem;
+}
+
+div.login-form form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+div.login-form form div.form-group {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+}
+
+div.login-form form div.form-group input {
+    font-weight: 500;
+}
+
+div.login-form form div.form-group input {
+    margin-bottom: 0.5rem;
+    height: 2rem;
+    font-size: 1rem;
+    border-radius: 5px;
+    outline: none;
+    border: 2px solid #3498db;
+    padding-left: 0.5rem;
+}

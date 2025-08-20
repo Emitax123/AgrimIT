@@ -1,0 +1,132 @@
+.fila {
+    min-width: 80%;
+}
+
+div.index-container {
+    display: flex;
+    flex-flow: column;
+    align-items: start;
+}
+
+div.index-container div.card-cont {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: center;
+    width: 100%;
+    place-self: center;
+    gap: 5em;
+    padding-bottom: 2em;
+    margin-bottom: 1em;
+    border-bottom: 1px solid #2d72ba;
+
+}
+
+div.card-cont div.card {
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    height: 5rem;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px 2px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+div.card:hover {
+    transform: scale(1.05);
+}
+
+div.card span.title {
+    font-weight: 600;
+    font-size: 0.75rem;
+    margin-bottom: 0.5em;
+}
+
+div.card span.content {
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+div.projects-cont {
+    width: 100%;
+}
+
+div.projects-cont div.project-list {
+    display: flex;
+    flex-flow: column;
+    align-items: start;
+    justify-content: center;
+    width: 100%;
+    background-color: #f9f9f9;
+    padding: 1em;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px 2px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1em;
+}
+
+div.projects-cont span.title {
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: #333;
+    margin-bottom: 5rem;
+}
+
+
+
+div.projects-cont a.link {
+    text-decoration: none;
+    color: #fff;
+    background-color: #2d72ba;
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 0.1rem;
+    border-radius: 4px;
+}
+
+div.project-list ul {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+div.project-list li {
+    list-style: none;
+    margin: 0.5em 0;
+
+
+}
+
+div.project-list li a {
+    display: flex;
+    justify-content: space-between;
+    transition: color ease-in-out 0.2s, font-weight ease-in-out 0.3s, font-size ease-in-out 0.3s;
+}
+
+div.project-list li a:hover {
+    color: #2d72ba;
+    font-weight: bold;
+    font-size: 1.02rem;
+}
+
+div.project-list li.header {
+    display: flex;
+    list-style: none;
+    justify-content: space-between;
+    font-weight: bold;
+    color: #333;
+    border-bottom: 2px solid #747373;
+    margin-bottom: 0.5em;
+
+
+}
+
+div.project-list li span {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    width: 25%;
+}

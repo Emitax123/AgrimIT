@@ -1,0 +1,86 @@
+div.fila {
+    width: fit-content;
+    height: 100%;
+
+}
+
+div.client-list-cont {
+    width: 100%;
+    margin-top: 2em;
+}
+
+div.client-container {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-between;
+    border-bottom: 2px solid #3498db;
+    gap: 1rem;
+    padding: 0.1rem 0;
+}
+
+div.client-container span {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-right: 2em;
+}
+
+div.client-buttons {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-between;
+    align-items: center;
+}
+
+div.client-buttons a {
+    padding: 0.2em 0.2em;
+}
+
+
+
+
+div.agrouped-form-items {
+    display: flex;
+    flex-flow: row wrap;
+    gap: 1em;
+}
+
+/* ===========================================
+   RESPONSIVE MEDIA QUERIES - ACCOUNTING MOVEMENTS
+   =========================================== */
+
+/* Large Desktop (1200px+) */
+@media (min-width: 1200px) {}
+
+/* Desktop (1024px - 1199px) */
+@media (max-width: 1199px) {}
+
+/* Tablet Large (896px - 1023px) */
+@media (max-width: 1023px) {}
+
+/* Tablet (768px - 895px) */
+@media (max-width: 895px) {}
+
+/* Mobile Large (481px - 767px) */
+@media (max-width: 767px) {
+    div.client-container {
+        margin-top: 1em;
+        flex-flow: column;
+        padding-bottom: 0.5em;
+    }
+}
+
+/* Mobile Standard (376px - 480px) */
+@media (max-width: 480px) {}
+
+/* Mobile Small (≤ 375px) */
+@media (max-width: 375px) {}
+
+/* Landscape orientation adjustments */
+@media (max-height: 500px) and (orientation: landscape) {}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2),
+(min-resolution: 192dpi) {}
+
+/* Print styles */
+@media print {}

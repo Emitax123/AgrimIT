@@ -1,0 +1,53 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% block form %}
+  <link rel="stylesheet" href="{% static 'css/index.css' %}" />
+  <div class="index-container">
+    <div class="card-cont">
+      <a href="{% url 'projects' %}">
+        <div class="card projects">
+          <span class="title">Proyectos Activos</span>
+          <span class="content">{{ project_count }}</span>
+        </div>
+      </a>
+      <a href="{% url 'clients' %}">
+        <div class="card clients">
+          <span class="title">Clientes</span>
+          <span class="content">{{ clients_count }}</span>
+        </div>
+      </a>
+      <a href="{% url 'balance' %}">
+        <div class="card income">
+          <span class="title">Ingresos</span>
+          <span class="content">${{ net_income }}</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="projects-cont">
+      <span class="title">Proyectos Recientes</span>
+      <div class="project-list">
+        <ul>
+          <li class="header">
+            <span>Projecto</span><span>Cliente</span><span>Partida</span><span>Estado</span>
+          </li>
+          {% for p in projects %}
+            <li>
+              <a href="{% url 'projectview' p.pk %}">
+                <span>{{ p.type }}</span> <span>{{ p.client.name }}</span><span>{{ p.partida }}</span><span>
+                  {% if p.closed %}
+                    Cerrado
+                  {% else %}
+                    Activo
+                  {% endif %}
+                </span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <a class="link" href="{% url 'projects' %}">Ver todos</a>
+    </div>
+  </div>
+{% endblock %}

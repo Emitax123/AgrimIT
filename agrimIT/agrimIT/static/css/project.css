@@ -1,0 +1,815 @@
+div.fila {
+    min-width: 50rem;
+}
+
+.cont-project-div {
+    width: 100%;
+
+}
+
+div.contact-form input {
+    padding: 0.5em;
+}
+
+div.contact-form form {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 0.5em;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+div.contact-form button {
+    max-height: 2rem;
+}
+
+.project-div {
+    padding: 1rem;
+    background-color: white;
+    color: black;
+    display: flex;
+    flex-flow: column;
+}
+
+div.project-title div {
+
+    display: flex;
+    flex-flow: wrap;
+    align-items: baseline;
+    margin-bottom: 1rem;
+    width: 100%;
+    gap: 1em;
+}
+
+
+div.project-title div span.title {
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+div.project-title div span.date {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+div.project-title div span.id {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.project-div form {
+    display: none;
+}
+
+.project-div form.client-form {
+    display: block;
+}
+
+.project-div form.client-form input {
+    display: none;
+}
+
+.project-div div.mini-div {
+    display: flex;
+    flex-flow: row;
+    justify-content: space-between;
+    width: 65%;
+    max-height: 2rem;
+}
+
+.project-div div.mini-div.first {
+    margin-top: 1em;
+}
+
+div.mini-div span {
+    font-weight: 500;
+
+}
+
+div.mini-div input {
+    padding-left: 0.2em;
+}
+
+div.project-div div.show-box {
+    border-bottom: 2px solid #3498db;
+}
+
+div.project-div div.fix-show-box {
+    width: 100%;
+    display: flex;
+    border-bottom: 2px solid #3498db;
+
+
+}
+
+div.fix-show-box div.fix-info-box {
+    display: flex;
+    flex-flow: row;
+
+    align-items: start;
+    margin-bottom: 1rem;
+    width: 100%;
+}
+
+div.fix-info-box div.client-box {
+    display: flex;
+    flex-flow: column;
+    justify-content: start;
+    align-items: start;
+    width: 50%;
+    margin-bottom: 1rem;
+}
+
+#titular-data.client-box div {
+    display: flex;
+    justify-content: space-between;
+    width: 80%;
+}
+
+div.client-box div form {
+
+    width: 50%;
+}
+
+div.show-box div.info-box {
+    display: flex;
+    flex-flow: row;
+    align-items: start;
+    margin-bottom: 1rem;
+    width: 100%;
+}
+
+div.show-box div.info-box div {
+    width: 50%;
+    display: flex;
+    flex-flow: column;
+}
+
+span.slide-text {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+div.end-btn-container {
+    display: flex;
+    flex-flow: row;
+    justify-content: start;
+    padding-left: 1rem;
+    margin-top: 1rem;
+}
+
+div.mini-div .toggle-btn {
+    width: 5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.1em;
+}
+
+div.project-div div.delete-container form {
+    display: flex;
+    flex-flow: row;
+    justify-content: end;
+    width: 100%;
+}
+
+div.delete-container {
+    display: flex;
+    flex-flow: row;
+    justify-content: end;
+
+}
+
+div.file-box form .toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0rem 0.2rem;
+    font-size: 0.75rem;
+    width: fit-content;
+}
+
+div.file-box form .toggle-btn.active {
+    padding: 0.2rem 0.2rem;
+}
+
+div.file-box form span {
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+div.contact-box div {
+    display: flex;
+    flex-flow: column;
+    justify-content: start;
+    align-items: start;
+    width: 100%;
+}
+
+/* ===========================================
+   RESPONSIVE MEDIA QUERIES - PROJECT
+   =========================================== */
+
+/* Large Desktop (1200px+) */
+@media (min-width: 1200px) {
+    div.fila {
+        min-width: 60rem;
+        max-width: 80rem;
+        margin: 0 auto;
+    }
+
+    .project-div {
+        padding: 2rem;
+    }
+
+    div.project-title div span.title {
+        font-size: 2.5rem;
+    }
+
+    .project-div div.mini-div {
+        width: 70%;
+    }
+}
+
+/* Desktop (1024px - 1199px) */
+@media (max-width: 1199px) {
+    div.fila {
+        min-width: 45rem;
+        max-width: 70rem;
+    }
+
+    .project-div {
+        padding: 1.5rem;
+    }
+
+    div.project-title div span.title {
+        font-size: 2.2rem;
+    }
+
+    .project-div div.mini-div {
+        width: 75%;
+    }
+}
+
+/* Tablet Large (896px - 1023px) */
+@media (max-width: 1023px) {
+    div.fila {
+        min-width: auto;
+        width: 95%;
+        margin: 0 auto;
+    }
+
+    .cont-project-div {
+        padding: 0 1rem;
+    }
+
+    .project-div {
+        padding: 1.5rem;
+        border-radius: 8px;
+    }
+
+    div.project-title div {
+        flex-flow: column;
+        align-items: flex-start;
+        gap: 0.5em;
+    }
+
+    div.project-title div span.title {
+        font-size: 2rem;
+    }
+
+    .project-div div.mini-div {
+        width: 85%;
+        flex-flow: column;
+        max-height: none;
+        gap: 0.5rem;
+    }
+
+    div.mini-div span {
+        width: 100%;
+    }
+
+    div.mini-div input {
+        width: 100%;
+        padding: 0.5em;
+        box-sizing: border-box;
+    }
+
+    div.fix-info-box {
+        flex-flow: column;
+        gap: 1rem;
+    }
+
+    div.fix-info-box div.client-box {
+        width: 100%;
+    }
+
+    div.show-box div.info-box {
+        flex-flow: column;
+        gap: 1rem;
+    }
+
+    div.show-box div.info-box div {
+        width: 100%;
+    }
+}
+
+/* Tablet (768px - 895px) */
+@media (max-width: 895px) {
+    div.fila {
+        width: 100%;
+        margin: 0;
+        padding: 0 0.5rem;
+    }
+
+    .cont-project-div {
+        padding: 0;
+    }
+
+    .project-div {
+        padding: 1.2rem;
+        margin: 0.5rem 0;
+    }
+
+    div.project-title div {
+        margin-bottom: 1.5rem;
+    }
+
+    div.project-title div span.title {
+        font-size: 1.8rem;
+        line-height: 1.2;
+    }
+
+    div.project-title div span.date,
+    div.project-title div span.id {
+        font-size: 0.95rem;
+    }
+
+    .project-div div.mini-div {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    .project-div div.mini-div.first {
+        margin-top: 1.5em;
+    }
+
+    div.mini-div .toggle-btn {
+        width: 6rem;
+        margin-left: 0;
+        margin-top: 0.5rem;
+    }
+
+    #titular-data.client-box div {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    div.client-box div form {
+        width: 100%;
+    }
+
+    span.slide-text {
+        font-size: 1.3rem;
+        margin-bottom: 0.5rem;
+    }
+
+    div.end-btn-container {
+        padding-left: 0;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    div.contact-form {
+        padding: 0 0.5rem;
+    }
+
+    div.contact-form form {
+        padding: 1rem;
+    }
+
+    div.contact-form input {
+        padding: 0.8em;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    div.contact-form button {
+        width: 100%;
+        max-height: none;
+        padding: 0.8rem;
+        margin-top: 0.5rem;
+    }
+}
+
+/* Mobile Large (481px - 767px) */
+@media (max-width: 767px) {
+    div.fila {
+        width: 100%;
+        padding: 0 0.25rem;
+    }
+
+    .project-div {
+        padding: 1rem;
+        margin: 0.25rem 0;
+        border-radius: 6px;
+    }
+
+    div.project-title div {
+        margin-bottom: 1rem;
+        gap: 0.3em;
+    }
+
+    div.project-title div span.title {
+        font-size: 1.6rem;
+        line-height: 1.1;
+    }
+
+    div.project-title div span.date,
+    div.project-title div span.id {
+        font-size: 0.9rem;
+    }
+
+    .project-div div.mini-div {
+        margin-bottom: 1.2rem;
+        gap: 0.8rem;
+    }
+
+    .project-div div.mini-div.first {
+        margin-top: 1.2em;
+    }
+
+    div.mini-div span {
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+
+    div.mini-div input {
+        padding: 0.7em;
+        font-size: 0.95rem;
+    }
+
+    div.mini-div .toggle-btn {
+        width: 100%;
+        padding: 0.8rem;
+        font-size: 0.9rem;
+        margin-top: 0.8rem;
+    }
+
+    div.fix-show-box {
+        border-bottom: 1px solid #3498db;
+    }
+
+    div.project-div div.show-box {
+        border-bottom: 1px solid #3498db;
+    }
+
+    div.fix-info-box div.client-box {
+        margin-bottom: 1.5rem;
+    }
+
+    #titular-data.client-box div {
+        gap: 0.8rem;
+    }
+
+    span.slide-text {
+        font-size: 1.2rem;
+        margin-bottom: 0.8rem;
+    }
+
+    div.end-btn-container {
+        margin-top: 1.5rem;
+        gap: 0.8rem;
+    }
+
+    div.project-div div.delete-container {
+        margin-top: 1rem;
+    }
+
+    div.project-div div.delete-container form {
+        justify-content: center;
+    }
+
+    div.file-box {
+        margin: 1rem 0;
+    }
+
+    div.file-box form .toggle-btn {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.8rem;
+        width: auto;
+        min-width: fit-content;
+    }
+
+    div.file-box form span {
+        font-size: 0.85rem;
+    }
+
+    div.contact-form form {
+        padding: 0.8rem;
+    }
+
+    div.contact-form input {
+        padding: 0.7em;
+        font-size: 0.95rem;
+    }
+
+    div.contact-form button {
+        padding: 0.7rem;
+        font-size: 0.95rem;
+    }
+}
+
+/* Mobile Standard (376px - 480px) */
+@media (max-width: 480px) {
+    div.fila {
+        padding: 0 0.125rem;
+    }
+
+    .project-div {
+        padding: 0.8rem;
+        margin: 0.125rem 0;
+    }
+
+    div.project-title div span.title {
+        font-size: 1.4rem;
+        word-break: break-word;
+    }
+
+    div.project-title div span.date,
+    div.project-title div span.id {
+        font-size: 0.85rem;
+    }
+
+    .project-div div.mini-div {
+        margin-bottom: 1rem;
+        gap: 0.6rem;
+    }
+
+    .project-div div.mini-div.first {
+        margin-top: 1rem;
+    }
+
+    div.mini-div span {
+        font-size: 0.9rem;
+    }
+
+    div.mini-div input {
+        padding: 0.6em;
+        font-size: 0.9rem;
+    }
+
+    div.mini-div .toggle-btn {
+        padding: 0.7rem;
+        font-size: 0.85rem;
+        margin-top: 0.6rem;
+    }
+
+    div.fix-info-box div.client-box {
+        margin-bottom: 1.2rem;
+    }
+
+    #titular-data.client-box div {
+        gap: 0.6rem;
+    }
+
+    span.slide-text {
+        font-size: 1.1rem;
+        margin-bottom: 0.6rem;
+    }
+
+    div.end-btn-container {
+        margin-top: 1.2rem;
+        gap: 0.6rem;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    div.end-btn-container .toggle-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    div.file-box form .toggle-btn {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.75rem;
+        margin: 0.2rem;
+    }
+
+    div.file-box form span {
+        font-size: 0.8rem;
+    }
+
+    div.contact-form form {
+        padding: 0.6rem;
+    }
+
+    div.contact-form input {
+        padding: 0.6em;
+        font-size: 0.9rem;
+    }
+
+    div.contact-form button {
+        padding: 0.6rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Mobile Small (≤ 375px) */
+@media (max-width: 375px) {
+    div.fila {
+        padding: 0;
+    }
+
+    .project-div {
+        padding: 0.6rem;
+        margin: 0;
+        border-radius: 4px;
+    }
+
+    div.project-title div {
+        margin-bottom: 0.8rem;
+        gap: 0.2em;
+    }
+
+    div.project-title div span.title {
+        font-size: 1.2rem;
+        line-height: 1;
+    }
+
+    div.project-title div span.date,
+    div.project-title div span.id {
+        font-size: 0.8rem;
+    }
+
+    .project-div div.mini-div {
+        margin-bottom: 0.8rem;
+        gap: 0.4rem;
+    }
+
+    .project-div div.mini-div.first {
+        margin-top: 0.8em;
+    }
+
+    div.mini-div span {
+        font-size: 0.85rem;
+    }
+
+    div.mini-div input {
+        padding: 0.5em;
+        font-size: 0.85rem;
+    }
+
+    div.mini-div .toggle-btn {
+        padding: 0.6rem;
+        font-size: 0.8rem;
+        margin-top: 0.4rem;
+    }
+
+    div.fix-info-box div.client-box {
+        margin-bottom: 1rem;
+    }
+
+    #titular-data.client-box div {
+        gap: 0.4rem;
+    }
+
+    span.slide-text {
+        font-size: 1rem;
+        margin-bottom: 0.4rem;
+    }
+
+    div.end-btn-container {
+        margin-top: 1rem;
+        gap: 0.4rem;
+    }
+
+    div.end-btn-container .toggle-btn {
+        padding: 0.8rem;
+        font-size: 0.85rem;
+    }
+
+    div.file-box form .toggle-btn {
+        padding: 0.3rem 0.5rem;
+        font-size: 0.7rem;
+        margin: 0.1rem;
+    }
+
+    div.file-box form span {
+        font-size: 0.75rem;
+    }
+
+    div.contact-form form {
+        padding: 0.5rem;
+    }
+
+    div.contact-form input {
+        padding: 0.5em;
+        font-size: 0.85rem;
+    }
+
+    div.contact-form button {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+    }
+}
+
+/* Landscape orientation adjustments */
+@media (max-height: 500px) and (orientation: landscape) {
+    .project-div {
+        padding: 0.8rem;
+    }
+
+    div.project-title div span.title {
+        font-size: 1.4rem;
+    }
+
+    .project-div div.mini-div {
+        margin-bottom: 0.8rem;
+    }
+
+    div.fix-info-box {
+        flex-direction: row;
+        gap: 2rem;
+    }
+
+    div.fix-info-box div.client-box {
+        width: 50%;
+        margin-bottom: 0;
+    }
+
+    div.show-box div.info-box {
+        flex-direction: row;
+        gap: 2rem;
+    }
+
+    div.show-box div.info-box div {
+        width: 50%;
+    }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2),
+(min-resolution: 192dpi) {
+    .project-div {
+        border: 0.5px solid rgba(0, 0, 0, 0.1);
+    }
+
+    div.project-div div.show-box,
+    div.project-div div.fix-show-box {
+        border-bottom: 1.5px solid #3498db;
+    }
+
+    div.contact-form form {
+        border: 0.5px solid rgba(0, 0, 0, 0.1);
+    }
+}
+
+/* Print styles */
+@media print {
+    div.fila {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .project-div {
+        padding: 1rem;
+        box-shadow: none;
+        border: 1px solid #000;
+        page-break-inside: avoid;
+        margin-bottom: 1rem;
+    }
+
+    div.project-title div span.title {
+        font-size: 1.5rem;
+        color: #000;
+    }
+
+    .project-div div.mini-div {
+        page-break-inside: avoid;
+    }
+
+    div.mini-div .toggle-btn,
+    div.end-btn-container,
+    div.delete-container,
+    div.file-box form .toggle-btn,
+    div.contact-form button {
+        display: none;
+    }
+
+    div.mini-div input {
+        border: 1px solid #000;
+        background: transparent;
+    }
+
+    div.contact-form form {
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+
+    div.project-div div.show-box,
+    div.project-div div.fix-show-box {
+        border-bottom: 2px solid #000;
+    }
+}
