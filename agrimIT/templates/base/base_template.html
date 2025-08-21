@@ -2,112 +2,18 @@
   <head>
     {% load static %}
     <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="  <scrip            <li>
-              <a href="{% url 'projects' %}" data-submenu="projects-submenu">Proyectos</a>
-              <ul class="navbar-submenu" id="projects-submenu">
-                <li>
-                  <a href="{% url 'projects' %}">Proyectos</a>
-                </li>
-                <li>
-                  <a href="{% url 'projectslisttype' type=1 %}">Mensuras</a>
-                </li>  // JavaScript for the navbar submenu
-    document.addEventListener('DOMContentLoaded', function () {
-      const submenuItems = document.querySelectorAll('[data-submenu]');
-      let isMobile = window.innerWidth <= 768;
-      
-      // Detectar si es dispositivo móvil
-      function checkIfMobile() {
-        isMobile = window.innerWidth <= 768;
-      }
-      
-      // Listener para cambios de tamaño de ventana
-      window.addEventListener('resize', checkIfMobile);
-      
-      submenuItems.forEach(item => {
-        const submenuId = item.getAttribute('data-submenu');
-        const submenu = document.getElementById(submenuId);
-        
-        if (!submenu) return;
-        
-        // Para desktop: hover behavior
-        if (!isMobile) {
-          item.addEventListener('mouseenter', () => {
-            submenu.classList.add('show');
-          });
-          
-          item.parentElement.addEventListener('mouseleave', () => {
-            submenu.classList.remove('show');
-          });
-        }
-        
-        // Para móvil: click/touch behavior con toggle
-        item.addEventListener('click', (e) => {
-          if (isMobile) {
-            e.preventDefault(); // Prevenir navegación en móvil
-            
-            // Cerrar otros submenús abiertos
-            submenuItems.forEach(otherItem => {
-              if (otherItem !== item) {
-                const otherSubmenuId = otherItem.getAttribute('data-submenu');
-                const otherSubmenu = document.getElementById(otherSubmenuId);
-                if (otherSubmenu) {
-                  otherSubmenu.classList.remove('show');
-                }
-              }
-            });
-            
-            // Toggle del submenú actual
-            submenu.classList.toggle('show');
-          }
-        });
-        
-        // Para móvil: cerrar submenú al tocar fuera
-        document.addEventListener('click', (e) => {
-          if (isMobile && !item.parentElement.contains(e.target)) {
-            submenu.classList.remove('show');
-          }
-        });
-      });
-      
-      // Manejar hamburger menu
-      const hamburgerBtn = document.getElementById('hamburger-btn');
-      const navList = document.getElementById('nav-list');
-      const navOverlay = document.getElementById('nav-overlay');
-      
-      if (hamburgerBtn && navList && navOverlay) {
-        hamburgerBtn.addEventListener('click', () => {
-          navList.classList.toggle('show');
-          navOverlay.classList.toggle('show');
-        });
-        
-        navOverlay.addEventListener('click', () => {
-          navList.classList.remove('show');
-          navOverlay.classList.remove('show');
-          // Cerrar todos los submenús cuando se cierre el menú principal
-          submenuItems.forEach(item => {
-            const submenuId = item.getAttribute('data-submenu');
-            const submenu = document.getElementById(submenuId);
-            if (submenu) {
-              submenu.classList.remove('show');
-            }
-          });
-        });
-      }
-    });ge" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}" />
     <link rel="shortcut icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}" />
     <link rel="apple-touch-icon" href="{% static 'img/favicon.svg' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}" />
-    <link rel="stylesheet" type="text/css" href="{% static 'css/responsive.css' %}" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet" />
     <meta charset="utf-8" />
     <title>AgrimIT</title>
-
-    <!-- JavaScript para navegación responsive -->
-    <script src="{% static 'js/navigation.js' %}" defer></script>
   </head>
   <body>
     <!-- COMIENZO NAVBAR -->
@@ -209,9 +115,119 @@
   </body>
 
   <script>
-    // JavaScript for the navbar submenu
+    // Navbar functionality - Complete solution
     document.addEventListener('DOMContentLoaded', function () {
-      const projectsLi = document.querySelector('.nav-dropdown > li')
+      const hamburgerBtn = document.getElementById('hamburger-btn')
+      const navList = document.getElementById('nav-list')
+      const navOverlay = document.getElementById('nav-overlay')
+      const toggleButtons = document.querySelectorAll('[data-submenu]')
+    
+      // Hamburger menu functionality
+      if (hamburgerBtn && navList && navOverlay) {
+        hamburgerBtn.addEventListener('click', function () {
+          const isActive = navList.classList.contains('active')
+    
+          if (isActive) {
+            // Cerrar menú
+            hamburgerBtn.classList.remove('active')
+            navList.classList.remove('active')
+            navOverlay.classList.remove('active')
+            document.body.style.overflow = ''
+          } else {
+            // Abrir menú
+            hamburgerBtn.classList.add('active')
+            navList.classList.add('active')
+            navOverlay.classList.add('active')
+            document.body.style.overflow = 'hidden'
+          }
+        })
+    
+        // Cerrar menú al hacer click en overlay
+        navOverlay.addEventListener('click', function () {
+          hamburgerBtn.classList.remove('active')
+          navList.classList.remove('active')
+          navOverlay.classList.remove('active')
+          document.body.style.overflow = ''
+        })
+    
+        // Cerrar menú al cambiar tamaño de ventana (si se cambia a desktop)
+        window.addEventListener('resize', function () {
+          if (window.innerWidth > 768) {
+            hamburgerBtn.classList.remove('active')
+            navList.classList.remove('active')
+            navOverlay.classList.remove('active')
+            document.body.style.overflow = ''
+    
+            // Cerrar todos los submenús en móvil
+            document.querySelectorAll('.navbar-submenu').forEach((submenu) => {
+              submenu.classList.remove('show')
+            })
+          }
+        })
+      }
+    
+      // Submenu functionality
+      toggleButtons.forEach((button) => {
+        const submenuId = button.getAttribute('data-submenu')
+        const submenu = document.getElementById(submenuId)
+    
+        if (submenu) {
+          // Mobile: Solo click to toggle
+          button.addEventListener('click', function (e) {
+            if (window.innerWidth <= 768) {
+              e.preventDefault()
+    
+              // Verificar si este submenú específico está abierto ANTES de hacer cambios
+              const isCurrentlyOpen = submenu.classList.contains('show')
+    
+              // Primero cerrar TODOS los submenús (incluyendo este)
+              document.querySelectorAll('.navbar-submenu').forEach((other) => {
+                other.classList.remove('show')
+              })
+    
+              // Si el submenú NO estaba abierto antes, ahora lo abrimos
+              if (!isCurrentlyOpen) {
+                submenu.classList.add('show')
+              }
+              // Si SÍ estaba abierto, se queda cerrado (toggle completo)
+            }
+          })
+    
+          // Desktop: Solo hover functionality
+          const parentLi = button.closest('li')
+          if (parentLi) {
+            let hoverTimeout
+    
+            parentLi.addEventListener('mouseenter', function () {
+              if (window.innerWidth > 768) {
+                clearTimeout(hoverTimeout)
+                submenu.classList.add('show')
+              }
+            })
+    
+            parentLi.addEventListener('mouseleave', function () {
+              if (window.innerWidth > 768) {
+                hoverTimeout = setTimeout(() => {
+                  submenu.classList.remove('show')
+                }, 150)
+              }
+            })
+    
+            // Cancelar el cierre por hover si el mouse está sobre el submenú
+            submenu.addEventListener('mouseenter', function () {
+              if (window.innerWidth > 768) {
+                clearTimeout(hoverTimeout)
+              }
+            })
+    
+            submenu.addEventListener('mouseleave', function () {
+              if (window.innerWidth > 768) {
+                submenu.classList.remove('show')
+              }
+            })
+          }
+        }
+      })
     })
     
     // JavaScript for search functionality
