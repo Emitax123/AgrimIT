@@ -30,9 +30,27 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 ALLOWED_HOSTS = ['*']  # Railway handles domain routing securely
 
 # Production database - Railway PostgreSQL
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is required in production")
+
+# Debug database connection (remove after fixing)
+print(f"🔍 DATABASE_URL: {DATABASE_URL[:50]}...")
+
 DATABASES = {
-    'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
+    'default': dj_database_url.config(
+        default=DATABASE_URL,
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
+
+# Print parsed database config for debugging
+print(f"🔍 Parsed DB Config:")
+print(f"  Host: {DATABASES['default'].get('HOST', 'NOT SET')}")
+print(f"  Port: {DATABASES['default'].get('PORT', 'NOT SET')}")
+print(f"  Name: {DATABASES['default'].get('NAME', 'NOT SET')}")
+print(f"  User: {DATABASES['default'].get('USER', 'NOT SET')}")
 # Security settings for production - adjusted for Railway
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
