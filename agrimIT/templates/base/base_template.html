@@ -172,28 +172,23 @@
         const submenu = document.getElementById(submenuId)
     
         if (submenu) {
-          // Mobile: Solo click to toggle
+          // Mobile: Click to toggle - simplificado
           button.addEventListener('click', function (e) {
             if (window.innerWidth <= 768) {
               e.preventDefault()
+              e.stopPropagation()
     
-              // Verificar si este submenú específico está abierto ANTES de hacer cambios
-              const isCurrentlyOpen = submenu.classList.contains('show')
-    
-              // Primero cerrar TODOS los submenús (incluyendo este)
+              // Cerrar todos los otros submenús
               document.querySelectorAll('.navbar-submenu').forEach((other) => {
-                other.classList.remove('show')
+                if (other !== submenu) {
+                  other.classList.remove('show')
+                }
               })
     
-              // Si el submenú NO estaba abierto antes, ahora lo abrimos
-              if (!isCurrentlyOpen) {
-                submenu.classList.add('show')
-              }
-              // Si SÍ estaba abierto, se queda cerrado (toggle completo)
+              // Toggle del actual
+              submenu.classList.toggle('show')
             }
-          })
-    
-          // Desktop: Solo hover functionality
+          }) // Desktop: Solo hover functionality
           const parentLi = button.closest('li')
           if (parentLi) {
             let hoverTimeout

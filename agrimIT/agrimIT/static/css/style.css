@@ -176,9 +176,9 @@
         padding-left: 10px;
     }
 
-    /* Submenu en móvil */
+    /* Submenu en móvil - Forzado para evitar conflictos */
     .navbar-submenu {
-        position: static;
+        position: static !important;
         display: none;
         box-shadow: none;
         background: #f8f9fa;
@@ -189,7 +189,17 @@
     }
 
     .navbar-submenu.show {
-        display: block;
+        display: block !important;
+    }
+
+    /* Forzar que hover NO interfiera en móvil */
+    .nav-dropdown li:hover .navbar-submenu {
+        display: none !important;
+    }
+
+    /* Solo permitir .show en móvil */
+    .nav-dropdown li .navbar-submenu.show {
+        display: block !important;
     }
 
     .navbar-submenu li {
@@ -446,8 +456,11 @@ nav {
     display: block;
 }
 
-.nav-dropdown li:hover .navbar-submenu {
-    display: block;
+/* Hover solo en desktop */
+@media (min-width: 769px) {
+    .nav-dropdown li:hover .navbar-submenu {
+        display: block;
+    }
 }
 
 .navbar-submenu li {
