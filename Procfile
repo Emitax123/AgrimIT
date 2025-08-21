@@ -1,2 +1,2 @@
-release: python manage.py migrate --settings=agrimIT.settings.prod && python manage.py collectstatic --noinput --settings=agrimIT.settings.prod
-web: gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 60 agrimIT.wsgi:application
+release: cd agrimIT && python manage.py migrate --settings=agrimIT.settings.prod && python manage.py collectstatic --noinput --settings=agrimIT.settings.prod
+web: cd agrimIT && gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 60 agrimIT.wsgi:application
