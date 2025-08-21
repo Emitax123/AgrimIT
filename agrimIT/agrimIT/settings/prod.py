@@ -31,11 +31,7 @@ ALLOWED_HOSTS = ['*']  # Railway handles domain routing securely
 
 # Production database - Railway PostgreSQL
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
+    'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
 }
 # Security settings for production - adjusted for Railway
 SECURE_BROWSER_XSS_FILTER = True
