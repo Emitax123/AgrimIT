@@ -6,7 +6,33 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'agrimIT.settings.dev')
+    # Load .env file first (if not in Railway)
+    if not os.environ.get('RAILWAY_ENVIRONMENT'):
+        from pathlib import Path
+        env_file = Path(__file__).resolve().parent.parent / '.env'
+        if env_file.exists():
+            print(f"Cargando archivo .env desde: {env_file}")
+            with open(env_file, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        key, value = line.split('=', 1)
+                        key = key.strip()
+                        value = value.strip().strip('"\'')
+                        # FORZAR el uso del .env (remover la condición)
+                        os.environ[key] = value
+                        if key == 'DJANGO_SETTINGS_MODULE':
+                            print(f"Estableciendo DJANGO_SETTINGS_MODULE = {value}")
+    
+    # Now decide which settings to use
+    if os.environ.get('RAILWAY_ENVIRONMENT'):
+        # En Railway, siempre usar producción
+        os.environ['DJANGO_SETTINGS_MODULE'] = 'agrimIT.settings.prod'
+    else:
+        # En local, usar el valor del .env o dev como fallback
+        settings_module = os.environ.get('DJANGO_SETTINGS_MODULE', 'agrimIT.settings.dev')
+        os.environ['DJANGO_SETTINGS_MODULE'] = settings_module
+        print(f"Usando configuración: {settings_module}")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

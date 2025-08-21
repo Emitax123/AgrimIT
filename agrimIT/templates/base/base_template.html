@@ -2,7 +2,98 @@
   <head>
     {% load static %}
     <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="X-UA-Compatible" content="  <scrip            <li>
+              <a href="{% url 'projects' %}" data-submenu="projects-submenu">Proyectos</a>
+              <ul class="navbar-submenu" id="projects-submenu">
+                <li>
+                  <a href="{% url 'projects' %}">Proyectos</a>
+                </li>
+                <li>
+                  <a href="{% url 'projectslisttype' type=1 %}">Mensuras</a>
+                </li>  // JavaScript for the navbar submenu
+    document.addEventListener('DOMContentLoaded', function () {
+      const submenuItems = document.querySelectorAll('[data-submenu]');
+      let isMobile = window.innerWidth <= 768;
+      
+      // Detectar si es dispositivo móvil
+      function checkIfMobile() {
+        isMobile = window.innerWidth <= 768;
+      }
+      
+      // Listener para cambios de tamaño de ventana
+      window.addEventListener('resize', checkIfMobile);
+      
+      submenuItems.forEach(item => {
+        const submenuId = item.getAttribute('data-submenu');
+        const submenu = document.getElementById(submenuId);
+        
+        if (!submenu) return;
+        
+        // Para desktop: hover behavior
+        if (!isMobile) {
+          item.addEventListener('mouseenter', () => {
+            submenu.classList.add('show');
+          });
+          
+          item.parentElement.addEventListener('mouseleave', () => {
+            submenu.classList.remove('show');
+          });
+        }
+        
+        // Para móvil: click/touch behavior con toggle
+        item.addEventListener('click', (e) => {
+          if (isMobile) {
+            e.preventDefault(); // Prevenir navegación en móvil
+            
+            // Cerrar otros submenús abiertos
+            submenuItems.forEach(otherItem => {
+              if (otherItem !== item) {
+                const otherSubmenuId = otherItem.getAttribute('data-submenu');
+                const otherSubmenu = document.getElementById(otherSubmenuId);
+                if (otherSubmenu) {
+                  otherSubmenu.classList.remove('show');
+                }
+              }
+            });
+            
+            // Toggle del submenú actual
+            submenu.classList.toggle('show');
+          }
+        });
+        
+        // Para móvil: cerrar submenú al tocar fuera
+        document.addEventListener('click', (e) => {
+          if (isMobile && !item.parentElement.contains(e.target)) {
+            submenu.classList.remove('show');
+          }
+        });
+      });
+      
+      // Manejar hamburger menu
+      const hamburgerBtn = document.getElementById('hamburger-btn');
+      const navList = document.getElementById('nav-list');
+      const navOverlay = document.getElementById('nav-overlay');
+      
+      if (hamburgerBtn && navList && navOverlay) {
+        hamburgerBtn.addEventListener('click', () => {
+          navList.classList.toggle('show');
+          navOverlay.classList.toggle('show');
+        });
+        
+        navOverlay.addEventListener('click', () => {
+          navList.classList.remove('show');
+          navOverlay.classList.remove('show');
+          // Cerrar todos los submenús cuando se cierre el menú principal
+          submenuItems.forEach(item => {
+            const submenuId = item.getAttribute('data-submenu');
+            const submenu = document.getElementById(submenuId);
+            if (submenu) {
+              submenu.classList.remove('show');
+            }
+          });
+        });
+      }
+    });ge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}" />
     <link rel="shortcut icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}" />
@@ -45,6 +136,9 @@
               <a href="{% url 'projects' %}" data-submenu="projects-submenu">Proyectos</a>
               <ul class="navbar-submenu" id="projects-submenu">
                 <li>
+                  <a href="{% url 'projects' type=1 %}">Todos</a>
+                </li>
+                <li>
                   <a href="{% url 'projectslisttype' type=1 %}">Mensuras</a>
                 </li>
                 <li>
@@ -64,6 +158,9 @@
             <li>
               <a href="{% url 'balance' %}" data-submenu="balance-submenu">Balances</a>
               <ul class="navbar-submenu" id="balance-submenu">
+                <li>
+                  <a href="{% url 'balance' %}">Resumen</a>
+                </li>
                 <li>
                   <a href="{% url 'accounting_display' %}">Cobranzas</a>
                 </li>
