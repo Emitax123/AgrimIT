@@ -353,7 +353,7 @@ def full_mod_view(request: HttpRequest, pk: int) -> HttpResponse:
 @login_required
 def history_view(request: HttpRequest) -> HttpResponse:
     """ View the history of events for the current user """
-    events = Event.objects.order_by('-time')[:100]
+    events = Event.objects.filter(user=request.user).order_by('-time')[:100]
     grouped_objects_def = defaultdict(lambda: defaultdict(list))
     for e in events:
         
