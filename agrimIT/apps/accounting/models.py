@@ -90,7 +90,7 @@ class MonthlyFinancialSummary(models.Model):
             5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
             9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
         }
-        return f"{month_names.get(self.month, self.month)} - {self.year}"
+        return f"{month_names.get(self.month, self.month)} - {self.year} - {self.user.username}"
     
     @property
     def net_worth(self):
