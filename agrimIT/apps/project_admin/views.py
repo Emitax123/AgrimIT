@@ -73,6 +73,7 @@ def index(request):
     net_income = summary.net_worth if summary else Dec("0.00")
     return render (request, 'base/Index.html', {'projects': projects, 'clients_count': clients_count, 'project_count': project_count, 'net_income': net_income})
 
+#Eliminación de2 proyecto
 @login_required
 @transaction.atomic
 def delete_view(request: HttpRequest, pk: int) -> HttpResponse:
@@ -354,6 +355,8 @@ def full_mod_view(request: HttpRequest, pk: int) -> HttpResponse:
 def history_view(request: HttpRequest) -> HttpResponse:
     """ View the history of events for the current user """
     events = Event.objects.filter(user=request.user).order_by('-time')[:100]
+    if not events:
+        return render (request, 'project_admin/history_template.html', {'no_events':True})
     grouped_objects_def = defaultdict(lambda: defaultdict(list))
     for e in events:
         

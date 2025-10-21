@@ -14,7 +14,7 @@
     </form>
 </div>
 {% if non_exist %}
-    <p>No existen registros en la fecha indicada</p>
+    <p class="error-message">No existen registros del mes {{ month }}/{{ year }}</p>
 {% else %}
 <div class="board-container ">
     <div class="board" >
