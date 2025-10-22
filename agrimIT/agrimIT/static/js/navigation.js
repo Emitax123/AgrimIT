@@ -18,11 +18,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const navOverlay = document.getElementById('nav-overlay');
     const body = document.body;
     
-    // Debug: Verificar que los elementos existen
-    console.log('Hamburger button:', hamburgerBtn);
-    console.log('Nav list:', navList);
-    console.log('Nav overlay:', navOverlay);
-    
     // ===========================================
     // FUNCIONES PRINCIPALES
     // ===========================================
@@ -31,9 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
      * Alternar estado del menú móvil
      */
     function toggleMenu() {
-        console.log('🔄 Toggle menu called');
         const isActive = navList.classList.contains('active');
-        console.log('Current active state:', isActive);
         
         if (isActive) {
             closeMenu();
@@ -46,7 +39,6 @@ document.addEventListener('DOMContentLoaded', function() {
      * Abrir menú móvil
      */
     function openMenu() {
-        console.log('📱 Opening mobile menu');
         hamburgerBtn.classList.add('active');
         navList.classList.add('active');
         navOverlay.classList.add('active');
@@ -114,9 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Botón hamburger
     if (hamburgerBtn) {
-        console.log('✅ Adding click listener to hamburger button');
         hamburgerBtn.addEventListener('click', function(e) {
-            console.log('🍔 Hamburger clicked!');
             e.stopPropagation();
             toggleMenu();
         });
@@ -277,8 +267,9 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // Log de inicialización (solo en desarrollo)
+    // Navigation system initialized
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        console.log('🍔 AgrimIT Responsive Navigation initialized');
+        // Debug mode: navigation initialized
     }
 });
 
