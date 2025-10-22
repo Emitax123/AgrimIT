@@ -9,9 +9,6 @@ Fecha: 2025
 */
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Debug: Verificar que el script se está cargando
-    console.log('🍔 Navigation script loaded');
-    
     // ===========================================
     // VARIABLES DEL MENÚ
     // ===========================================

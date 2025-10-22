@@ -34,9 +34,6 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is required in production")
 
-# Debug database connection (remove after fixing)
-print(f"🔍 DATABASE_URL: {DATABASE_URL[:50]}...")
-
 DATABASES = {
     'default': dj_database_url.config(
         default=DATABASE_URL,
@@ -45,12 +42,6 @@ DATABASES = {
     )
 }
 
-# Print parsed database config for debugging
-print(f"🔍 Parsed DB Config:")
-print(f"  Host: {DATABASES['default'].get('HOST', 'NOT SET')}")
-print(f"  Port: {DATABASES['default'].get('PORT', 'NOT SET')}")
-print(f"  Name: {DATABASES['default'].get('NAME', 'NOT SET')}")
-print(f"  User: {DATABASES['default'].get('USER', 'NOT SET')}")
 # Security settings for production - adjusted for Railway
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -82,7 +73,7 @@ CSRF_COOKIE_HTTPONLY = True
 #EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 #DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL')
 
-# Production logging - Railway compatible
+# Production logging - Railway compatible with structured logging
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -91,14 +82,23 @@ LOGGING = {
             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
             'style': '{',
         },
+        'json_formatter': {
+            'format': '{"level": "{levelname}", "time": "{asctime}", "module": "{module}", "process": {process}, "thread": {thread}, "message": "{message}"}',
+            'style': '{',
+        },
         'simple': {
-            'format': '{levelname} {message}',
+            'format': '{levelname} {asctime} {message}',
             'style': '{',
         },
     },
     'handlers': {
         'console': {
             'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'json_formatter',
+        },
+        'error_console': {
+            'level': 'ERROR',
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
@@ -109,6 +109,31 @@ LOGGING = {
     },
     'loggers': {
         'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'agrimIT': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'apps.project_admin': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'apps.accounting': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'apps.clients': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'apps.users': {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,

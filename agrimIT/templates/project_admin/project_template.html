@@ -303,38 +303,6 @@
  
 
   <script>
-    
-    /*var buttonArrow = document.querySelectorAll('button.arrow-button');
-    
-    buttonArrow.forEach(function (button){
-      var flag = true;
-      button.addEventListener('click', function(){
-        var div = button.nextElementSibling; 
-        var parentDiv = button.parentNode;
-        var divChilds = div.querySelectorAll('*');
-        if (flag){
-          div.style.transition = 'all 1s ease-in-out';
-          div.style.opacity = '1';
-          parentDiv.classList.toggle('marginb100');
-          divChilds.forEach(function(child){
-            console.log(child);
-            child.style.display = 'flex';
-          });
-          flag = false;
-        } else {
-          div.style.display = 'flex';
-          div.style.transition = 'all 0.5s ';
-          div.style.opacity = '0';
-          divChilds.forEach(function(child){
-            console.log(child);
-            child.style.display = 'none';
-          });
-          parentDiv.classList.remove('marginb100');
-          flag = true;
-        }
-      });
-    });*/
-
     // File upload functionality
     const uploadBtn = document.getElementById('upload-btn');
     const fileForm = document.getElementById('file-form');
@@ -342,19 +310,10 @@
     const fileLabel = document.getElementById('file-label');
     const fileNameSpan = document.getElementById('file-name');
 
-    console.log('File upload elements:', {
-      uploadBtn: uploadBtn,
-      fileForm: fileForm,
-      fileInput: fileInput,
-      fileLabel: fileLabel,
-      fileNameSpan: fileNameSpan
-    });
-
     // Show file form when upload button is clicked
     if (uploadBtn && fileForm) {
       uploadBtn.addEventListener('click', function(event) {
         event.preventDefault();
-        console.log('Upload button clicked');
         uploadBtn.style.display = 'none';
         fileForm.style.display = 'flex';
         fileForm.style.flexDirection = 'column';
@@ -370,7 +329,6 @@
     if (fileLabel && fileInput) {
       fileLabel.addEventListener('click', function(event) {
         event.preventDefault();
-        console.log('File label clicked');
         fileInput.click();
       });
     }
@@ -378,14 +336,12 @@
     // Display selected file name
     if (fileInput && fileNameSpan) {
       fileInput.addEventListener('change', function() {
-        console.log('File input changed:', fileInput.files);
         if (fileInput.files.length > 0) {
           const fileName = fileInput.files[0].name;
           const fileSize = (fileInput.files[0].size / 1024 / 1024).toFixed(2); // Size in MB
           fileNameSpan.textContent = `${fileName} (${fileSize} MB)`;
           fileNameSpan.style.color = '#27ae60';
           fileNameSpan.style.fontWeight = 'bold';
-          console.log('File selected:', fileName);
         } else {
           fileNameSpan.textContent = "Ningún archivo seleccionado";
           fileNameSpan.style.color = '#666';
@@ -397,11 +353,9 @@
     // Form submission validation
     if (fileForm) {
       fileForm.addEventListener('submit', function(event) {
-        console.log('Form submission attempted');
         if (!fileInput.files.length) {
           event.preventDefault();
           alert('Por favor seleccione un archivo antes de guardar.');
-          console.log('Form submission prevented - no file selected');
           return false;
         }
         
@@ -409,12 +363,9 @@
         const maxSize = 10 * 1024 * 1024; // 10MB in bytes
         if (fileInput.files[0].size > maxSize) {
           event.preventDefault();
-          alert('El archivo es demasiado grande. El tamaño máximo permitido es 10MB.');
-          console.log('Form submission prevented - file too large');
+          alert('El archivo es demasiado grande. Tamaño máximo: 10MB');
           return false;
         }
-        
-        console.log('Form submission allowed');
       });
     }
 
@@ -463,7 +414,6 @@
       if (form && form.tagName === 'FORM') {
         form.style.display = 'flex';
         modifyClientButton.style.display = 'none'
-        console.log(form.querySelector('input').placeholder);
         const inputField = document.getElementById('input-client-name');
         //change inputField placeholder to the current value of the span with class client-span1
 

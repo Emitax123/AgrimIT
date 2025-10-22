@@ -18,6 +18,7 @@ urlpatterns = [
   path('project/modify/<int:pk>', views.full_mod_view, name='fullmodification'),
   path('history', views.history_view, name='history'),
   path('search/', views.search, name='search'),
+  path('api/log-error/', views.log_frontend_error, name='log_frontend_error'),
   path('generate-test-data/', views.generate_test_data, name='generate_test_data'), 
   path('generate-monthly-summaries/', views.generate_monthly_summaries, name='generate_monthly_summaries'),
 ]

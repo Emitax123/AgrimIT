@@ -13,7 +13,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet" />
     <meta charset="utf-8" />
+    <meta name="csrf-token" content="{{ csrf_token }}" />
     <title>AgrimIT</title>
+
+    <!-- Frontend Logger -->
+    <script src="{% static 'js/logger.js' %}"></script>
   </head>
   <body>
     <!-- COMIENZO NAVBAR -->

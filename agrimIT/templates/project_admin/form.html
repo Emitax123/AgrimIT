@@ -53,7 +53,7 @@
                 </div>
               </div>
               <!-- Datos Titular dentro de content 2 -->
-              <!--                                                                         
+              <!--                                                                          
               <div id="titular-data" style="margin: 20px;" class="fields">
                 <h4>Datos titular</h4>
                 <div style="margin-top:10px; height: 80px;" class="input-field">
@@ -68,7 +68,7 @@
                 <label for="{{ form.titular_phone.id_for_label }}">{{ form.titular_phone.label }}</label>
                 {{ form.titular_phone }}
                 </div>
-              </div>                                                                         -->
+              </div>                                                                          -->
             </div>
           </div> <!-- End content 2 -->
 
@@ -276,7 +276,9 @@
                 }
               }
             })
-            .catch((error) => console.error('Error:', error))
+            .catch((error) => {
+              // Error handling without console logging
+            })
         }
       }
     })
@@ -320,15 +322,6 @@
         const hasClientName = clientNameInput.value.trim() !== ''
         const hasClientPhone = clientPhoneInput.value.trim() !== ''
     
-        console.log('Validation check:', {
-          hasSelectedClient,
-          hasClientName,
-          hasClientPhone,
-          clientListValue: `"${clientList.value}"`,
-          clientNameValue: `"${clientNameInput.value}"`,
-          clientPhoneValue: `"${clientPhoneInput.value}"`
-        })
-    
         // Clear previous errors
         removeError(clientList)
         removeError(clientNameInput)
@@ -336,7 +329,6 @@
     
         // Case 1: Client is selected from dropdown
         if (hasSelectedClient) {
-          console.log('Client selected from dropdown - validation passed')
           return true
         }
     
@@ -344,52 +336,39 @@
         if (!hasSelectedClient) {
           if (!hasClientName && !hasClientPhone) {
             // Neither client selected nor manual data entered
-            console.log('No client data provided - validation failed')
             showError(clientList, 'Debe seleccionar un cliente o ingresar los datos manualmente')
             return false
           }
     
           if (!hasClientName) {
-            console.log('Client name missing - validation failed')
             showError(clientNameInput, 'El nombre es requerido')
             return false
           }
     
           if (!hasClientPhone) {
-            console.log('Client phone missing - validation failed')
             showError(clientPhoneInput, 'El teléfono es requerido')
             return false
           }
         }
     
-        console.log('All validations passed')
         return true
-      }
-    
-      // Function to validate project type
+      } // Function to validate project type
       function validateProjectType() {
         const projectTypeSelect = document.getElementById('id_type')
         if (!projectTypeSelect) {
-          console.log('Project type selector not found')
           return true
         }
     
         const hasProjectType = projectTypeSelect.value.trim() !== ''
-        console.log('Project type validation:', {
-          hasProjectType,
-          projectTypeValue: `"${projectTypeSelect.value}"`
-        })
     
         // Clear previous errors
         removeError(projectTypeSelect)
     
         if (!hasProjectType) {
-          console.log('Project type missing - validation failed')
           showError(projectTypeSelect, 'Debe seleccionar un tipo de proyecto')
           return false
         }
     
-        console.log('Project type validation passed')
         return true
       }
     
@@ -398,28 +377,15 @@
         const clientValid = validateClientData()
         const projectTypeValid = validateProjectType()
     
-        console.log('Form validation results:', {
-          clientValid,
-          projectTypeValid,
-          overallValid: clientValid && projectTypeValid
-        })
-    
         return clientValid && projectTypeValid
       }
       // Form submission validation
       form.addEventListener(
         'submit',
         function (event) {
-          console.log('Form submit event triggered')
-          console.log('Client list value:', clientList.value)
-          console.log('Client name value:', clientNameInput.value)
-          console.log('Client phone value:', clientPhoneInput.value)
-    
           const isValid = validateForm()
-          console.log('Overall validation result:', isValid)
     
           if (!isValid) {
-            console.log('Validation failed - preventing form submission')
             event.preventDefault()
             event.stopPropagation()
             event.stopImmediatePropagation()
@@ -436,20 +402,15 @@
             return false
           }
     
-          console.log('Validation passed - allowing form submission')
           return true
         },
         true
-      ) // Use capture phase to ensure this runs first
-    
-      // Additional backup prevention on button click
+      ) // Use capture phase to ensure this runs first      // Additional backup prevention on button click
       if (submitButton) {
         submitButton.addEventListener(
           'click',
           function (event) {
-            console.log('Submit button clicked')
             if (!validateForm()) {
-              console.log('Button click validation failed')
               event.preventDefault()
               event.stopPropagation()
               event.stopImmediatePropagation()

@@ -155,8 +155,7 @@ def create_for_client(request: HttpRequest, pk: int) -> HttpResponse:
             for field, error_list in errors.items():
                 for error in error_list:
                     # Access the error message for each field
-                    error_message = error.message
-                    print(f"Error for field '{field}': {error_message}")    
+                    error_message = error.message    
     form = ProjectForm()
     return render (request, 'clients/project_for_client.html', {'form':form})
 

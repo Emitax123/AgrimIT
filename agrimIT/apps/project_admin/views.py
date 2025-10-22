@@ -7,6 +7,9 @@ from django.http import FileResponse, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.core.paginator import Paginator, PageNotAnInteger
 from django.db import DatabaseError, transaction
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+import json
 import logging
 logger = logging.getLogger(__name__)
 from django.conf import settings
@@ -213,8 +216,18 @@ def project_view(request: HttpRequest, pk: int) -> HttpResponse:
 def create_view(request: HttpRequest) -> HttpResponse:
     """ Create a new project """
     if request.method == 'POST':
+        logger.info("Project creation started", extra={
+            'user_id': request.user.id,
+            'form_data_keys': list(request.POST.keys())
+        })
+        
         form = ProjectForm(request.POST)    
         if form.is_valid():
+            logger.info("Project form validation successful", extra={
+                'user_id': request.user.id,
+                'project_type': form.cleaned_data.get('type')
+            })
+            
             with transaction.atomic():
                 form_instance = form.save(commit=False)
                 # Associate the current user with the project
@@ -224,6 +237,10 @@ def create_view(request: HttpRequest) -> HttpResponse:
                 client_pk = request.POST.get('client-pk') or request.POST.get('client-list')
                 if client_pk:
                     client = Client.objects.get(pk=client_pk)
+                    logger.info("Existing client selected", extra={
+                        'user_id': request.user.id,
+                        'client_id': client_pk
+                    })
                 else:
                     client_name = request.POST.get('client-name')
                     client = Client.objects.filter(user=request.user, name=client_name).first()
@@ -234,11 +251,25 @@ def create_view(request: HttpRequest) -> HttpResponse:
                             user=request.user,
                             email=request.POST.get('client-email'),
                         )
+                        logger.info("New client created", extra={
+                            'user_id': request.user.id,
+                            'client_name': client_name,
+                            'client_id': client.id
+                        })
+                        
                 form_instance.client = client
                 form_instance.save()
                 #Se guarda la instancia
                 msg = "Se ha creado un nuevo proyecto"   
                 pk = form_instance.pk
+                
+                logger.info("Project created successfully", extra={
+                    'user_id': request.user.id,
+                    'project_id': pk,
+                    'project_type': form_instance.type,
+                    'client_name': client.name
+                })
+                
                 save_in_history(pk, 'newp', msg, request.user)
                 create_account(pk)
                 if 'save_and_backhome' in request.POST:
@@ -246,12 +277,23 @@ def create_view(request: HttpRequest) -> HttpResponse:
                 
         else:
             # Form data is not valid, handle the errors
+            logger.warning("Project form validation failed", extra={
+                'user_id': request.user.id,
+                'form_errors': dict(form.errors),
+                'form_data': dict(request.POST)
+            })
+            
             errors = form.errors.as_data()
             for field, error_list in errors.items():
                 for error in error_list:
                     # Access the error message for each field
                     error_message = error.message
-                    print(f"Error for field '{field}': {error_message}")    
+                    
+    logger.info("Project creation form requested", extra={
+        'user_id': request.user.id,
+        'method': request.method
+    })
+                    
     form = ProjectForm()
     clients = Client.objects.all().filter(flag=True).order_by('name')
     return render (request, 'project_admin/form.html', {'form':form, 'clients':clients})
@@ -435,12 +477,27 @@ def download_file(request: HttpRequest, pk: int) -> HttpResponse:
 @transaction.atomic
 def upload_files(request: HttpRequest, pk: int) -> HttpResponse:
     if request.method == 'POST':
+        logger.info("File upload started", extra={
+            'user_id': request.user.id,
+            'project_id': pk
+        })
+        
         form = FileFieldForm(request.POST, request.FILES)
         if form.is_valid():
             try:
                 file = request.FILES['file_field']
                 timestamp = int(time.time())
                 file_name = f"{pk}_{timestamp}_{file.name}"
+                file_size = file.size
+                
+                logger.info("File upload processing", extra={
+                    'user_id': request.user.id,
+                    'project_id': pk,
+                    'original_filename': file.name,
+                    'file_size': file_size,
+                    'processed_filename': file_name
+                })
+                
                 bucket_name = settings.SUPABASE_BUCKET
                 file.seek(0)  # Reset file pointer to beginning
                 file_content = file.read()  # Read as bytes
@@ -448,8 +505,27 @@ def upload_files(request: HttpRequest, pk: int) -> HttpResponse:
                 file_url = supabase.storage.from_(bucket_name).get_public_url(file_name)
                 ProjectFiles.objects.create(project=Project.objects.get(pk=pk), name=file_name, url=file_url)
                 save_in_history(pk, 'file_add', f"Se subió el archivo {file_name}", request.user)
+                
+                logger.info("File upload successful", extra={
+                    'user_id': request.user.id,
+                    'project_id': pk,
+                    'filename': file_name,
+                    'file_size': file_size
+                })
+                
             except Exception as e:
-                logger.error(f"Error uploading file for project {pk}: {str(e)}")
+                logger.error("File upload failed", extra={
+                    'user_id': request.user.id,
+                    'project_id': pk,
+                    'error': str(e),
+                    'filename': file.name if 'file' in locals() else 'unknown'
+                })
+        else:
+            logger.warning("File upload form validation failed", extra={
+                'user_id': request.user.id,
+                'project_id': pk,
+                'form_errors': dict(form.errors)
+            })
                 
     prev = request.META.get('HTTP_REFERER')
     return redirect(prev)
@@ -732,3 +808,30 @@ def generate_monthly_summaries(request: HttpRequest) -> HttpResponse:
     except Exception as e:
         logger.error(f"Error generating monthly summaries: {str(e)}")
         return JsonResponse({'error': f'Error generating monthly summaries: {str(e)}'}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def log_frontend_error(request: HttpRequest) -> JsonResponse:
+    """
+    Log frontend JavaScript errors to Django logging system.
+    This replaces console.log for critical error tracking.
+    """
+    try:
+        data = json.loads(request.body)
+        
+        # Log the frontend error with context
+        logger.error("Frontend JavaScript error", extra={
+            'user_id': request.user.id if request.user.is_authenticated else 'anonymous',
+            'error_message': data.get('message', 'No message'),
+            'filename': data.get('filename', 'unknown'),
+            'line_number': data.get('lineno', 'unknown'),
+            'url': data.get('url', request.META.get('HTTP_REFERER', 'unknown')),
+            'user_agent': request.META.get('HTTP_USER_AGENT', 'unknown'),
+            'timestamp': timezone.now().isoformat()
+        })
+        
+        return JsonResponse({'status': 'logged'})
+    except Exception as e:
+        logger.error(f"Error logging frontend error: {str(e)}")
+        return JsonResponse({'error': 'Failed to log error'}, status=500)

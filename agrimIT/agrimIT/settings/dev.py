@@ -42,10 +42,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Development logging
-# ...existing code...
-
-# Production logging - more secure and efficient
+# Development logging with structured format
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -56,6 +53,10 @@ LOGGING = {
         },
         'simple': {
             'format': '{levelname} {asctime} {message}',
+            'style': '{',
+        },
+        'json_dev': {
+            'format': '{"level": "{levelname}", "time": "{asctime}", "module": "{module}", "message": "{message}"}',
             'style': '{',
         },
     },
