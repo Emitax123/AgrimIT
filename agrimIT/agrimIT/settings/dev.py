@@ -56,7 +56,7 @@ LOGGING = {
             'style': '{',
         },
         'json_dev': {
-            'format': '{"level": "{levelname}", "time": "{asctime}", "module": "{module}", "message": "{message}"}',
+            'format': 'LEVEL={levelname} TIME={asctime} MODULE={module} MESSAGE={message}',
             'style': '{',
         },
     },

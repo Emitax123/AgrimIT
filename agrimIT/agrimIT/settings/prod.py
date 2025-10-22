@@ -83,7 +83,7 @@ LOGGING = {
             'style': '{',
         },
         'json_formatter': {
-            'format': '{"level": "{levelname}", "time": "{asctime}", "module": "{module}", "process": {process}, "thread": {thread}, "message": "{message}"}',
+            'format': 'LEVEL={levelname} TIME={asctime} MODULE={module} PROCESS={process} THREAD={thread} MESSAGE={message}',
             'style': '{',
         },
         'simple': {
@@ -95,7 +95,7 @@ LOGGING = {
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'formatter': 'json_formatter',
+            'formatter': 'verbose',
         },
         'error_console': {
             'level': 'ERROR',
