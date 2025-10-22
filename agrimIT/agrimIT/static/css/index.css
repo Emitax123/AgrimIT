@@ -103,13 +103,15 @@ div.project-list li {
 div.project-list li a {
     display: flex;
     justify-content: space-between;
-    transition: color ease-in-out 0.2s, font-weight ease-in-out 0.3s, font-size ease-in-out 0.3s;
+    transition: color ease-in-out 0.2s, font-weight ease-in-out 0.3s, transform ease-in-out 0.3s;
+    min-height: 1.5rem;
+    /* Altura fija para evitar movimiento */
 }
 
 div.project-list li a:hover {
     color: #2d72ba;
     font-weight: bold;
-    font-size: 1.02rem;
+    transform: scale(1.01);
 }
 
 div.project-list li.header {
@@ -122,6 +124,10 @@ div.project-list li.header {
     margin-bottom: 0.5em;
 
 
+}
+
+div.project-list li.project {
+    border-bottom: 1px solid #74737380;
 }
 
 div.project-list li span {

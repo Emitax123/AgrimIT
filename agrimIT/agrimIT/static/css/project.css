@@ -7,15 +7,23 @@ div.fila {
 
 }
 
+div.contact-form {
+    border-radius: 5px;
+}
+
 div.contact-form input {
     padding: 0.5em;
 }
 
 div.contact-form form {
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    padding: 0.5em;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 0.2em;
+    gap: 0.5em
+}
+
+div.contact-form form div.inputs {
+    display: flex;
+    flex-flow: column;
+    gap: 0.5em
 }
 
 div.contact-form button {
@@ -36,7 +44,7 @@ div.project-title div {
     flex-flow: wrap;
     align-items: baseline;
     margin-bottom: 1rem;
-    width: 100%;
+
     gap: 1em;
 }
 
@@ -98,7 +106,17 @@ div.project-div div.fix-show-box {
     display: flex;
     border-bottom: 2px solid #3498db;
 
+}
 
+div.client-box div.btns-cont {
+    display: flex;
+    flex-flow: column;
+    margin-top: 0.5em;
+    gap: 0.5em;
+}
+
+div.client-box div.btns-cont form.client-form {
+    width: 100%;
 }
 
 div.fix-show-box div.fix-info-box {
@@ -169,7 +187,7 @@ div.project-div div.delete-container form {
     display: flex;
     flex-flow: row;
     justify-content: end;
-    width: 100%;
+
 }
 
 div.delete-container {
@@ -381,9 +399,7 @@ div.contact-box div {
         gap: 0.5rem;
     }
 
-    div.contact-form {
-        padding: 0 0.5rem;
-    }
+
 
     div.contact-form form {
         padding: 1rem;
@@ -484,11 +500,12 @@ div.contact-box div {
     }
 
     div.project-div div.delete-container {
-        margin-top: 1rem;
+        flex-flow: row;
+        justify-content: end;
     }
 
     div.project-div div.delete-container form {
-        justify-content: center;
+        width: auto;
     }
 
     div.file-box {
@@ -564,6 +581,22 @@ div.contact-box div {
         padding: 0.7rem;
         font-size: 0.85rem;
         margin-top: 0.6rem;
+
+    }
+
+    div.mini-div form {
+
+        flex-flow: column;
+        width: 50%;
+    }
+
+    div.mini-div form select {
+        padding: 0.6em;
+        font-size: 0.9rem;
+    }
+
+    div.mini-div .toggle-btn {
+        width: 50%;
     }
 
     div.fix-info-box div.client-box {
@@ -675,10 +708,7 @@ div.contact-box div {
         gap: 0.4rem;
     }
 
-    span.slide-text {
-        font-size: 1rem;
-        margin-bottom: 0.4rem;
-    }
+    span.slide-text {}
 
     div.end-btn-container {
         margin-top: 1rem;

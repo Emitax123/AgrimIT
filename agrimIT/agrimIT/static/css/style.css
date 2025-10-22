@@ -566,8 +566,8 @@ nav {
     display: flex;
     justify-content: center;
     width: 100%;
+    height: auto;
     min-height: 100vh;
-
     /* 1200px in rem */
     padding: 2rem 2rem 2rem 2rem;
 
@@ -579,7 +579,7 @@ nav {
     justify-content: center;
 
     flex-flow: column;
-    height: 100%;
+    height: fit-content;
     background-color: white;
     padding: 2rem;
     border-radius: 8px;
@@ -667,7 +667,7 @@ nav {
 
     .fila {
         padding: 1em;
-        margin: 1em 0;
+
     }
 
     .section {
@@ -708,8 +708,7 @@ nav {
     .btn,
     button {
         font-size: 1.1rem;
-        padding: 1rem;
-        margin-bottom: 1rem;
+
     }
 
     /* Cards genericas */

@@ -13,7 +13,11 @@
 
     <div class="project-div">
       <!-- Delete button -->
-      <div class="delete-container">
+      
+      <div class="project-title">
+
+        <div><span class="title">{{ project.type|default:"N/A" }}</span><span class="date">{{ project.created|date:"d/m/Y"|default:"N/A" }}</span><span class="id">ID:{{ project.pk|default:"N/A" }} </span>
+        <div class="delete-container">
         {% if project.pk %}
         <form method="post" action="{% url 'delete' pk=project.pk %}">
           {% csrf_token %}
@@ -27,13 +31,12 @@
         </button>
         {% endif %}
       </div>
-      <div class="project-title">
-
-        <div><span class="title">{{ project.type|default:"N/A" }}</span><span class="date">{{ project.created|date:"d/m/Y"|default:"N/A" }}</span><span class="id">ID:{{ project.pk|default:"N/A" }} </span></div>
+        </div>
 
         {% if project.type == "Mensura" %}
           <h3>{{ project.mens|default:"" }}</h3>
         {% endif %}
+        
       </div>
       
       
@@ -53,7 +56,7 @@
                 <h3 >Cliente</h3>
               <span>Nombre: {{project.client.name}} </span>
               <span>Telefono: {{project.client.phone}} </span>
-              <div >
+              <div class="btns-cont" >
               {% if not project.titular_name %}
               
                 <div >
@@ -70,7 +73,7 @@
                 <button class="toggle-btn active client-btn">Agregar Contacto</button>
                 <form  method="post" action="{% url 'modification' pk=project.pk %}">
                   {% csrf_token %}
-                  <div >
+                  <div class="inputs" >
                     <input class="contact-input" required placeholder="Nombre de contacto" type="text" name="contact_name" />
                     <input class="contact-input" required placeholder="Teléfono de contacto" type="tel" name="contact_phone" />
                   </div>
@@ -432,12 +435,14 @@
     })
     // Handle client-btn buttons
     const clientButtons = document.querySelectorAll('.client-btn');
+    const contactDiv = document.querySelector('.contact-form');
     clientButtons.forEach(button => {
       button.addEventListener('click', function(event) {
         event.preventDefault();
         const form = this.nextElementSibling;
         if (form && form.tagName === 'FORM') {
           form.style.display = 'flex';
+          contactDiv.style.backgroundColor = '#f9f9f9';
           button.style.display = 'none';
           // Get the value span and input field
           const valueSpan = button.parentElement.querySelector('.client-span1');

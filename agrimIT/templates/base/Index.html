@@ -32,7 +32,7 @@
             <span>Projecto</span><span>Cliente</span><span>Partida</span><span>Estado</span>
           </li>
           {% for p in projects %}
-            <li>
+            <li class="project">
               <a href="{% url 'projectview' p.pk %}">
                 <span>{{ p.type }}</span> <span>{{ p.client.name }}</span><span>{{ p.partida }}</span><span>
                   {% if p.closed %}

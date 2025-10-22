@@ -94,6 +94,11 @@
               </form>
               <div id="results-cont" class="results-cont"></div>
             </li>
+            {% if request.user.is_authenticated %}
+              <li>
+                <a href="{% url 'logout' %}">Cerrar sesión</a>
+              </li>
+            {% endif %}
           </ul>
         </div>
       </div>

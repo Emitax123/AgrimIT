@@ -164,6 +164,7 @@ button.toggle-btn {
 
     .date-select-cont form#date-filter-form {
         flex-flow: column !important;
+        align-items: center !important;
         gap: 1em;
     }
 
@@ -177,7 +178,7 @@ button.toggle-btn {
 /* Mobile Standard (376px - 480px) */
 @media (max-width: 480px) {
     .acc-container {
-        font-size: 0.75rem;
+        font-size: 0.6rem;
     }
 
     .date-select-cont {
@@ -186,6 +187,7 @@ button.toggle-btn {
 
     .date-select-cont form#date-filter-form {
         flex-flow: column !important;
+        align-items: center !important;
         gap: 1em;
     }
 
@@ -199,7 +201,7 @@ button.toggle-btn {
 /* Mobile Small (≤ 375px) */
 @media (max-width: 375px) {
     .acc-container {
-        font-size: 0.75rem;
+        font-size: 0.5rem;
     }
 
     .date-select-cont {

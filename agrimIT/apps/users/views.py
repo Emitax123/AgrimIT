@@ -27,3 +27,8 @@ def login_view(request):
             return render(request, 'users/login.html', {'error': error})
     else:
         return render(request, 'users/login.html')
+
+def logout_view(request):
+    from django.contrib.auth import logout
+    logout(request)
+    return redirect('index')

@@ -146,9 +146,7 @@ div.month-data div.month-details span {
     box-shadow: 0 2px 4px rgba(33, 150, 243, 0.2);
 }
 
-div.board-container div.charts div.chart2-cont #myChart2 {
-    width: 30rem !important;
-}
+
 
 /* ===========================================
    RESPONSIVE MEDIA QUERIES - BALANCE

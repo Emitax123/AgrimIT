@@ -412,7 +412,7 @@ def get_monthly_networth_data(year: int, user: User) -> tuple[list, list]:
     
     # OPTIMIZATION 3: Use list comprehension for better performance
     # Generate month labels and values in single pass instead of separate loops
-    month_labels = [month_str(month_num) for month_num in range(1, 13)]
+    month_labels = [month_str_short(month_num) for month_num in range(1, 13)]
     networth_values = [
         summary_by_month.get(month_num, 0.0) 
         for month_num in range(1, 13)
@@ -423,6 +423,18 @@ def get_monthly_networth_data(year: int, user: User) -> tuple[list, list]:
 #---------------------
 
 def month_str(number):
+    months = {
+        1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+        5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+        9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+    }
+
+    return months.get(number, 'Mes no válido')
+
+def month_str_short(number):
+    """
+    Returns short month names for chart labels to avoid overlapping.
+    """
     months = {
         1: 'Ene', 2: 'Feb', 3: 'Mar', 4: 'Abr',
         5: 'May', 6: 'Jun', 7: 'Jul', 8: 'Ago',
@@ -550,7 +562,7 @@ def chart_data(request: HttpRequest) -> JsonResponse:
             
     except Exception as e:
         # Fall back to default values if there's an error
-        month_labels = [month_str(i) for i in range(1, 13)]
+        month_labels = [month_str_short(i) for i in range(1, 13)]
         networth_values = [0] * 12
         total_advance = 0
         total_expenses = 0

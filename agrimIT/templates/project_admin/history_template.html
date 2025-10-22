@@ -2,8 +2,8 @@
 {% load static %}
 {% block form %}
   <link rel="stylesheet" type="text/css" href="{% static 'css/history.css' %}" />
-  {% if no_events %}
-    <span>No hay eventos para mostrar.</span>
+  {% if not no_events %}
+    <span style="font-weight: bold;">No hay eventos para mostrar.</span>
   {% else %}
     {% for year, months in yearlist.items %}
       {% for month, items in months.items %}
