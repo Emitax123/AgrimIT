@@ -34,6 +34,16 @@ div.client-buttons a {
     padding: 0.2em 0.2em;
 }
 
+div.client-buttons .toggle-btn:hover {
+    background-color: #2d72ba;
+
+}
+
+div.client-buttons .toggle-btn.red:hover {
+    background-color: #c0392b;
+    color: #fff;
+}
+
 
 
 
