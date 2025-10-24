@@ -184,6 +184,7 @@ SECURITY_ANALYSIS_FINAL.md
 README.md
 RAILWAY_LOGGING_GUIDE.md
 CBV_GUIDE.md
+RAILWAY_DEPLOYMENT_NOTES.md
 
 # Scripts de desarrollo/testing temporales
 test_*.py

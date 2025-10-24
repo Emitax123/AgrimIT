@@ -90,10 +90,26 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-# Production hosts - Railway domains
-ALLOWED_HOSTS = get_optional_env('DJANGO_ALLOWED_HOSTS', 
-    default='web-production-93a9.up.railway.app',
-    cast_func=lambda x: [host.strip() for host in x.split(',') if host.strip()])
+# Production hosts - Railway domains + healthcheck
+allowed_hosts_env = get_optional_env('DJANGO_ALLOWED_HOSTS', 
+    default='web-production-93a9.up.railway.app,healthcheck.railway.app')
+
+ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',') if host.strip()]
+
+# Always include essential Railway domains
+railway_domains = [
+    'healthcheck.railway.app',
+    '*.railway.app',
+    '*.up.railway.app'
+]
+
+for domain in railway_domains:
+    if domain not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(domain)
+
+# Log the allowed hosts for debugging
+import logging
+logging.getLogger(__name__).info(f"ALLOWED_HOSTS configured: {ALLOWED_HOSTS}")
 
 # Production database - Railway PostgreSQL with validation
 DATABASES = {
@@ -152,6 +168,8 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_TRUSTED_ORIGINS = [
     'https://web-production-93a9.up.railway.app',
     'https://agrimIT.railway.app',  # Si tienes dominio personalizado
+    'https://healthcheck.railway.app',  # Railway healthcheck
+    'https://*.railway.app',  # Wildcard para otros subdominios de Railway
 ]
 
 
