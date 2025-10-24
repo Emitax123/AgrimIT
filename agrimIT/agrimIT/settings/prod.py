@@ -91,14 +91,21 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Production hosts - Railway domains + healthcheck
+# Get Railway domain from environment (Railway sets RAILWAY_STATIC_URL)
+railway_domain = os.environ.get('RAILWAY_STATIC_URL', '').replace('https://', '').replace('http://', '')
+if not railway_domain:
+    railway_domain = 'agrimit-production.up.railway.app'  # Fallback to your actual domain
+
 allowed_hosts_env = get_optional_env('DJANGO_ALLOWED_HOSTS', 
-    default='web-production-93a9.up.railway.app,healthcheck.railway.app')
+    default=f'{railway_domain},healthcheck.railway.app')
 
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',') if host.strip()]
 
 # Always include essential Railway domains
 railway_domains = [
     'healthcheck.railway.app',
+    railway_domain,  # Dynamic Railway domain
+    'agrimit-production.up.railway.app',  # Your specific domain
     '*.railway.app',
     '*.up.railway.app'
 ]
@@ -109,7 +116,9 @@ for domain in railway_domains:
 
 # Log the allowed hosts for debugging
 import logging
-logging.getLogger(__name__).info(f"ALLOWED_HOSTS configured: {ALLOWED_HOSTS}")
+railway_logger = logging.getLogger(__name__)
+railway_logger.info(f"Railway domain detected: {railway_domain}")
+railway_logger.info(f"ALLOWED_HOSTS configured: {ALLOWED_HOSTS}")
 
 # Production database - Railway PostgreSQL with validation
 DATABASES = {
@@ -165,12 +174,28 @@ SESSION_COOKIE_SAMESITE = 'Lax'  # Protección adicional CSRF
 CSRF_COOKIE_SECURE = True   # ✅ HTTPS only CSRF cookies
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_TRUSTED_ORIGINS = [
-    'https://web-production-93a9.up.railway.app',
-    'https://agrimIT.railway.app',  # Si tienes dominio personalizado
+# CSRF security - secure for Railway production
+CSRF_COOKIE_SECURE = True   # ✅ HTTPS only CSRF cookies
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# Build CSRF trusted origins dynamically
+csrf_origins = [
+    f'https://{railway_domain}',  # Dynamic Railway domain
+    'https://agrimit-production.up.railway.app',  # Your specific domain
     'https://healthcheck.railway.app',  # Railway healthcheck
-    'https://*.railway.app',  # Wildcard para otros subdominios de Railway
+    'https://*.railway.app',  # Wildcard for Railway subdomains
 ]
+
+# Add custom domain if configured
+custom_domain = os.environ.get('CUSTOM_DOMAIN')
+if custom_domain:
+    csrf_origins.append(f'https://{custom_domain}')
+
+CSRF_TRUSTED_ORIGINS = csrf_origins
+
+# Log CSRF origins for debugging
+railway_logger.info(f"CSRF_TRUSTED_ORIGINS configured: {CSRF_TRUSTED_ORIGINS}")
 
 
 
