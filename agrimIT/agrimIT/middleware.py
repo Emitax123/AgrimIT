@@ -3,12 +3,23 @@ Custom security middleware for AgrimIT project
 """
 
 import time
-from django.http import HttpResponseTooManyRequests, HttpResponseForbidden
+from django.http import HttpResponseForbidden, HttpResponse
 from django.core.cache import cache
 from django.conf import settings
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def create_rate_limit_response(message="Rate limit exceeded. Please try again later.", retry_after=60):
+    """Create a standardized 429 rate limit response"""
+    response = HttpResponse(
+        message,
+        status=429,
+        content_type='text/plain'
+    )
+    response['Retry-After'] = str(retry_after)
+    return response
 
 
 class SecurityHeadersMiddleware:
@@ -100,9 +111,7 @@ class RateLimitMiddleware:
                 f"Rate limit exceeded for IP {self._get_client_ip(request)} "
                 f"on path {request.path} (type: {limit_type})"
             )
-            return HttpResponseTooManyRequests(
-                "Rate limit exceeded. Please try again later."
-            )
+            return create_rate_limit_response()
         
         return self.get_response(request)
     
