@@ -9,14 +9,78 @@ import dj_database_url
 
 # Override critical settings for production
 DEBUG = False
-SECRET_KEY = os.environ.get('SECRET_KEY')
 
-# Validate that SECRET_KEY is provided
-if not SECRET_KEY:
-    raise ValueError("SECRET_KEY environment variable is required in production")
+# Environment variables validation with detailed error messages
+def get_required_env(var_name, error_msg=None):
+    """Get required environment variable with validation"""
+    value = os.environ.get(var_name)
+    if not value:
+        error_msg = error_msg or f"{var_name} environment variable is required in production"
+        raise ValueError(error_msg)
+    return value
 
-# Add whitenoise middleware for static files
+def get_optional_env(var_name, default=None, cast_func=None):
+    """Get optional environment variable with optional type casting"""
+    value = os.environ.get(var_name, default)
+    if cast_func and value is not None:
+        try:
+            return cast_func(value)
+        except (ValueError, TypeError) as e:
+            raise ValueError(f"Invalid value for {var_name}: {value}. Error: {e}")
+    return value
+
+# Validate required environment variables
+SECRET_KEY = get_required_env('SECRET_KEY', 
+    "SECRET_KEY must be set in production. Generate one with: python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'")
+
+DATABASE_URL = get_required_env('DATABASE_URL',
+    "DATABASE_URL is required for Railway PostgreSQL connection")
+
+# Validate optional but recommended environment variables
+SUPABASE_URL = get_optional_env('SUPABASE_URL')
+SUPABASE_KEY = get_optional_env('SUPABASE_KEY')
+SUPABASE_BUCKET = get_optional_env('SUPABASE_BUCKET')
+
+# Warn if Supabase is not configured (if your app uses it)
+if not all([SUPABASE_URL, SUPABASE_KEY, SUPABASE_BUCKET]):
+    import warnings
+    warnings.warn("Supabase environment variables not fully configured. File upload functionality may not work.")
+
+# Override base.py values with validated ones
+globals().update({
+    'SUPABASE_URL': SUPABASE_URL,
+    'SUPABASE_KEY': SUPABASE_KEY,
+    'SUPABASE_BUCKET': SUPABASE_BUCKET,
+})
+
+# Add security and performance middleware for production
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+
+# Security middleware configuration - enhanced
+MIDDLEWARE += [
+    # Custom security middleware (will be created)
+    'agrimIT.middleware.SecurityHeadersMiddleware',
+    'agrimIT.middleware.RateLimitMiddleware',
+]
+
+# Templates configuration for production - SECURE (no debug context processor)
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            BASE_DIR.parent / 'templates',
+        ],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                # 'django.template.context_processors.debug',  # ❌ REMOVED for security
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
 
 # Static files configuration
 STATIC_URL = '/static/'
@@ -26,14 +90,12 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-# Production hosts - Railway compatible
-ALLOWED_HOSTS = ['*']  # Railway handles domain routing securely
+# Production hosts - Railway domains
+ALLOWED_HOSTS = get_optional_env('DJANGO_ALLOWED_HOSTS', 
+    default='web-production-93a9.up.railway.app',
+    cast_func=lambda x: [host.strip() for host in x.split(',') if host.strip()])
 
-# Production database - Railway PostgreSQL
-DATABASE_URL = os.environ.get('DATABASE_URL')
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable is required in production")
-
+# Production database - Railway PostgreSQL with validation
 DATABASES = {
     'default': dj_database_url.config(
         default=DATABASE_URL,
@@ -42,25 +104,55 @@ DATABASES = {
     )
 }
 
-# Security settings for production - adjusted for Railway
+# Validate database configuration
+if not DATABASES['default'].get('NAME'):
+    raise ValueError("Database configuration is invalid. Check DATABASE_URL format.")
+
+# Security settings for production - enhanced
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_PRELOAD = True
 SECURE_REDIRECT_EXEMPT = []
-# Railway handles SSL termination
-SECURE_SSL_REDIRECT = False  # Railway handles this
+
+# Railway handles SSL termination but we can add some extra security
+SECURE_SSL_REDIRECT = False  # Railway handles this at infrastructure level
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Additional security headers
+X_FRAME_OPTIONS = 'DENY'
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
+# Content Security Policy (will be handled by custom middleware)
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
+
+# Request size limits (10MB default)
+MAX_REQUEST_SIZE = 10 * 1024 * 1024  # 10MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = MAX_REQUEST_SIZE
+FILE_UPLOAD_MAX_MEMORY_SIZE = MAX_REQUEST_SIZE
+
+# Admin IP whitelist (configure if needed)
+# ADMIN_IP_WHITELIST = ['192.168.1.100', '10.0.0.50']  # Uncomment and configure IPs
+
 USE_TZ = True
 
-# Session security - adjusted for Railway
-SESSION_COOKIE_SECURE = False  # Railway handles SSL termination
+# Session security - secure for Railway production
+SESSION_COOKIE_SECURE = True   # ✅ HTTPS only cookies (Railway forwards HTTPS properly)
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_AGE = 3600
+SESSION_COOKIE_AGE = 31536000  # 1 año (365 días * 24 horas * 60 minutos * 60 segundos)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # La sesión persiste aunque se cierre el navegador
+SESSION_SAVE_EVERY_REQUEST = True  # Renueva la sesión en cada request
+SESSION_COOKIE_SAMESITE = 'Lax'  # Protección adicional CSRF
 
-# CSRF security - adjusted for Railway
-CSRF_COOKIE_SECURE = False  # Railway handles SSL termination
+# CSRF security - secure for Railway production
+CSRF_COOKIE_SECURE = True   # ✅ HTTPS only CSRF cookies
 CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-93a9.up.railway.app',
+    'https://agrimIT.railway.app',  # Si tienes dominio personalizado
+]
 
 
 

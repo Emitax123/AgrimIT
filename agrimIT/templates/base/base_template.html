@@ -301,6 +301,9 @@
     
         results.forEach((result) => {
           const link = document.createElement('a')
+          if (result.closed) {
+            link.className = 'closed-project'
+          }
           link.href = projectLinkUrl.replace('0', result.id)
     
           const titleSpan = document.createElement('span')

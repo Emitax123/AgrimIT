@@ -11,6 +11,10 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'agrimIT.settings')
+# Use the same logic as wsgi.py and manage.py
+if os.environ.get('RAILWAY_ENVIRONMENT'):
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'agrimIT.settings.prod')
+else:
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'agrimIT.settings.dev')
 
 application = get_asgi_application()

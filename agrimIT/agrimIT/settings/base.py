@@ -42,7 +42,8 @@ sys.path.insert(0, str(BASE_DIR / 'apps'))
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY')
+# SECRET_KEY will be validated in environment-specific settings
+SECRET_KEY = os.getenv('SECRET_KEY', 'dev-only-secret-key-change-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
@@ -81,23 +82,8 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'agrimIT.urls'
 
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            Path(__file__).resolve().parent.parent.parent / 'templates',    
-        ],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
+# Templates configuration will be defined in environment-specific settings
+# to properly handle debug context processor security
 
 WSGI_APPLICATION = 'agrimIT.wsgi.application'
 
@@ -106,9 +92,9 @@ WSGI_APPLICATION = 'agrimIT.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 
-# Supabase Configuration
+# Supabase Configuration - validation will be done in views that use it
 SUPABASE_URL = os.getenv('SUPABASE_URL')
-SUPABASE_KEY = os.getenv('SUPABASE_KEY')
+SUPABASE_KEY = os.getenv('SUPABASE_KEY') 
 SUPABASE_BUCKET = os.getenv('SUPABASE_BUCKET')
 
 # Password validation

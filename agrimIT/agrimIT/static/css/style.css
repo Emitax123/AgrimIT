@@ -538,6 +538,14 @@ nav {
     text-decoration: none;
 }
 
+.results-cont a.closed-project {
+    background-color: rgb(183, 239, 184);
+}
+
+.results-cont a.closed-project:hover {
+    background-color: #b0e6b0;
+}
+
 .results-cont a:hover {
     background-color: #f8f9fa;
 }

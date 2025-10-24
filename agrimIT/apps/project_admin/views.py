@@ -64,7 +64,9 @@ def save_in_history(project_pk: int, event_type: str, msg: str, user=None):
 
 @login_required
 def index(request):
-    projects = Project.objects.select_related('client').filter(user=request.user).order_by('-created')[:10]
+    projects = Project.objects.select_related('client')\
+        .prefetch_related('files')\
+        .filter(user=request.user).order_by('-created')[:10]
     clients_count = Client.objects.filter(user=request.user, flag=True).count()
     project_count = Project.objects.filter(user=request.user).count()
     net_income = Dec("0.00")
@@ -134,11 +136,11 @@ def projectlist_view(request: HttpRequest) -> HttpResponse:
     if request.method == 'POST':
         if request.POST.get('search-input')!="":
             query = request.POST.get('search-input')
-            projects = Project.objects.select_related('client').filter(
-                user=request.user
-            ).filter(
-                 Q(client__name__icontains=query) | Q(partida__icontains=query)
-            ).order_by('-created')[:108]
+            projects = Project.objects.select_related('client')\
+                .prefetch_related('files')\
+                .filter(user=request.user)\
+                .filter(Q(client__name__icontains=query) | Q(partida__icontains=query))\
+                .order_by('-created')
             
             if not projects.exists():
                 return render (request, 'project_admin/project_list_template.html', {'no_projects':True})
@@ -146,14 +148,21 @@ def projectlist_view(request: HttpRequest) -> HttpResponse:
         return render (request, 'project_admin/project_list_template.html', {'projects':actual_pag, 'pages':pages})
 
     else:
-        actual_pag, pages = paginate_queryset(request, Project.objects.select_related('client').filter(user=request.user, closed=False).order_by('-created')[:108])
+        actual_pag, pages = paginate_queryset(request, 
+            Project.objects.select_related('client')
+            .prefetch_related('files', 'events')
+            .filter(user=request.user, closed=False)
+            .order_by('-created')
+        )
     return render (request, 'project_admin/project_list_template.html', {'projects':actual_pag, 'pages':pages})
 
 #Proyectos por cliente
 @login_required
 def alt_projectlist_view(request: HttpRequest, pk: int) -> HttpResponse:
     """ List projects for a specific client """
-    projects = Project.objects.select_related('client').filter(user=request.user, client__pk=pk).order_by('-created')[:108]
+    projects = Project.objects.select_related('client')\
+        .prefetch_related('files')\
+        .filter(user=request.user, client__pk=pk).order_by('-created')
     if not projects.exists():
         return render (request, 'project_admin/project_list_template.html', {'no_projects':True})
     actual_pag, pages = paginate_queryset(request, projects)
@@ -174,7 +183,9 @@ def projectlistfortype_view(request: HttpRequest, type: int) -> HttpResponse:
     project_type = type_map.get(type)
     if not project_type:
         return render(request, 'project__admin/project_list_template.html', {'no_projects': True})
-    projects = Project.objects.select_related('client').filter(user=request.user, type=project_type, closed=False).order_by('-created')[:108]
+    projects = Project.objects.select_related('client')\
+        .prefetch_related('files')\
+        .filter(user=request.user, type=project_type, closed=False).order_by('-created')
     actual_pag, pages = paginate_queryset(request, projects)
     if not projects.exists():
         return render (request, 'project_admin/project_list_template.html', {'no_projects':True})
@@ -418,34 +429,67 @@ def history_view(request: HttpRequest) -> HttpResponse:
 #Modulo de busqueda
 @login_required
 def search(request: HttpRequest) -> JsonResponse:
-    """ Search for projects based on a query string """
+    """ Search for projects based on a query string - OPTIMIZED """
     try:
-        query = request.GET.get('query')  # Get the search query from the request
+        query = request.GET.get('query', '').strip()  # Get and clean the search query
+        
+        # Validate query length to prevent expensive searches
+        if not query or len(query) < 2:
+            return JsonResponse({'results': []}, safe=False)
+        
         # Perform your search logic here and get the results
         if query:
-            objectc = Project.objects.select_related('client').filter(
-                user=request.user
-            ).filter(
-                Q(client__name__icontains=query) | Q(partida__icontains=query)
-            ).order_by('-created')[:5]
-            results = []
-            for obj in objectc:
-                results.append({
-                'id': obj.pk,
-                'type': obj.type,
-                'datecreated': obj.created.strftime('%d/%m/%Y'),
-                })
+            # Optimized search query with multiple search fields
+            search_filter = Q(client__name__icontains=query) | \
+                          Q(partida__icontains=query) | \
+                          Q(titular_name__icontains=query) | \
+                          Q(type__icontains=query)
+            
+            objectc = Project.objects.select_related('client')\
+                .filter(user=request.user)\
+                .filter(search_filter)\
+                .only('id', 'type', 'created', 'titular_name', 'partida', 'client__name', 'closed')\
+                .order_by('-created')[:5]
+            
+            # Use list comprehension for better performance
+            results = [
+                {
+                    'id': obj.pk,
+                    'type': obj.type,
+                    'datecreated': obj.created.strftime('%d/%m/%Y'),
+                    'client_name': obj.client.name if obj.client else 'Sin cliente',
+                    'titular_name': obj.titular_name,
+                    'partida': obj.partida,
+                    'closed': obj.closed
+                }
+                for obj in objectc
+            ]
         else:
-            results = list(Project.objects.none())
+            results = []
     
-        return JsonResponse({'results': results}, safe=False)
+        return JsonResponse({
+            'results': results,
+            'query': query,
+            'count': len(results)
+        }, safe=False)
+        
     except DatabaseError as e:
-       # Log the error if you want
-       logger.error(f"Database error in search view: {str(e)}")
-       return JsonResponse({'error': 'Database error occurred.'}, status=500)
+        # Log the database error
+        logger.error(f"Database error in search view: {str(e)}", extra={
+            'user_id': request.user.id,
+            'query': query,
+            'error_type': 'DatabaseError'
+        })
+        return JsonResponse({'error': 'Database error occurred.'}, status=500)
+        
     except Exception as e:
-       logger.error(f"Unexpected error in search view: {str(e)}")
-       return JsonResponse({'error': 'An unexpected error occurred.'}, status=500)
+        # Log unexpected errors
+        logger.error(f"Unexpected error in search view: {str(e)}", extra={
+            'user_id': request.user.id,
+            'query': query,
+            'error_type': type(e).__name__
+        })
+        return JsonResponse({'error': 'An error occurred while searching.'}, status=500)
 
 #Modulo descargas
 @login_required
@@ -721,10 +765,12 @@ def generate_monthly_summaries(request: HttpRequest) -> HttpResponse:
         from apps.accounting.models import Account, AccountMovement
         
         # Get all projects for the user with their accounts
-        user_projects = Project.objects.select_related('account', 'client').filter(
-            user=request.user,
-            account__isnull=False
-        )
+        user_projects = Project.objects.select_related('account', 'client')\
+            .prefetch_related('account__movements')\
+            .filter(
+                user=request.user,
+                account__isnull=False
+            )
         
         # Dictionary to store monthly data
         monthly_data = {}

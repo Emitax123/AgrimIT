@@ -5,8 +5,28 @@ These settings are used during development.
 
 from .base import *
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG is inherited from base.py which reads from DJANGO_DEBUG env var
+# If you want to override it specifically for development, uncomment:
+# DEBUG = True
+
+# Templates configuration for development - includes debug context processor
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            BASE_DIR.parent / 'templates',
+        ],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',    # ✅ OK in development
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
 
 # Hosts allowed during development
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
