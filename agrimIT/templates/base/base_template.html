@@ -99,7 +99,7 @@
               <div id="results-cont" class="results-cont"></div>
             </li>
             {% if request.user.is_authenticated %}
-              <li>
+              <li class="logout">
                 <a href="{% url 'logout' %}">Cerrar sesión</a>
               </li>
             {% endif %}
@@ -161,7 +161,7 @@
     
         // Cerrar menú al cambiar tamaño de ventana (si se cambia a desktop)
         window.addEventListener('resize', function () {
-          if (window.innerWidth > 768) {
+          if (window.innerWidth > 1024) {
             hamburgerBtn.classList.remove('active')
             navList.classList.remove('active')
             navOverlay.classList.remove('active')
@@ -183,7 +183,7 @@
         if (submenu) {
           // Mobile: Click to toggle - simplificado
           button.addEventListener('click', function (e) {
-            if (window.innerWidth <= 768) {
+            if (window.innerWidth <= 1024) {
               e.preventDefault()
               e.stopPropagation()
     
@@ -203,14 +203,14 @@
             let hoverTimeout
     
             parentLi.addEventListener('mouseenter', function () {
-              if (window.innerWidth > 768) {
+              if (window.innerWidth > 1024) {
                 clearTimeout(hoverTimeout)
                 submenu.classList.add('show')
               }
             })
     
             parentLi.addEventListener('mouseleave', function () {
-              if (window.innerWidth > 768) {
+              if (window.innerWidth > 1024) {
                 hoverTimeout = setTimeout(() => {
                   submenu.classList.remove('show')
                 }, 150)
@@ -219,13 +219,13 @@
     
             // Cancelar el cierre por hover si el mouse está sobre el submenú
             submenu.addEventListener('mouseenter', function () {
-              if (window.innerWidth > 768) {
+              if (window.innerWidth > 1024) {
                 clearTimeout(hoverTimeout)
               }
             })
     
             submenu.addEventListener('mouseleave', function () {
-              if (window.innerWidth > 768) {
+              if (window.innerWidth > 1024) {
                 submenu.classList.remove('show')
               }
             })

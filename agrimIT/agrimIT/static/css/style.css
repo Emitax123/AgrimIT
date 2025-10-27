@@ -46,6 +46,20 @@
    RESPONSIVE MEDIA QUERIES
    =========================================== */
 
+
+@media (max-width: 1800px) {
+    .nav-dropdown  {
+        gap: 0.5em!important;
+    }
+  
+}
+
+@media (max-width: 1400px) {
+    .nav-dropdown  {
+        gap: 0em!important;
+    }
+  
+}
 /* Tablet */
 @media (max-width: 1024px) {
     .navbar {
@@ -58,7 +72,7 @@
     }
 
     .nav-dropdown {
-        gap: 1.5rem;
+        gap: 0.2em!important;
     }
 
     .nav-dropdown a {
@@ -80,12 +94,16 @@
     }
 
     .nav-dropdown {
-        gap: 1rem;
+        gap: 0!important;
+        
     }
-
+    .nav-dropdown a {
+        font-size: 0.8rem!important;
+    }
     #search-form {
         position: relative;
         margin-left: auto;
+        
     }
 
     #search-input {
@@ -95,8 +113,8 @@
     }
 }
 
-/* Móvil */
-@media (max-width: 768px) {
+/* Móvil y Tablets */
+@media (max-width: 1024px) {
     .navbar {
         flex-direction: row;
         justify-content: space-between;
@@ -185,6 +203,7 @@
         border-radius: 0;
         margin-left: 20px;
         margin-top: 10px;
+        width: 100%;
         padding: 0;
     }
 
@@ -200,6 +219,7 @@
     /* Solo permitir .show en móvil */
     .nav-dropdown li .navbar-submenu.show {
         display: block !important;
+        position: absolute !important;
     }
 
     .navbar-submenu li {
@@ -220,17 +240,15 @@
     /* Search form en móvil */
     #search-form {
         width: 100%;
-        margin-top: 20px;
-        padding-top: 20px;
-        border-top: 1px solid #eee;
         order: 2;
+        padding: 0.5rem 1rem;
     }
 
     #search-input {
         width: 100%;
         padding: 0.8rem;
         font-size: 1rem;
-        margin-bottom: 10px;
+      
         border: 1px solid #ddd;
         border-radius: 4px;
     }
@@ -406,12 +424,16 @@ nav {
 .nav-list {
     display: flex;
     align-items: center;
+    
+     margin-left: auto;
+     margin-right: 10em;
 
 }
 
 .nav-dropdown {
     display: flex;
     list-style: none;
+  
     gap: 2rem;
     margin: 0;
     padding: 0;
@@ -420,6 +442,8 @@ nav {
 .nav-dropdown li {
     position: relative;
     display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .nav-dropdown a {
@@ -456,8 +480,8 @@ nav {
     display: block;
 }
 
-/* Hover solo en desktop */
-@media (min-width: 769px) {
+/* Hover solo en desktop (mayor a 1024px) */
+@media (min-width: 1025px) {
     .nav-dropdown li:hover .navbar-submenu {
         display: block;
     }
