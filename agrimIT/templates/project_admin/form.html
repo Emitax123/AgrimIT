@@ -53,7 +53,7 @@
                 </div>
               </div>
               <!-- Datos Titular dentro de content 2 -->
-              <!--                                                                            
+              <!--                                                                              
               <div id="titular-data" style="margin: 20px;" class="fields">
                 <h4>Datos titular</h4>
                 <div style="margin-top:10px; height: 80px;" class="input-field">
@@ -68,7 +68,7 @@
                 <label for="{{ form.titular_phone.id_for_label }}">{{ form.titular_phone.label }}</label>
                 {{ form.titular_phone }}
                 </div>
-              </div>                                                                            -->
+              </div>                                                                              -->
             </div>
           </div> <!-- End content 2 -->
 
@@ -279,6 +279,13 @@
             .catch((error) => {
               // Error handling without console logging
             })
+          // Re-enable client inputs
+          clientInputs.forEach((input) => {
+            input.style.backgroundColor = ''
+            input.style.color = ''
+            input.style.cursor = ''
+            input.disabled = false
+          })
         }
       }
     })
