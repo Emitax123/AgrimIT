@@ -219,10 +219,7 @@
         </form>
       </div>
       <div class="mini-div">
-        <form method="post" action="{% url 'accounting_display' pk=project.pk %}" id="gasto-form">
-          {% csrf_token %}
-          <button class="toggle-btn" type="submit">Ver Detalle</button>
-        </form>
+        <a href="{% url 'accounting_display' pk=project.pk %}" class="toggle-btn">Ver Detalle</a>
       </div>
       {% if project.client.flag %}
       {% if project.contact_name %}

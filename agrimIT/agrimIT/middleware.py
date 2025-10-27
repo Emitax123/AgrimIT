@@ -92,14 +92,20 @@ class RateLimitMiddleware:
         
         # Rate limiting configuration
         self.RATE_LIMITS = {
-            'default': {'requests': 100, 'window': 60},  # 100 requests per minute
-            'auth': {'requests': 5, 'window': 60},       # 5 auth attempts per minute
-            'api': {'requests': 1000, 'window': 3600},   # 1000 API calls per hour
+            'default': {'requests': 100, 'window': 60},   # 100 requests per minute
+            'auth': {'requests': 20, 'window': 60},       # 20 auth attempts per minute (increased)
+            'logout': {'requests': 50, 'window': 60},     # 50 logout requests per minute
+            'api': {'requests': 1000, 'window': 3600},    # 1000 API calls per hour
         }
 
     def __call__(self, request):
         # Skip rate limiting for certain paths or in development
         if settings.DEBUG or self._should_skip_rate_limit(request):
+            return self.get_response(request)
+        
+        # Skip rate limiting for authenticated users on regular operations
+        # Only rate limit anonymous users and specific auth operations
+        if request.user.is_authenticated and not self._is_auth_operation(request):
             return self.get_response(request)
         
         # Determine rate limit type
@@ -117,15 +123,32 @@ class RateLimitMiddleware:
     
     def _should_skip_rate_limit(self, request):
         """Skip rate limiting for certain conditions"""
-        skip_paths = ['/admin/', '/static/', '/media/']
+        skip_paths = [
+            '/admin/', 
+            '/static/', 
+            '/media/',
+            '/logout/',     # Skip rate limiting for logout
+            '/accounts/logout/',
+        ]
         return any(request.path.startswith(path) for path in skip_paths)
+    
+    def _is_auth_operation(self, request):
+        """Check if this is an authentication-related operation"""
+        auth_keywords = ['login', 'logout', 'register', 'password']
+        return any(keyword in request.path.lower() for keyword in auth_keywords)
     
     def _get_limit_type(self, request):
         """Determine which rate limit to apply"""
-        if request.path.startswith('/admin/login/') or 'login' in request.path:
+        # Logout operations - more lenient
+        if 'logout' in request.path.lower():
+            return 'logout'
+        # Login operations - moderate limits
+        elif request.path.startswith('/admin/login/') or 'login' in request.path.lower():
             return 'auth'
+        # API operations
         elif request.path.startswith('/api/'):
             return 'api'
+        # Default for everything else
         else:
             return 'default'
     
