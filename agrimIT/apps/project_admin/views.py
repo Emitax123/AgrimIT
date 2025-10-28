@@ -68,7 +68,7 @@ def index(request):
         .prefetch_related('files')\
         .filter(user=request.user).order_by('-created')[:10]
     clients_count = Client.objects.filter(user=request.user, flag=True).count()
-    project_count = Project.objects.filter(user=request.user).count()
+    project_count = Project.objects.filter(user=request.user, closed=False).count()
     net_income = Dec("0.00")
     current_year = int(timezone.now().year)
     current_month = int(timezone.now().month)
@@ -100,8 +100,12 @@ def delete_view(request: HttpRequest, pk: int) -> HttpResponse:
                 except Exception as e:
                     logger.error(f"Error deleting file for project {pk}: {str(e)}")
             
-            # Delete the associated account
-            project.account.delete()
+            # Delete the associated account if exists
+            if project.account:
+                try:
+                    project.account.delete()
+                except Exception as e:
+                    logger.error(f"Error deleting account for project {pk}: {str(e)}")
             
             # Save history BEFORE deleting project
             save_in_history(pk, 'deletep', msg, request.user)
@@ -799,6 +803,12 @@ def generate_monthly_summaries(request: HttpRequest) -> HttpResponse:
             
             # Add project's financial data to monthly totals
             account = project.account
+            
+            # Skip if project doesn't have an account
+            if not account:
+                logger.warning(f"Project {project.pk} doesn't have an account, skipping financial data")
+                continue
+            
             monthly_data[month_key]['total_advance'] += account.advance
             monthly_data[month_key]['total_expenses'] += account.expense
             
