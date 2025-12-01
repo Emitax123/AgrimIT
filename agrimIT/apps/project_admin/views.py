@@ -209,12 +209,29 @@ def project_view(request: HttpRequest, pk: int) -> HttpResponse:
         if project.user != request.user:
             logger.warning(f"User {request.user} tried to access project {pk} that does not belong to them.")
             return redirect('projects')
+        
+        # Get teams this project is shared with
+        from apps.teams.models import ProjectShare
+        shared_with_teams = ProjectShare.objects.filter(
+            project=project
+        ).select_related('team', 'shared_by').order_by('-shared_at')
+        
         file = project.files.first()
         if file:
-            return render(request, 'project_admin/project_template.html', {'project': project, 'account': project.account, 'file_url': file.url})
+            return render(request, 'project_admin/project_template.html', {
+                'project': project, 
+                'account': project.account, 
+                'file_url': file.url,
+                'shared_with_teams': shared_with_teams
+            })
         else:
             form = FileFieldForm()
-        return render(request, 'project_admin/project_template.html', {'project': project, 'account': project.account, 'form': form})
+        return render(request, 'project_admin/project_template.html', {
+            'project': project, 
+            'account': project.account, 
+            'form': form,
+            'shared_with_teams': shared_with_teams
+        })
     except Project.DoesNotExist:
         logger.error(f"Project with ID {pk} does not exist for current user.")
         return redirect('projects')

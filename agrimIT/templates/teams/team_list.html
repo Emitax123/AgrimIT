@@ -1,0 +1,124 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/teams.css' %}" />
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="fila">
+      <div class="teams-header">
+        <h1>Mis Grupos de Trabajo</h1>
+        <a href="{% url 'team_create' %}" class="btn btn-primary"><span>➕</span> Crear Nuevo Grupo</a>
+      </div>
+
+      {% if messages %}
+        <div class="messages-container">
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <!-- Grupos Propios -->
+      <div class="teams-section">
+        <h2>Grupos que Administro</h2>
+
+        {% if owned_teams %}
+          <div class="teams-grid">
+            {% for team in owned_teams %}
+              <div class="team-card">
+                <div class="team-card-header">
+                  <h3>{{ team.name }}</h3>
+                  <span class="team-badge owner-badge">Propietario</span>
+                </div>
+
+                {% if team.description %}
+                  <p class="team-description">{{ team.description|truncatewords:20 }}</p>
+                {% endif %}
+
+                <div class="team-stats">
+                  <div class="stat">
+                    <span class="stat-icon">👥</span>
+                    <span class="stat-value">{{ team.members_count }}</span>
+                    <span class="stat-label">Miembro{% if team.members_count != 1 %}s{% endif %}</span>
+                  </div>
+                  <div class="stat">
+                    <span class="stat-icon">📁</span>
+                    <span class="stat-value">{{ team.get_shared_projects_count }}</span>
+                    <span class="stat-label">Proyecto{% if team.get_shared_projects_count != 1 %}s{% endif %}</span>
+                  </div>
+                </div>
+
+                <div class="team-actions">
+                  <a href="{% url 'team_detail' team.pk %}" class="btn btn-view">Ver Detalles</a>
+                  <a href="{% url 'team_edit' team.pk %}" class="btn btn-edit">Editar</a>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <p>No has creado ningún grupo aún.</p>
+            <a href="{% url 'team_create' %}" class="btn btn-primary">Crear Mi Primer Grupo</a>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Grupos donde soy miembro -->
+      <div class="teams-section">
+        <h2>Grupos donde Participo</h2>
+
+        {% if member_teams %}
+          <div class="teams-grid">
+            {% for team in member_teams %}
+              <div class="team-card member-card">
+                <div class="team-card-header">
+                  <h3>{{ team.name }}</h3>
+                  <span class="team-badge member-badge">Miembro</span>
+                </div>
+
+                {% if team.description %}
+                  <p class="team-description">{{ team.description|truncatewords:20 }}</p>
+                {% endif %}
+
+                <div class="team-owner-info">
+                  <span class="owner-label">Administrador:</span>
+                  <span class="owner-name">{{ team.owner.get_full_name|default:team.owner.username }}</span>
+                </div>
+
+                <div class="team-stats">
+                  <div class="stat">
+                    <span class="stat-icon">👥</span>
+                    <span class="stat-value">{{ team.members_count|add:1 }}</span>
+                    <span class="stat-label">Miembro{% if team.members_count != 0 %}s{% endif %}</span>
+                  </div>
+                  <div class="stat">
+                    <span class="stat-icon">📁</span>
+                    <span class="stat-value">{{ team.get_shared_projects_count }}</span>
+                    <span class="stat-label">Proyecto{% if team.get_shared_projects_count != 1 %}s{% endif %}</span>
+                  </div>
+                </div>
+
+                <div class="team-actions">
+                  <a href="{% url 'team_detail' team.pk %}" class="btn btn-view">Ver Detalles</a>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <p>No eres miembro de ningún grupo aún.</p>
+            <p class="hint">Espera a que alguien te agregue a un grupo.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Acceso rápido a proyectos compartidos -->
+      <div class="quick-access">
+        <a href="{% url 'shared_projects' %}" class="btn btn-secondary"><span>📂</span> Ver Todos los Proyectos Compartidos Conmigo</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}

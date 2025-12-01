@@ -1,0 +1,93 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/teams.css' %}" />
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="fila">
+      <div class="page-header">
+        <h1>📂 Proyectos Compartidos Conmigo</h1>
+        <p class="subtitle">Proyectos que otros usuarios han compartido a través de grupos donde participas</p>
+      </div>
+
+      {% if messages %}
+        <div class="messages-container">
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% if shared_projects %}
+        <div class="shared-projects-grid">
+          {% for share in shared_projects %}
+            <div class="shared-project-card">
+              <div class="card-header">
+                <h3><a href="{% url 'projectview' share.project.pk %}">{{ share.project.type }}</a></h3>
+                <span class="project-badge">{{ share.project.type }}</span>
+              </div>
+
+              <div class="card-body">
+                <div class="project-detail">
+                  <strong>Titular:</strong> {{ share.project.titular_name }}
+                </div>
+                <div class="project-detail">
+                  <strong>Cliente:</strong> {{ share.project.client.name }}
+                </div>
+                {% if share.project.partida %}
+                  <div class="project-detail">
+                    <strong>Partida:</strong> {{ share.project.partida }}
+                  </div>
+                {% endif %}
+
+                <div class="share-info">
+                  <div class="info-row">
+                    <span class="info-label">🏢 Grupo:</span>
+                    <a href="{% url 'team_detail' share.team.pk %}" class="team-link">{{ share.team.name }}</a>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">👤 Compartido por:</span>
+                    <span>{{ share.shared_by.get_full_name|default:share.shared_by.username }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">📅 Fecha:</span>
+                    <span>{{ share.shared_at|date:'d/m/Y H:i' }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="info-label">👨‍💼 Propietario:</span>
+                    <span>{{ share.project.user.get_full_name|default:share.project.user.username }}</span>
+                  </div>
+                </div>
+
+                {% if share.notes %}
+                  <div class="share-notes">
+                    <strong>Notas:</strong>
+                    <p>{{ share.notes }}</p>
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="card-footer">
+                <a href="{% url 'projectview' share.project.pk %}" class="btn btn-view">Ver Proyecto Completo</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state-large">
+          <div class="empty-icon">📭</div>
+          <h2>No hay proyectos compartidos</h2>
+          <p>Cuando otros usuarios compartan proyectos con los grupos donde participas, aparecerán aquí.</p>
+          <a href="{% url 'team_list' %}" class="btn btn-primary">Ver Mis Grupos</a>
+        </div>
+      {% endif %}
+
+      <div class="back-link">
+        <a href="{% url 'team_list' %}" class="btn btn-secondary">← Volver a Mis Grupos</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}

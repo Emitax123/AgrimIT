@@ -1,0 +1,36 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/teams.css' %}" />
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="fila">
+      <div class="delete-confirmation">
+        <h1>⚠️ Confirmar Eliminación</h1>
+
+        <div class="warning-box">
+          <p>
+            ¿Estás seguro de que deseas eliminar el grupo <strong>"{{ team.name }}"</strong>?
+          </p>
+          <p>Esta acción no se puede deshacer y:</p>
+          <ul>
+            <li>Se eliminarán todos los miembros del grupo</li>
+            <li>Los proyectos dejarán de estar compartidos con este grupo</li>
+            <li>El grupo no podrá ser recuperado</li>
+          </ul>
+        </div>
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="form-actions">
+            <button type="submit" class="btn btn-danger">Sí, Eliminar Grupo</button>
+            <a href="{% url 'team_detail' team.pk %}" class="btn btn-secondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

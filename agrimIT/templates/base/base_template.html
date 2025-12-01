@@ -8,6 +8,8 @@
     <link rel="shortcut icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}" />
     <link rel="apple-touch-icon" href="{% static 'img/favicon.svg' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/teams.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/responsive.css' %}" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -84,6 +86,20 @@
             </li>
             <li>
               <a href="{% url 'clients' %}">Clientes</a>
+            </li>
+            <li>
+              <a href="{% url 'team_list' %}" data-submenu="teams-submenu">Grupos</a>
+              <ul class="navbar-submenu" id="teams-submenu">
+                <li>
+                  <a href="{% url 'team_list' %}">Mis Grupos</a>
+                </li>
+                <li>
+                  <a href="{% url 'team_create' %}">Crear Grupo</a>
+                </li>
+                <li>
+                  <a href="{% url 'shared_projects' %}">Proyectos Compartidos</a>
+                </li>
+              </ul>
             </li>
             <!-- FORMULARIO DE BÚSQUEDA -->
             <li>

@@ -1,0 +1,66 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/teams.css' %}" />
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="fila">
+      <div class="form-header">
+        <h1>{{ action }} Grupo de Trabajo</h1>
+      </div>
+
+      {% if messages %}
+        <div class="messages-container">
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="form-container">
+        <form method="post" class="team-form">
+          {% csrf_token %}
+
+          <div class="form-group">
+            <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+            {{ form.name }}
+            {% if form.name.errors %}
+              <div class="error-message">{{ form.name.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-group">
+            <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+            {{ form.description }}
+            {% if form.description.errors %}
+              <div class="error-message">{{ form.description.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-group">
+            <label for="{{ form.members_usernames.id_for_label }}">{{ form.members_usernames.label }}</label>
+            {{ form.members_usernames }}
+            <small class="form-help">{{ form.members_usernames.help_text }}</small>
+            {% if form.members_usernames.errors %}
+              <div class="error-message">{{ form.members_usernames.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+              {% if action == 'Crear' %}
+                Crear Grupo
+              {% else %}
+                Guardar Cambios
+              {% endif %}
+            </button>
+            <a href="{% url 'team_list' %}" class="btn btn-secondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

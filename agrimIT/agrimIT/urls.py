@@ -23,4 +23,5 @@ urlpatterns = [
     path('', include('apps.project_admin.urls')),
     path('accounting/', include('apps.accounting.urls')),
     path('', include('apps.clients.urls')),
+    path('grupos/', include('apps.teams.urls')),
 ]

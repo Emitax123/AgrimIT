@@ -19,7 +19,10 @@
         <div><span class="title">{{ project.type|default:"N/A" }}</span><span class="date">{{ project.created|date:"d/m/Y"|default:"N/A" }}</span><span class="id">ID:{{ project.pk|default:"N/A" }} </span>
         <div class="delete-container">
         {% if project.pk %}
-        <form method="post" action="{% url 'delete' pk=project.pk %}">
+        <a href="{% url 'project_share' project.pk %}" class="toggle-btn green" style="margin-right: 0.5rem;">
+          👥 Compartir
+        </a>
+        <form method="post" action="{% url 'delete' pk=project.pk %}" style="display: inline;">
           {% csrf_token %}
           <button type="submit" class="toggle-btn red" onclick="return confirm('¿Estás seguro que deseas eliminar este proyecto?')">
             Eliminar
@@ -113,6 +116,37 @@
               </div>
             </div>
             <!-- FIN Datos Titular -->
+            
+            <!-- Grupos Compartidos -->
+            {% if shared_with_teams %}
+            <div class="titular-div">
+              <h3 style="color: #2c5f2d; margin-bottom: 1rem;">👥 Compartido con:</h3>
+              {% for share in shared_with_teams %}
+              <div style="background-color: #f0f7f0; padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <strong style="color: #2c5f2d;">{{ share.team.name }}</strong>
+                  <span style="color: #666; font-size: 0.9em; margin-left: 1rem;">
+                    Compartido por {{ share.shared_by.username }} el {{ share.shared_at|date:"d/m/Y" }}
+                  </span>
+                  {% if share.notes %}
+                  <p style="margin-top: 0.25rem; color: #666; font-size: 0.9em;">{{ share.notes }}</p>
+                  {% endif %}
+                </div>
+                {% if project.user == user %}
+                <form method="post" action="{% url 'project_unshare' project.pk share.team.pk %}" style="display: inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="toggle-btn red" style="padding: 0.4rem 0.8rem; font-size: 0.85em;" 
+                          onclick="return confirm('¿Dejar de compartir con {{ share.team.name }}?')">
+                    Dejar de compartir
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+            <!-- FIN Grupos Compartidos -->
+            
             <!-- Datos contacto (solo si cliente es fijo) -->
             
             <!-- FIN Datos Contacto -->

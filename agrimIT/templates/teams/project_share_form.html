@@ -1,0 +1,67 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/teams.css' %}" />
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="fila">
+      <div class="form-header">
+        <h1>Compartir Proyecto con Grupo</h1>
+      </div>
+
+      {% if messages %}
+        <div class="messages-container">
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="project-info-box">
+        <h3>Proyecto a Compartir</h3>
+        <p>
+          <strong>{{ project.type }}</strong> - {{ project.titular_name }}
+        </p>
+        {% if project.client %}
+          <p>Cliente: {{ project.client.name }}</p>
+        {% endif %}
+        {% if project.partida %}
+          <p>Partida: {{ project.partida }}</p>
+        {% endif %}
+      </div>
+
+      <div class="form-container">
+        <form method="post" class="share-form">
+          {% csrf_token %}
+
+          <div class="form-group">
+            <label for="{{ form.team.id_for_label }}">{{ form.team.label }}</label>
+            {{ form.team }}
+            {% if form.team.help_text %}
+              <small class="form-help">{{ form.team.help_text }}</small>
+            {% endif %}
+            {% if form.team.errors %}
+              <div class="error-message">{{ form.team.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-group">
+            <label for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+            {{ form.notes }}
+            {% if form.notes.errors %}
+              <div class="error-message">{{ form.notes.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Compartir Proyecto</button>
+            <a href="{% url 'projectview' project.pk %}" class="btn btn-secondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
