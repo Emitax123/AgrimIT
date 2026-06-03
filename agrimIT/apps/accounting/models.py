@@ -21,9 +21,11 @@ class Account(models.Model):
     def networth(self):
         """
         Calculate the net worth of the account.
-        
+
+        Net profit: payments received (advance) minus costs incurred (expense).
+        Consistent with MonthlyFinancialSummary.net_worth.
         """
-        return self.expenses - self.advance
+        return self.advance - self.expense
     class Meta:
         verbose_name = "Cobranza"
         verbose_name_plural = "Cobranzas"
@@ -78,10 +80,10 @@ class MonthlyFinancialSummary(models.Model):
     class Meta:
         verbose_name = "Resumen Mensual"
         verbose_name_plural = "Resumenes Mensuales"
-        unique_together = ['year', 'month']  # Ensure only one record per month
+        unique_together = ['user', 'year', 'month']  # Ensure only one record per user/month
         ordering = ['-year', '-month']  # Default ordering, newest first
         indexes = [
-            models.Index(fields=['year', 'month']),  # For efficient lookups by year/month
+            models.Index(fields=['user', 'year', 'month'], name='acc_summary_user_ym_idx'),  # lookups by user/year/month
         ]
 
     def __str__(self):

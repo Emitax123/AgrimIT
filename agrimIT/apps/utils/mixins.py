@@ -122,12 +122,22 @@ class SearchMixin:
         if search_query and self.search_fields:
             from django.db.models import Q
             search_filter = Q()
-            
+
+            # Whitelist: only allow lookups whose root attribute is a real field
+            # on the model, so a misconfigured search_fields can't expose relations.
+            valid_field_names = {f.name for f in queryset.model._meta.get_fields()}
             for field in self.search_fields:
+                root_field = field.split('__', 1)[0]
+                if root_field not in valid_field_names:
+                    logger.warning(
+                        f"SearchMixin: ignoring unknown search field '{field}' "
+                        f"on model {queryset.model.__name__}"
+                    )
+                    continue
                 search_filter |= Q(**{f"{field}__icontains": search_query})
-            
+
             queryset = queryset.filter(search_filter)
-        
+
         return queryset
     
     def get_context_data(self, **kwargs):

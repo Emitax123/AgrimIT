@@ -1,7 +1,7 @@
 
 from django.db import DatabaseError, transaction
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 import logging
 logger = logging.getLogger(__name__)
 from apps.clients.models import Client
@@ -162,11 +162,12 @@ def create_for_client(request: HttpRequest, pk: int) -> HttpResponse:
 #Remover un cliente de la lista de clientes en formulario de creacion
 @login_required
 def clientedislist(request: HttpRequest, pk: int) -> HttpResponse:
-    client = Client.objects.get(pk=pk)
+    client = get_object_or_404(Client, pk=pk, user=request.user)
     client.not_listed = True
     client.save()
     return redirect('clients')
 
+@login_required
 def deleteclient(request: HttpRequest, pk: int) -> HttpResponse:
     try:
         client = Client.objects.get(pk=pk, user=request.user)
