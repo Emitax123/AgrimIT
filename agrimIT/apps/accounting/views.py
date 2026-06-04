@@ -258,7 +258,7 @@ def create_manual_acc_entry (request, pk):
    
     """
     if request.method == 'POST':
-        project = get_object_or_404(Project, id=pk)
+        project = get_object_or_404(Project, id=pk, user=request.user)
         # Handle form submission
         form = ManualAccountEntryForm(request.POST)
         if form.is_valid():
