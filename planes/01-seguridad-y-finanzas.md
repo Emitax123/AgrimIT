@@ -59,6 +59,18 @@ La vista ya filtra por `user=request.user`, pero le falta el decorador. Agregarl
 
 - [x] Validar `field` contra los campos reales del modelo (`_meta.get_fields()`); los desconocidos se ignoran y se loguean
 
+### A.6 Refuerzo de aislamiento por usuario (hallado en testing)
+> Estos fixes se entregan en el PR `fix/aislamiento-por-usuario` (separado del PR del Plan 01, que se mergeó antes de detectar esto en testing).
+
+Querysets sobre modelos con `user` que no filtraban por dueño (IDOR / fuga de datos entre usuarios):
+
+- [x] `create_view` (`project_admin/views.py`): dropdown de clientes `Client.objects.all().filter(flag=True)` → `filter(user=request.user, flag=True)` **(bug reportado: aparecían clientes de otros usuarios)**
+- [x] `create_view`: `Client.objects.get(pk=client_pk)` → `get_object_or_404(Client, pk=client_pk, user=request.user)` (evita asociar proyecto a cliente ajeno)
+- [x] `upload_files` (`project_admin/views.py`): valida `get_object_or_404(Project, pk=pk, user=request.user)` **antes** de subir a Supabase (antes subía a proyecto ajeno por `pk`)
+- [x] `create_manual_acc_entry` (`accounting/views.py`): `get_object_or_404(Project, id=pk, user=request.user)` (antes cargaba movimientos en proyecto ajeno)
+
+> Auditoría: el resto de `accounting/views.py` ya filtra por `user` consistentemente. El helper `save_in_history` usa `Project.objects.get(pk=...)` sin user pero recibe el `user` explícito y solo registra historial (bajo riesgo). La migración global FBV→CBV con `TenantMixin` queda en [Plan 04](04-deuda-tecnica.md).
+
 ### A.5 Rotación de credenciales — acción manual del usuario
 El `.env` está en `.gitignore` y no está versionado, pero contiene `SECRET_KEY`, password de PostgreSQL y key de Supabase en texto plano. Si alguna vez se compartió, rotar.
 
@@ -105,7 +117,7 @@ unique_together = ['user', 'year', 'month']
 
 - [x] Agregar `user` al `unique_together` (+ índice `acc_summary_user_ym_idx`)
 - [ ] Validar que no existan filas en conflicto en datos actuales (chequear antes de migrar)
-- [x] Migración creada a mano: `0005_alter_monthlyfinancialsummary_user.py` — ⏳ pendiente correr `migrate` (no se pudo en este entorno: venv roto / Python 3.11 ausente)
+- [x] Migración `0005_alter_monthlyfinancialsummary_user.py` — verificada (`makemigrations --check` no detecta cambios) y **aplicada** (`migrate accounting` OK)
 
 ### B.3 Conversión de montos con `except:` silencioso
 **Archivo:** `agrimIT/apps/project_admin/views.py` (`mod_view`)

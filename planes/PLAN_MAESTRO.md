@@ -33,9 +33,10 @@ Bugs de seguridad (IDOR, decoradores, validación de archivos) y errores de cál
 - [x] A.2 — `@login_required` en `deleteclient`
 - [x] A.3 — Validación de archivos subidos (extensión + tamaño)
 - [x] A.4 — Whitelist de campos en `SearchMixin`
+- [x] A.6 — Refuerzo de aislamiento por usuario (dropdown clientes + 3 IDOR más, hallado en testing)
 - [ ] A.5 — Rotación de credenciales (acción manual del usuario)
 - [x] B.1 — Corregir `Account.networth` → `advance - expense`
-- [x] B.2 — `unique_together` con `user` + migración `0005` (⏳ correr `migrate`)
+- [x] B.2 — `unique_together` con `user` + migración `0005` (aplicada ✓)
 - [x] B.3 — Eliminar `except:` silencioso en `mod_view`
 
 ### [Plan 02 — Validación de formularios](02-validaciones.md)
