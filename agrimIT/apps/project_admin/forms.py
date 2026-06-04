@@ -1,5 +1,14 @@
 from django import forms
+from django.conf import settings
+from django.core.validators import FileExtensionValidator
+from django.template.defaultfilters import filesizeformat
 from .models import Project
+
+
+# Allowed file types for project uploads sent to Supabase storage.
+ALLOWED_UPLOAD_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'dwg', 'docx']
+# Hard size limit per file. Mirrors FILE_UPLOAD_MAX_MEMORY_SIZE (10MB in prod).
+MAX_UPLOAD_SIZE = getattr(settings, 'FILE_UPLOAD_MAX_MEMORY_SIZE', 10 * 1024 * 1024)
 
 
 
@@ -72,5 +81,15 @@ class MultipleFileField(forms.FileField):
 
 
 class FileFieldForm(forms.Form):
-    file_field = forms.FileField()
+    file_field = forms.FileField(
+        validators=[FileExtensionValidator(allowed_extensions=ALLOWED_UPLOAD_EXTENSIONS)],
+    )
+
+    def clean_file_field(self):
+        file = self.cleaned_data['file_field']
+        if file and file.size > MAX_UPLOAD_SIZE:
+            raise forms.ValidationError(
+                f"El archivo supera el tamaño máximo permitido ({filesizeformat(MAX_UPLOAD_SIZE)})."
+            )
+        return file
 

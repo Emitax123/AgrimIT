@@ -19,7 +19,7 @@ from apps.project_admin.forms import FileFieldForm, ProjectForm, ProjectFullForm
 from apps.project_admin.models import Event, Project, ProjectFiles
 from apps.accounting.models import Account, MonthlyFinancialSummary
 from django.db.models import Q
-from decimal import Decimal as Dec
+from decimal import Decimal as Dec, InvalidOperation
 from django.contrib.auth.decorators import login_required
 from collections import defaultdict
 from .supabase_client import supabase
@@ -358,8 +358,9 @@ def mod_view(request: HttpRequest, pk: int) -> HttpResponse:
                     previous_price = project_instance.account.estimated
                     msg = f"Se establecio el presupuesto del proyecto {project_instance.pk}"
                     create_acc_entry(project_instance, 'est', previous_price, Dec(request.POST.get('price')))
-                except:
-                    project_instance.account.estimated = Dec("0,00")
+                except (InvalidOperation, ValueError, TypeError):
+                    logger.warning(f"Invalid 'price' for project {project_instance.pk}: {request.POST.get('price')!r}")
+                    return render(request, 'project_admin/project_template.html', {'error': 'El presupuesto ingresado no es un monto válido.'})
             if request.POST.get('adv'):
                 try:
                     newadv_asdecimal = Dec(request.POST.get('adv'))
@@ -369,8 +370,9 @@ def mod_view(request: HttpRequest, pk: int) -> HttpResponse:
                     else:
                         msg = f"Se cobraron ${newadv_asdecimal} del proyecto {project_instance.pk}"
                     create_acc_entry(project_instance, 'adv', previous_adv, newadv_asdecimal)
-                except:
-                    project_instance.account.advance = Dec("0.00")
+                except (InvalidOperation, ValueError, TypeError):
+                    logger.warning(f"Invalid 'adv' for project {project_instance.pk}: {request.POST.get('adv')!r}")
+                    return render(request, 'project_admin/project_template.html', {'error': 'El anticipo ingresado no es un monto válido.'})
             if request.POST.get('gasto'):
                 try:
                     newgasto_asdecimal = Dec(request.POST.get('gasto'))
@@ -380,8 +382,9 @@ def mod_view(request: HttpRequest, pk: int) -> HttpResponse:
                     else:
                         msg = f"Se debitaron ${newgasto_asdecimal} al proyecto {project_instance.pk}"
                     create_acc_entry(project_instance, 'exp', previous_gasto, newgasto_asdecimal)
-                except:
-                    project_instance.account.expense = Dec("0.00")
+                except (InvalidOperation, ValueError, TypeError):
+                    logger.warning(f"Invalid 'gasto' for project {project_instance.pk}: {request.POST.get('gasto')!r}")
+                    return render(request, 'project_admin/project_template.html', {'error': 'El gasto ingresado no es un monto válido.'})
 
 
             project_instance.save()
