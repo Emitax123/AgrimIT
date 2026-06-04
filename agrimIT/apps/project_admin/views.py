@@ -4,7 +4,7 @@ from django.utils import timezone
 from urllib.error import URLError
 from urllib.request import urlopen
 from django.http import FileResponse, HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, get_object_or_404
 from django.core.paginator import Paginator, PageNotAnInteger
 from django.db import DatabaseError, transaction
 from django.views.decorators.csrf import csrf_exempt
@@ -268,7 +268,7 @@ def create_view(request: HttpRequest) -> HttpResponse:
                 client = None
                 client_pk = request.POST.get('client-pk') or request.POST.get('client-list')
                 if client_pk:
-                    client = Client.objects.get(pk=client_pk)
+                    client = get_object_or_404(Client, pk=client_pk, user=request.user)
                     logger.info("Existing client selected", extra={
                         'user_id': request.user.id,
                         'client_id': client_pk
@@ -327,7 +327,7 @@ def create_view(request: HttpRequest) -> HttpResponse:
     })
                     
     form = ProjectForm()
-    clients = Client.objects.all().filter(flag=True).order_by('name')
+    clients = Client.objects.filter(user=request.user, flag=True).order_by('name')
     return render (request, 'project_admin/form.html', {'form':form, 'clients':clients})
 
 #vista de modificacion
@@ -549,7 +549,10 @@ def upload_files(request: HttpRequest, pk: int) -> HttpResponse:
             'user_id': request.user.id,
             'project_id': pk
         })
-        
+
+        # Verify the project belongs to the current user before touching storage
+        project = get_object_or_404(Project, pk=pk, user=request.user)
+
         form = FileFieldForm(request.POST, request.FILES)
         if form.is_valid():
             try:
@@ -571,7 +574,7 @@ def upload_files(request: HttpRequest, pk: int) -> HttpResponse:
                 file_content = file.read()  # Read as bytes
                 supabase.storage.from_(bucket_name).upload(file_name, file_content)
                 file_url = supabase.storage.from_(bucket_name).get_public_url(file_name)
-                ProjectFiles.objects.create(project=Project.objects.get(pk=pk), name=file_name, url=file_url)
+                ProjectFiles.objects.create(project=project, name=file_name, url=file_url)
                 save_in_history(pk, 'file_add', f"Se subió el archivo {file_name}", request.user)
                 
                 logger.info("File upload successful", extra={
