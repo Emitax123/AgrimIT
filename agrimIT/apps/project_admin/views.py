@@ -914,3 +914,139 @@ def log_frontend_error(request: HttpRequest) -> JsonResponse:
     except Exception as e:
         logger.error(f"Error logging frontend error: {str(e)}")
         return JsonResponse({'error': 'Failed to log error'}, status=500)
+
+
+# ============================================================
+# PROJECT NOTES VIEWS
+# ============================================================
+
+@login_required
+def project_notes_view(request, pk):
+    """Vista para ver todas las notas de un proyecto"""
+    from .models import ProjectNote
+    from .forms import ProjectNoteForm
+    
+    try:
+        project = Project.objects.get(pk=pk, user=request.user)
+    except Project.DoesNotExist:
+        return HttpResponse("Proyecto no encontrado", status=404)
+    
+    notes = project.notes.all().order_by('-created')
+    
+    # Si es POST, agregar nueva nota
+    if request.method == 'POST':
+        form = ProjectNoteForm(request.POST)
+        if form.is_valid():
+            note = form.save(commit=False)
+            note.project = project
+            note.user = request.user
+            note.save()
+            return redirect('project_notes', pk=pk)
+    else:
+        form = ProjectNoteForm()
+    
+    context = {
+        'project': project,
+        'notes': notes,
+        'form': form
+    }
+    
+    return render(request, 'project_admin/project_notes.html', context)
+
+
+@login_required
+def add_project_note(request, pk):
+    """Vista AJAX para agregar una nota rápida"""
+    from .models import ProjectNote
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+    
+    try:
+        project = Project.objects.get(pk=pk, user=request.user)
+    except Project.DoesNotExist:
+        return JsonResponse({'error': 'Proyecto no encontrado'}, status=404)
+    
+    try:
+        data = json.loads(request.body)
+        title = data.get('title', '').strip()
+        description = data.get('description', '').strip()
+        
+        if not title or not description:
+            return JsonResponse({'error': 'Título y descripción son requeridos'}, status=400)
+        
+        note = ProjectNote.objects.create(
+            project=project,
+            user=request.user,
+            title=title,
+            description=description
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'note': {
+                'id': note.id,
+                'title': note.title,
+                'description': note.description,
+                'created': note.created.strftime('%d/%m/%Y %H:%M'),
+                'user': note.user.username
+            }
+        })
+    
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'JSON inválido'}, status=400)
+    except Exception as e:
+        logger.error(f"Error creating note: {str(e)}")
+        return JsonResponse({'error': 'Error al crear la nota'}, status=500)
+
+
+@login_required
+def edit_project_note(request, pk, note_id):
+    """Vista para editar una nota"""
+    from .models import ProjectNote
+    from .forms import ProjectNoteForm
+    
+    try:
+        project = Project.objects.get(pk=pk, user=request.user)
+        note = ProjectNote.objects.get(id=note_id, project=project, user=request.user)
+    except (Project.DoesNotExist, ProjectNote.DoesNotExist):
+        return HttpResponse("No encontrado", status=404)
+    
+    if request.method == 'POST':
+        form = ProjectNoteForm(request.POST, instance=note)
+        if form.is_valid():
+            form.save()
+            return redirect('project_notes', pk=pk)
+    else:
+        form = ProjectNoteForm(instance=note)
+    
+    context = {
+        'project': project,
+        'note': note,
+        'form': form,
+        'editing': True
+    }
+    
+    return render(request, 'project_admin/project_notes.html', context)
+
+
+@login_required
+def delete_project_note(request, pk, note_id):
+    """Vista para eliminar una nota"""
+    from .models import ProjectNote
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+    
+    try:
+        project = Project.objects.get(pk=pk, user=request.user)
+        note = ProjectNote.objects.get(id=note_id, project=project, user=request.user)
+        note.delete()
+        
+        return JsonResponse({'success': True})
+    
+    except (Project.DoesNotExist, ProjectNote.DoesNotExist):
+        return JsonResponse({'error': 'No encontrado'}, status=404)
+    except Exception as e:
+        logger.error(f"Error deleting note: {str(e)}")
+        return JsonResponse({'error': 'Error al eliminar la nota'}, status=500)

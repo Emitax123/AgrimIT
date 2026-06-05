@@ -2,7 +2,7 @@ from django import forms
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
 from django.template.defaultfilters import filesizeformat
-from .models import Project
+from .models import Project, ProjectNote
 
 
 # Allowed file types for project uploads sent to Supabase storage.
@@ -92,4 +92,25 @@ class FileFieldForm(forms.Form):
                 f"El archivo supera el tamaño máximo permitido ({filesizeformat(MAX_UPLOAD_SIZE)})."
             )
         return file
+
+
+class ProjectNoteForm(forms.ModelForm):
+    """Formulario para crear y editar notas de proyecto"""
+    class Meta:
+        model = ProjectNote
+        fields = ['title', 'description']
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'placeholder': 'Ej: Visita a campo, Entrega de documentación...',
+                'maxlength': '200'
+            }),
+            'description': forms.Textarea(attrs={
+                'placeholder': 'Describe los detalles del evento o nota...',
+                'rows': 4
+            })
+        }
+        labels = {
+            'title': 'Título',
+            'description': 'Descripción'
+        }
 

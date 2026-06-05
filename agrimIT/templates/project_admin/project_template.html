@@ -19,6 +19,9 @@
         <div><span class="title">{{ project.type|default:"N/A" }}</span><span class="date">{{ project.created|date:"d/m/Y"|default:"N/A" }}</span><span class="id">ID:{{ project.pk|default:"N/A" }} </span>
         <div class="delete-container">
         {% if project.pk %}
+        <a href="{% url 'project_notes' pk=project.pk %}" class="toggle-btn" style="margin-right: 0.5rem; background-color: #6c757d;">
+          📝 Notas
+        </a>
         <a href="{% url 'project_share' project.pk %}" class="toggle-btn green" style="margin-right: 0.5rem;">
           👥 Compartir
         </a>

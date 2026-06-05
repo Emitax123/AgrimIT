@@ -21,4 +21,10 @@ urlpatterns = [
   path('api/log-error/', views.log_frontend_error, name='log_frontend_error'),
   path('generate-test-data/', views.generate_test_data, name='generate_test_data'), 
   path('generate-monthly-summaries/', views.generate_monthly_summaries, name='generate_monthly_summaries'),
+  
+  # Project Notes URLs
+  path('project/<int:pk>/notes/', views.project_notes_view, name='project_notes'),
+  path('project/<int:pk>/notes/add/', views.add_project_note, name='add_project_note'),
+  path('project/<int:pk>/notes/<int:note_id>/edit/', views.edit_project_note, name='edit_project_note'),
+  path('project/<int:pk>/notes/<int:note_id>/delete/', views.delete_project_note, name='delete_project_note'),
 ]

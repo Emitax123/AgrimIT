@@ -126,14 +126,16 @@
     <!-- FIN NAVBAR -->
     <div class="container">
       <div class="fila">
-        {% block index %}
+        {% block content %}
+          {% block index %}
 
-        {% endblock %}
-        {% block form %}
+          {% endblock %}
+          {% block form %}
 
-        {% endblock %}
-        {% block graph %}
+          {% endblock %}
+          {% block graph %}
 
+          {% endblock %}
         {% endblock %}
       </div>
     </div>

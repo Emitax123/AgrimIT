@@ -107,6 +107,31 @@ class ProjectFiles (models.Model):
     class Meta:
         ordering = ['-created']
     
+class ProjectNote(models.Model):
+    """
+    Notas/eventos personalizados que el usuario puede agregar a cada proyecto
+    para llevar un registro detallado de movimientos y eventos importantes.
+    """
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='notes')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='project_notes')
+    title = models.CharField(max_length=200, verbose_name='Título')
+    description = models.TextField(verbose_name='Descripción')
+    created = models.DateTimeField(auto_now_add=True, verbose_name='Fecha')
+    updated = models.DateTimeField(auto_now=True, verbose_name='Última modificación')
+    
+    def __str__(self):
+        return f"{self.title} - {self.project} - {self.created.strftime('%d/%m/%Y')}"
+    
+    class Meta:
+        ordering = ['-created']
+        verbose_name = 'Nota de Proyecto'
+        verbose_name_plural = 'Notas de Proyectos'
+        indexes = [
+            models.Index(fields=['project', '-created']),
+            models.Index(fields=['user', '-created']),
+        ]
+
+
 class Event (models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='events')
     TYPE_CHOICES = (
