@@ -1,6 +1,11 @@
 from django.db import models
+from django.core.validators import RegexValidator
 from apps.users.models import User
 from apps.clients.models import Client
+
+
+# Cadastral "_num" fields are numeric-only (letters live in their "_let" counterparts).
+solo_digitos = RegexValidator(r'^\d*$', 'Solo se permiten números.')
 
 
 class Project (models.Model):
@@ -36,26 +41,26 @@ class Project (models.Model):
     sect= models.CharField(max_length=30, blank=True, verbose_name='Seccion')
     #Partida
     #Si hay chacra no hay quinta y vice
-    chacra_num = models.CharField(max_length=10, blank=True, verbose_name='Numero')
+    chacra_num = models.CharField(max_length=10, blank=True, verbose_name='Numero', validators=[solo_digitos])
     chacra_let= models.CharField(max_length=10, blank=True, verbose_name='Letra')
 
-    quinta_num= models.CharField(max_length=10, blank=True, verbose_name='Numero')
+    quinta_num= models.CharField(max_length=10, blank=True, verbose_name='Numero', validators=[solo_digitos])
     quinta_let= models.CharField(max_length=10, blank=True, verbose_name='Letra')
-    
-    fraccion_num = models.CharField(max_length=10, blank=True, verbose_name='Numero')
+
+    fraccion_num = models.CharField(max_length=10, blank=True, verbose_name='Numero', validators=[solo_digitos])
     fraccion_let = models.CharField(max_length=10, blank=True, verbose_name='Letra')
-    
-    manzana_num= models.CharField(max_length=10, blank=True, verbose_name='Numero')
+
+    manzana_num= models.CharField(max_length=10, blank=True, verbose_name='Numero', validators=[solo_digitos])
     manzana_let= models.CharField(max_length=10, blank=True, verbose_name='Letra')
 
-    parcela_num = models.CharField(max_length=10, blank=True, verbose_name='Numero')
+    parcela_num = models.CharField(max_length=10, blank=True, verbose_name='Numero', validators=[solo_digitos])
     parcela_let = models.CharField(max_length=10, blank=True, verbose_name='Letra')
     
     subparcela = models.CharField(max_length=10, blank=True, verbose_name='Subparcela')
 
 
     street= models.CharField(max_length=50, blank=True, verbose_name='Calle')
-    street_num = models.CharField(max_length=10, blank=True, verbose_name='Numero')
+    street_num = models.CharField(max_length=10, blank=True, verbose_name='Numero', validators=[solo_digitos])
     floor = models.CharField(max_length=10, blank=True, verbose_name='Piso')
     dept = models.CharField(max_length=10, blank=True, verbose_name='Depto')
 
