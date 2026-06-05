@@ -13,11 +13,17 @@ campos de titular/mensura definida en el formulario.
 import csv
 import io
 
+import openpyxl
+
 from .forms import ProjectForm
 from .models import Project
 
 # Líneas que empiezan con este prefijo en el CSV se ignoran (guía/comentarios).
 COMMENT_PREFIX = '#'
+
+# Nombres de las hojas de la plantilla Excel.
+PROJECTS_SHEET = 'Proyectos'
+CLIENTS_SHEET = 'Clientes'
 
 # Valores válidos para mostrar en mensajes y en la guía de la plantilla.
 TIPO_VALUES = [c[0] for c in Project.TYPE_CHOICES]
@@ -98,8 +104,8 @@ FIELD_TO_HEADER = {field: header for header, field in COLUMN_MAP.items()}
 def _form_errors_to_text(form):
     """Aplana los errores de un ProjectForm a un texto legible por fila.
 
-    Usa el nombre de la columna del CSV (ej. ``tipo``) en vez de la etiqueta del
-    modelo, y para ``tipo`` agrega la lista de valores admitidos.
+    Usa el nombre de la columna del archivo (ej. ``tipo``) en vez de la etiqueta
+    del modelo, y para ``tipo`` agrega la lista de valores admitidos.
     """
     parts = []
     for field, error_list in form.errors.items():
@@ -111,8 +117,45 @@ def _form_errors_to_text(form):
     return '; '.join(parts)
 
 
+def _cell_to_str(value):
+    """Convierte una celda de Excel a texto. Los enteros (ej. cliente_id) no
+    deben quedar como '1.0'."""
+    if value is None:
+        return ''
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    return str(value).strip()
+
+
+def _rows_from_upload(uploaded_file):
+    """Devuelve ``(rows, error)`` con las filas del archivo subido (.xlsx o .csv).
+
+    Detecta el formato por la firma de bytes (los .xlsx son ZIP → empiezan con
+    ``PK``). Para Excel lee la hoja "Proyectos" (o la activa). ``error`` es un
+    string si no se pudo leer, o ``None`` si todo bien.
+    """
+    raw = uploaded_file.read()
+
+    if raw[:2] == b'PK':  # archivo Excel (.xlsx)
+        try:
+            wb = openpyxl.load_workbook(io.BytesIO(raw), read_only=True, data_only=True)
+        except Exception:
+            return [], 'No se pudo leer el archivo Excel. Verificá que sea un .xlsx válido.'
+        ws = wb[PROJECTS_SHEET] if PROJECTS_SHEET in wb.sheetnames else wb.active
+        rows = [[_cell_to_str(c) for c in row] for row in ws.iter_rows(values_only=True)]
+        wb.close()
+        return rows, None
+
+    # CSV (UTF-8 con BOM opcional, el que escribe Excel).
+    try:
+        text = raw.decode('utf-8-sig')
+    except UnicodeDecodeError:
+        return [], 'No se pudo leer el archivo. Guardalo como CSV (UTF-8) o como Excel (.xlsx).'
+    return list(csv.reader(io.StringIO(text))), None
+
+
 def parse_and_validate(uploaded_file, clients_by_id):
-    """Parsea y valida un CSV de proyectos.
+    """Parsea y valida una planilla de proyectos (.xlsx o .csv).
 
     Args:
         uploaded_file: el archivo subido (objeto file-like con bytes).
@@ -128,16 +171,9 @@ def parse_and_validate(uploaded_file, clients_by_id):
     valid = []
     errors = []
 
-    # Decodificar (UTF-8 con BOM opcional, el que escribe Excel).
-    try:
-        raw = uploaded_file.read()
-        text = raw.decode('utf-8-sig')
-    except UnicodeDecodeError:
-        return [], [(0, 'No se pudo leer el archivo. Guardalo como CSV con codificación UTF-8.')]
-
-    # Leemos todas las filas con su número de línea original para que el reporte
-    # coincida con lo que el usuario ve en Excel, aun salteando comentarios.
-    rows = list(csv.reader(io.StringIO(text)))
+    rows, read_error = _rows_from_upload(uploaded_file)
+    if read_error:
+        return [], [(0, read_error)]
 
     def _is_comment(row):
         return row and row[0].lstrip().startswith(COMMENT_PREFIX)
@@ -208,3 +244,23 @@ def parse_and_validate(uploaded_file, clients_by_id):
         return [], [(0, 'El archivo no tiene filas de datos.')]
 
     return valid, errors
+
+
+def build_template_xlsx(clients):
+    """Genera la plantilla Excel: hoja "Proyectos" (para cargar) + hoja
+    "Clientes" (referencia ID → Nombre del usuario). Devuelve los bytes del .xlsx.
+    """
+    wb = openpyxl.Workbook()
+
+    ws = wb.active
+    ws.title = PROJECTS_SHEET
+    ws.append(TEMPLATE_HEADERS)
+
+    cs = wb.create_sheet(CLIENTS_SHEET)
+    cs.append([CLIENT_COLUMN, 'Nombre'])
+    for client in clients:
+        cs.append([client.id, client.name])
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()

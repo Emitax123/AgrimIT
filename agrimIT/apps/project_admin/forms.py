@@ -95,10 +95,10 @@ class FileFieldForm(forms.Form):
 
 
 class CsvImportForm(forms.Form):
-    """Subida del CSV para la importación masiva de proyectos."""
+    """Subida del archivo (Excel/CSV) para la importación masiva de proyectos."""
     file_field = forms.FileField(
-        label='Archivo CSV',
-        validators=[FileExtensionValidator(allowed_extensions=['csv'])],
+        label='Archivo (.xlsx o .csv)',
+        validators=[FileExtensionValidator(allowed_extensions=['xlsx', 'csv'])],
     )
 
     def clean_file_field(self):

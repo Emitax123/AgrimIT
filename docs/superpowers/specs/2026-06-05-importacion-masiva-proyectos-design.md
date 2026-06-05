@@ -10,8 +10,8 @@ Decisiones acordadas con el usuario:
 
 - **Solo se importan proyectos.** Los clientes deben existir previamente.
 - Cada fila referencia a su cliente por **ID interno** (`cliente_id`).
-- Se provee una **plantilla CSV descargable** con encabezados fijos → no hace falta paso de mapeo manual de columnas.
-- Formato **CSV** únicamente, con el módulo `csv` de la stdlib (**cero dependencias nuevas**; el proyecto no tiene pandas/openpyxl).
+- Se provee una **plantilla Excel (.xlsx) descargable** con dos hojas: **Proyectos** (encabezados fijos para cargar) y **Clientes** (referencia ID → Nombre del usuario). No hace falta paso de mapeo manual de columnas.
+- La subida acepta **`.xlsx` y `.csv`** (se detecta el formato por la firma de bytes). Usa `openpyxl` para Excel y el módulo `csv` de la stdlib para CSV. **Dependencia agregada: `openpyxl`** (revierte la decisión inicial de "solo CSV", a pedido del usuario para poder tener la lista de clientes en una hoja aparte).
 - Flujo de **un solo paso** (Enfoque A): subir → validar todo → crear solo las filas válidas en una transacción → reportar las inválidas sin abortar el lote.
 
 ## Arquitectura
@@ -35,26 +35,22 @@ Todo vive en `apps/project_admin`. Aislamiento por `request.user` en todo el flu
 ### Componentes
 
 - **`importers.py`** (módulo nuevo, puro: sin HTTP ni DB):
-  - `TEMPLATE_HEADERS`: lista ordenada de encabezados.
-  - `COLUMN_MAP`: dict `encabezado_csv → campo_modelo` (sin `cliente_id`, que se maneja aparte).
-  - `MAX_ROWS = 1000`: tope por lote.
-  - `parse_and_validate(uploaded_file, clients_by_id) -> (valid, errors)`:
-    - Decodifica UTF-8 con BOM (`utf-8-sig`); `csv.DictReader`.
-    - Verifica encabezados requeridos (`tipo`, `cliente_id`); si faltan → error de archivo `(0, motivo)`.
-    - Por fila (numerada desde 2): saltea filas totalmente vacías; resuelve `cliente_id` contra `clients_by_id`; valida el resto con **`ProjectForm`** (reusa los validadores catastrales del Plan 02, exige `type`, hace opcionales `titular_*`/`type_mens`).
-    - Devuelve `valid = [(nro_fila, instancia_sin_guardar_con_client)]` y `errors = [(nro_fila, motivo)]`.
+  - `TEMPLATE_HEADERS`, `COLUMN_MAP` (encabezado → campo, sin `cliente_id`), `FIELD_TO_HEADER` (inverso, para mensajes), `MAX_ROWS = 1000`, `TIPO_VALUES`/`TIPO_MENS_VALUES`, nombres de hoja `PROJECTS_SHEET`/`CLIENTS_SHEET`.
+  - `_rows_from_upload(uploaded_file)`: detecta `.xlsx` (firma `PK`) vs `.csv` y devuelve `(rows, error)` como lista de filas (lista de celdas en texto). Excel: lee la hoja "Proyectos"; CSV: `utf-8-sig` + `csv.reader`.
+  - `parse_and_validate(uploaded_file, clients_by_id) -> (valid, errors)`: ignora líneas de comentario (`#`), detecta el encabezado, verifica columnas requeridas, y por fila resuelve `cliente_id` y valida el resto con **`ProjectForm`** (reusa los validadores catastrales del Plan 02). El número reportado es la **línea/fila real** del archivo.
+  - `build_template_xlsx(clients) -> bytes`: arma el workbook con hoja "Proyectos" (encabezados) + hoja "Clientes" (`cliente_id`, Nombre).
 
-- **`forms.py` → `CsvImportForm`**: `FileField` con `FileExtensionValidator(['csv'])` + límite `MAX_UPLOAD_SIZE`, espejando el `FileFieldForm` existente.
+- **`forms.py` → `CsvImportForm`**: `FileField` con `FileExtensionValidator(['xlsx', 'csv'])` + límite `MAX_UPLOAD_SIZE`.
 
 - **`views.py`**:
   - `import_view(request)`: GET muestra la pantalla; POST commitea las válidas y arma el reporte. Setea `instance.user = request.user` antes de guardar.
-  - `import_template_csv(request)`: `HttpResponse` `text/csv` con `Content-Disposition: attachment`, BOM para Excel y la fila de encabezados.
+  - `import_template_csv(request)`: devuelve el `.xlsx` generado por `build_template_xlsx` con los clientes del usuario.
 
-- **`urls.py`**: `projects/import/` → `import_view`; `projects/import/template/` → `import_template_csv`.
+- **`urls.py`**: `projects/import/` → `import_view`; `projects/import/template/` → `import_template_csv` (descarga `.xlsx`).
 
-- **Templates**: `project_admin/import_form.html` (instrucciones + descarga + tabla de clientes + subida) y `project_admin/import_result.html` (resumen + tabla de errores).
+- **Templates**: `project_admin/import_form.html` (instrucciones + callout resaltado de valores válidos + descarga; **sin** tabla de clientes, que ahora vive en la hoja "Clientes") y `project_admin/import_result.html` (resumen + tabla de errores).
 
-- **UI**: botón "📥 Importar proyectos" en el listado de proyectos; mostrar el ID en el listado de clientes (`clients_template.html`) para que el usuario conozca los `cliente_id`.
+- **UI**: botón "📥 Importar proyectos" en el listado de proyectos. (El ID del cliente se ve en la hoja "Clientes" de la plantilla; también se muestra en el listado de clientes.)
 
 ## Mapeo de columnas
 

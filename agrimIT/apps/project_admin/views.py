@@ -1,4 +1,3 @@
-import csv
 import io
 import time
 from django.utils import timezone
@@ -18,7 +17,8 @@ from apps.accounting.views import create_acc_entry, create_account, get_or_creat
 from apps.clients.models import Client
 from apps.project_admin.forms import CsvImportForm, FileFieldForm, ProjectForm, ProjectFullForm
 from apps.project_admin.importers import (
-    TEMPLATE_HEADERS, TIPO_MENS_VALUES, TIPO_VALUES, parse_and_validate,
+    TEMPLATE_HEADERS, TIPO_MENS_VALUES, TIPO_VALUES,
+    build_template_xlsx, parse_and_validate,
 )
 from apps.project_admin.models import Event, Project, ProjectFiles
 from apps.accounting.models import Account, MonthlyFinancialSummary
@@ -162,34 +162,24 @@ def duplicate_view(request: HttpRequest, pk: int) -> HttpResponse:
     # Open the edit form so the user can adjust what changes (e.g. la parcela).
     return redirect('fullmodification', pk=new_pk)
 
-#Descarga de la plantilla CSV para importacion masiva
+#Descarga de la plantilla Excel para importacion masiva
 @login_required
 def import_template_csv(request: HttpRequest) -> HttpResponse:
-    """ Return the fixed-header CSV template for the bulk project import. """
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="plantilla_proyectos.csv"'
-    # BOM so Excel opens the CSV as UTF-8.
-    response.write('﻿')
-    writer = csv.writer(response)
-    # Líneas de guía (las que empiezan con '#' las ignora el importador).
-    # Sin comas, para que Excel no las entrecomille al reguardar el archivo.
-    for line in [
-        '# Plantilla de importacion de proyectos - AgrimIT',
-        '# No borres la fila de encabezados. Las lineas que empiezan con # se ignoran al importar.',
-        '# Obligatorios: tipo y cliente_id. El resto es opcional.',
-        '# tipo: ' + ' / '.join(TIPO_VALUES),
-        '# tipo_mensura (solo si tipo=Mensura): ' + ' / '.join(TIPO_MENS_VALUES),
-        '# cliente_id: ID interno del cliente (lo ves en la pagina de importacion y en el listado de clientes)',
-        '# Los campos _num (chacra_num, parcela_num, etc.) admiten solo numeros.',
-    ]:
-        writer.writerow([line])
-    writer.writerow(TEMPLATE_HEADERS)
+    """ Return the bulk-import Excel template: a "Proyectos" sheet to fill in and
+    a "Clientes" sheet with the user's clients (ID -> Nombre) for reference. """
+    clients = Client.objects.filter(user=request.user).order_by('name')
+    content = build_template_xlsx(clients)
+    response = HttpResponse(
+        content,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = 'attachment; filename="plantilla_proyectos.xlsx"'
     return response
 
-#Importacion masiva de proyectos desde CSV
+#Importacion masiva de proyectos (Excel/CSV)
 @login_required
 def import_view(request: HttpRequest) -> HttpResponse:
-    """ Bulk-import projects from a CSV file.
+    """ Bulk-import projects from an Excel/CSV file.
 
     Validates every row, then creates only the valid ones inside a single
     transaction and reports the rejected rows without aborting the batch.
