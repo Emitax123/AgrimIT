@@ -17,7 +17,9 @@ from django.conf import settings
 from apps.accounting.views import create_acc_entry, create_account, get_or_create_account
 from apps.clients.models import Client
 from apps.project_admin.forms import CsvImportForm, FileFieldForm, ProjectForm, ProjectFullForm
-from apps.project_admin.importers import TEMPLATE_HEADERS, parse_and_validate
+from apps.project_admin.importers import (
+    TEMPLATE_HEADERS, TIPO_MENS_VALUES, TIPO_VALUES, parse_and_validate,
+)
 from apps.project_admin.models import Event, Project, ProjectFiles
 from apps.accounting.models import Account, MonthlyFinancialSummary
 from django.db.models import Q
@@ -169,6 +171,18 @@ def import_template_csv(request: HttpRequest) -> HttpResponse:
     # BOM so Excel opens the CSV as UTF-8.
     response.write('﻿')
     writer = csv.writer(response)
+    # Líneas de guía (las que empiezan con '#' las ignora el importador).
+    # Sin comas, para que Excel no las entrecomille al reguardar el archivo.
+    for line in [
+        '# Plantilla de importacion de proyectos - AgrimIT',
+        '# No borres la fila de encabezados. Las lineas que empiezan con # se ignoran al importar.',
+        '# Obligatorios: tipo y cliente_id. El resto es opcional.',
+        '# tipo: ' + ' / '.join(TIPO_VALUES),
+        '# tipo_mensura (solo si tipo=Mensura): ' + ' / '.join(TIPO_MENS_VALUES),
+        '# cliente_id: ID interno del cliente (lo ves en la pagina de importacion y en el listado de clientes)',
+        '# Los campos _num (chacra_num, parcela_num, etc.) admiten solo numeros.',
+    ]:
+        writer.writerow([line])
     writer.writerow(TEMPLATE_HEADERS)
     return response
 
@@ -212,6 +226,8 @@ def import_view(request: HttpRequest) -> HttpResponse:
         'form': form,
         'clients': clients,
         'headers': TEMPLATE_HEADERS,
+        'tipo_values': TIPO_VALUES,
+        'tipo_mens_values': TIPO_MENS_VALUES,
     })
 
 #Archivado de proyectos

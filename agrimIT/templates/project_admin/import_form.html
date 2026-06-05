@@ -11,8 +11,16 @@
       <li>Guardá el archivo como CSV (UTF-8) y subilo. Se crearán solo las filas válidas; las demás se reportan con su motivo.</li>
     </ol>
 
-    <p><strong>tipo</strong> debe ser uno de: Estado Parcelario, Mensura, Amojonamiento, Relevamiento, Legajo Parcelario.
-       Los campos <em>_num</em> de la nomenclatura admiten solo números.</p>
+    <div style="background: #f6f8fa; border: 1px solid #e1e4e8; border-radius: 6px; padding: 0.75rem 1rem; margin: 1rem 0;">
+      <p style="margin: 0 0 0.4rem;"><strong>Formato de las columnas obligatorias:</strong></p>
+      <ul style="margin: 0; padding-left: 1.2rem; line-height: 1.6;">
+        <li><strong>tipo</strong> — uno de: {% for v in tipo_values %}<code>{{ v }}</code>{% if not forloop.last %}, {% endif %}{% endfor %}.</li>
+        <li><strong>cliente_id</strong> — el ID interno de un cliente tuyo (ver la tabla de abajo).</li>
+        <li><strong>tipo_mensura</strong> (opcional, solo si <code>tipo=Mensura</code>) — uno de: {% for v in tipo_mens_values %}<code>{{ v }}</code>{% if not forloop.last %}, {% endif %}{% endfor %}.</li>
+        <li>Los campos <em>_num</em> de la nomenclatura admiten <strong>solo números</strong>.</li>
+      </ul>
+      <p style="margin: 0.5rem 0 0; color: #666; font-size: 0.9rem;">La plantilla descargada incluye estas indicaciones como comentarios (líneas que empiezan con <code>#</code>); el importador las ignora.</p>
+    </div>
 
     <div style="margin: 1rem 0;">
       <a href="{% url 'import_projects_template' %}" class="toggle-btn active">⬇️ Descargar plantilla CSV</a>

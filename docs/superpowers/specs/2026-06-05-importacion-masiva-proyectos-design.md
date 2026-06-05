@@ -72,8 +72,10 @@ Columnas extra en el archivo se ignoran; columnas opcionales faltantes se toman 
 
 ## Manejo de errores y casos borde
 
+- Los mensajes por fila **nombran la columna del CSV** (ej. `tipo: ...`, `chacra_num: ...`) y para `tipo` listan los valores válidos. El número reportado es la **línea real del archivo** (cuenta comentarios y filas en blanco).
+- La plantilla descargada incluye una **guía embebida** como líneas `#` (valores válidos de `tipo`/`tipo_mensura`, obligatorios, etc.). El importador ignora toda línea que empiece con `#`; las líneas de guía no llevan comas para sobrevivir el reguardado de Excel.
 - `cliente_id` ajeno/inexistente/no numérico → `cliente N no encontrado` (no expone datos de otros usuarios).
-- `tipo` fuera de choices, `_num` no numérico, `nro_tramite` no entero → motivo claro por fila (prefijado con la etiqueta del campo).
+- `tipo` fuera de choices, `_num` no numérico, `nro_tramite` no entero → motivo claro por fila (prefijado con el nombre de la columna).
 - Archivo vacío o sin filas de datos → aviso; fila totalmente vacía → se saltea; encoding inválido → mensaje amigable; más de `MAX_ROWS` filas → se procesan las primeras y se avisa.
 - El commit es transaccional pero solo sobre las filas válidas; las inválidas nunca abortan el lote.
 
