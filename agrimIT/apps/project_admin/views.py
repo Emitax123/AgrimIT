@@ -121,6 +121,43 @@ def delete_view(request: HttpRequest, pk: int) -> HttpResponse:
         logger.error(f"Project with pk {pk} does not exist for current user.")
         return redirect('index')
 
+#Duplicacion de proyecto
+@login_required
+@transaction.atomic
+def duplicate_view(request: HttpRequest, pk: int) -> HttpResponse:
+    """ Duplicate a project (same client/user, fresh empty account, no movements).
+
+    Agrimensores often load several projects from the same area with almost
+    identical nomenclature. This clones the source project so the user only
+    edits the delta. POST-only since it mutates state.
+    """
+    if request.method != 'POST':
+        return redirect('projectview', pk=pk)
+    try:
+        project = Project.objects.filter(user=request.user).get(pk=pk)
+    except Project.DoesNotExist:
+        logger.error(f"User {request.user.id} tried to duplicate project {pk} which doesn't exist or isn't theirs.")
+        return redirect('projects')
+
+    # Clone the instance: new PK, no account/movements, not archived.
+    project.pk = None
+    project.account = None
+    project.closed = False
+    project.save()
+    new_pk = project.pk
+
+    # Give the copy its own empty account (zeroed, no movements).
+    create_account(new_pk)
+    save_in_history(new_pk, 'newp', "Proyecto duplicado", request.user)
+
+    logger.info("Project duplicated", extra={
+        'user_id': request.user.id,
+        'source_project_id': pk,
+        'new_project_id': new_pk,
+    })
+    # Open the edit form so the user can adjust what changes (e.g. la parcela).
+    return redirect('fullmodification', pk=new_pk)
+
 #Archivado de proyectos
 @login_required
 @transaction.atomic

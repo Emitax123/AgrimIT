@@ -8,6 +8,7 @@ urlpatterns = [
   path('listprojectstype/<int:type>', views.projectlistfortype_view, name = 'projectslisttype'),
   path('create/', views.create_view, name = 'create'),
   path('delete/<int:pk>', views.delete_view, name = 'delete'),
+  path('project/duplicate/<int:pk>', views.duplicate_view, name='duplicate'),
   path('close/<int:pk>', views.close_view, name = 'close'),
   path('upload/<int:pk>', views.upload_files, name= 'upload'),
   path('download/<int:pk>/', views.download_file, name='download'),

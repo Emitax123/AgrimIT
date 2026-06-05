@@ -1,6 +1,6 @@
 
 from django.db import DatabaseError, transaction
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 import logging
 logger = logging.getLogger(__name__)
@@ -158,6 +158,23 @@ def create_for_client(request: HttpRequest, pk: int) -> HttpResponse:
                     error_message = error.message    
     form = ProjectForm()
     return render (request, 'clients/project_for_client.html', {'form':form})
+
+#Datos de un cliente en JSON para autocompletar el formulario de proyecto
+@login_required
+def client_json(request: HttpRequest, pk: int) -> JsonResponse:
+    """Return a single client's data as JSON, scoped to the current user.
+
+    Used by the project form to autofill the client fields when one is
+    selected from the dropdown. A client owned by another user yields 404.
+    """
+    client = get_object_or_404(Client, pk=pk, user=request.user)
+    return JsonResponse({
+        'name': client.name,
+        'phone': client.phone,
+        'email': client.email,
+        'id_type': client.id_type,
+        'id_number': client.id_number,
+    })
 
 #Remover un cliente de la lista de clientes en formulario de creacion
 @login_required

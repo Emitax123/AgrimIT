@@ -15,16 +15,16 @@ Tareas ordenadas por relación impacto/esfuerzo.
 ### 4.1 Autocompletar datos del cliente al seleccionarlo — esfuerzo bajo
 Hoy el dropdown de clientes (`form.html`) solo deshabilita inputs manuales.
 
-- [ ] Crear endpoint JSON `clients/<pk>/json/` que devuelva `name`, `phone`, `email`, `id_type`, `id_number`
-- [ ] Filtrar **siempre** por `user=request.user`
-- [ ] Script que rellene los campos del form al seleccionar un cliente
+- [x] Crear endpoint JSON `clients/<pk>/json/` que devuelva `name`, `phone`, `email`, `id_type`, `id_number`
+- [x] Filtrar **siempre** por `user=request.user`
+- [x] Script que rellene los campos del form al seleccionar un cliente
 
 ### 4.2 Duplicar / clonar proyecto — esfuerzo bajo-medio
 Los agrimensores cargan varios proyectos de la misma zona con nomenclatura casi idéntica (cambia la parcela).
 
-- [ ] Acción "Duplicar" que copie un `Project` (sin su `Account` ni movimientos, o con `Account` vacío)
-- [ ] Ruta nueva + vista que clone la instancia (`pk=None`, `save()`)
-- [ ] Abrir el form de edición con el delta para ajustar lo que cambia
+- [x] Acción "Duplicar" que copie un `Project` (sin su `Account` ni movimientos, o con `Account` vacío)
+- [x] Ruta nueva + vista que clone la instancia (`pk=None`, `save()`)
+- [x] Abrir el form de edición con el delta para ajustar lo que cambia
 
 ### 4.3 Importación masiva CSV/Excel — esfuerzo medio, MAYOR multiplicador
 La mejora de mayor impacto en tiempo. Aplica a `Project`, `Client` y `AccountMovement`.
@@ -49,9 +49,9 @@ La mejora de mayor impacto en tiempo. Aplica a `Project`, `Client` y `AccountMov
 ### 4.6 Carga financiera más rápida — esfuerzo bajo
 **Archivo:** `account_form.html`
 
-- [ ] Botones de monto rápido
-- [ ] Fecha por defecto = hoy
-- [ ] Mostrar en cabecera el contexto del proyecto (cliente + nomenclatura)
+- [x] Botones de monto rápido (aditivos + botón Limpiar)
+- [ ] ~~Fecha por defecto = hoy~~ — N/A: `AccountMovement.created_at` es `auto_now_add`, no hay input de fecha editable
+- [x] Mostrar en cabecera el contexto del proyecto (cliente + nomenclatura)
 
 ---
 
