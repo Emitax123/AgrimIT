@@ -13,7 +13,7 @@ class UserAdmin(BaseUserAdmin):
         'email', 
         'first_name', 
         'last_name', 
-        'hone_number',
+        'phone_number',
         'is_active', 
         'is_staff', 
         'date_joined'
@@ -22,13 +22,13 @@ class UserAdmin(BaseUserAdmin):
     # Add custom fields to the existing fieldsets
     fieldsets = BaseUserAdmin.fieldsets + (
         ('Additional Info', {
-            'fields': ('hone_number',)
+            'fields': ('phone_number',)
         }),
     )
     
     # Add custom fields to the add user form
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
         ('Additional Info', {
-            'fields': ('first_name', 'last_name', 'email', 'hone_number')
+            'fields': ('first_name', 'last_name', 'email', 'phone_number')
         }),
     )

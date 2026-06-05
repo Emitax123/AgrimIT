@@ -42,10 +42,10 @@ Bugs de seguridad (IDOR, decoradores, validación de archivos) y errores de cál
 ### [Plan 02 — Validación de formularios](02-validaciones.md)
 Montos validados, `ClientForm` sin exponer `user`, validadores catastrales, typo `phone_number`.
 
-- [ ] Montos como `DecimalField` + rango en `mod_view`
-- [ ] `ClientForm` con `exclude` + asignar `user` en vista
-- [ ] Validadores de nomenclatura catastral en `Project`
-- [ ] Typo `hone_number` → `phone_number` + `RenameField`
+- [x] Montos como `DecimalField` + rango en `mod_view`
+- [x] `ClientForm` con `exclude` + asignar `user` en vista
+- [x] Validadores de nomenclatura catastral en `Project`
+- [x] Typo `hone_number` → `phone_number` + `RenameField`
 
 ### [Plan 03 — Agilizar la carga de datos](03-carga-de-datos.md)
 **Prioridad del usuario.** Autocompletado, duplicación, importación masiva, cliente inline.

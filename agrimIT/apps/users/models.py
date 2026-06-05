@@ -5,7 +5,7 @@ from django.contrib.auth.models import AbstractUser
 class User(AbstractUser):
     first_name = models.CharField(max_length=30, blank=True, verbose_name='First Name')
     last_name = models.CharField(max_length=30, blank=True, verbose_name='Last Name')
-    hone_number = models.CharField(max_length=15, blank=True, verbose_name='Teléfono')
+    phone_number = models.CharField(max_length=15, blank=True, verbose_name='Teléfono')
     is_active = models.BooleanField(default=True, verbose_name='Is Active')
     is_staff = models.BooleanField(default=False, verbose_name='Is Staff')
 

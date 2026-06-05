@@ -26,8 +26,12 @@ from .supabase_client import supabase
 import random
 from datetime import datetime, timedelta
 
+# Maximum absolute amount accepted for monetary fields.
+# Account.* fields are DecimalField(max_digits=20, decimal_places=2) -> 18 integer digits.
+MAX_AMOUNT = Dec('9' * 18 + '.99')
+
 # Create your views here.
-def paginate_queryset(request: HttpRequest, queryset, per_page=12) -> tuple: 
+def paginate_queryset(request: HttpRequest, queryset, per_page=12) -> tuple:
     """Paginate any queryset and handle pagination errors"""
     num_page = request.GET.get('page')
     paginator = Paginator(queryset, per_page)
@@ -355,36 +359,43 @@ def mod_view(request: HttpRequest, pk: int) -> HttpResponse:
                 project_instance.inscription_type = request.POST.get('insctype')
             if request.POST.get('price'):
                 try:
-                    previous_price = project_instance.account.estimated
-                    msg = f"Se establecio el presupuesto del proyecto {project_instance.pk}"
-                    create_acc_entry(project_instance, 'est', previous_price, Dec(request.POST.get('price')))
+                    newprice_asdecimal = Dec(request.POST.get('price'))
                 except (InvalidOperation, ValueError, TypeError):
                     logger.warning(f"Invalid 'price' for project {project_instance.pk}: {request.POST.get('price')!r}")
                     return render(request, 'project_admin/project_template.html', {'error': 'El presupuesto ingresado no es un monto válido.'})
+                if newprice_asdecimal < 0 or newprice_asdecimal > MAX_AMOUNT:
+                    return render(request, 'project_admin/project_template.html', {'error': 'El presupuesto debe ser un monto positivo dentro del rango permitido.'})
+                previous_price = project_instance.account.estimated
+                msg = f"Se establecio el presupuesto del proyecto {project_instance.pk}"
+                create_acc_entry(project_instance, 'est', previous_price, newprice_asdecimal)
             if request.POST.get('adv'):
                 try:
                     newadv_asdecimal = Dec(request.POST.get('adv'))
-                    previous_adv = project_instance.account.advance
-                    if newadv_asdecimal < 0:
-                        msg = f"Se devolvieron ${abs(newadv_asdecimal)} del proyecto {project_instance.pk}"
-                    else:
-                        msg = f"Se cobraron ${newadv_asdecimal} del proyecto {project_instance.pk}"
-                    create_acc_entry(project_instance, 'adv', previous_adv, newadv_asdecimal)
                 except (InvalidOperation, ValueError, TypeError):
                     logger.warning(f"Invalid 'adv' for project {project_instance.pk}: {request.POST.get('adv')!r}")
                     return render(request, 'project_admin/project_template.html', {'error': 'El anticipo ingresado no es un monto válido.'})
+                if abs(newadv_asdecimal) > MAX_AMOUNT:
+                    return render(request, 'project_admin/project_template.html', {'error': 'El anticipo excede el rango permitido.'})
+                previous_adv = project_instance.account.advance
+                if newadv_asdecimal < 0:
+                    msg = f"Se devolvieron ${abs(newadv_asdecimal)} del proyecto {project_instance.pk}"
+                else:
+                    msg = f"Se cobraron ${newadv_asdecimal} del proyecto {project_instance.pk}"
+                create_acc_entry(project_instance, 'adv', previous_adv, newadv_asdecimal)
             if request.POST.get('gasto'):
                 try:
                     newgasto_asdecimal = Dec(request.POST.get('gasto'))
-                    previous_gasto = project_instance.account.expense
-                    if newgasto_asdecimal < 0:
-                        msg = f"Se redujo ${abs(newgasto_asdecimal)} el gasto del proyecto {project_instance.pk}"
-                    else:
-                        msg = f"Se debitaron ${newgasto_asdecimal} al proyecto {project_instance.pk}"
-                    create_acc_entry(project_instance, 'exp', previous_gasto, newgasto_asdecimal)
                 except (InvalidOperation, ValueError, TypeError):
                     logger.warning(f"Invalid 'gasto' for project {project_instance.pk}: {request.POST.get('gasto')!r}")
                     return render(request, 'project_admin/project_template.html', {'error': 'El gasto ingresado no es un monto válido.'})
+                if abs(newgasto_asdecimal) > MAX_AMOUNT:
+                    return render(request, 'project_admin/project_template.html', {'error': 'El gasto excede el rango permitido.'})
+                previous_gasto = project_instance.account.expense
+                if newgasto_asdecimal < 0:
+                    msg = f"Se redujo ${abs(newgasto_asdecimal)} el gasto del proyecto {project_instance.pk}"
+                else:
+                    msg = f"Se debitaron ${newgasto_asdecimal} al proyecto {project_instance.pk}"
+                create_acc_entry(project_instance, 'exp', previous_gasto, newgasto_asdecimal)
 
 
             project_instance.save()
