@@ -34,7 +34,7 @@ La mejora de mayor impacto en tiempo. Aplica a `Project`, `Client` y `AccountMov
 - [x] Validación fila por fila (reusa `ProjectForm`) + reporte de resultado (Enfoque A, sin paso de preview)
 - [x] Commit transaccional (solo filas válidas)
 - [x] Reportar filas con error sin abortar todo el lote
-- [x] Usar `csv` stdlib (cero dependencias nuevas)
+- [x] Plantilla Excel (.xlsx) de 2 hojas (Proyectos + Clientes); subida acepta .xlsx y .csv (`openpyxl` + `csv` stdlib)
 
 **Alcance:** solo proyectos; clientes pre-existentes referenciados por ID interno (`cliente_id`). Ver spec en `docs/superpowers/specs/2026-06-05-importacion-masiva-proyectos-design.md`.
 

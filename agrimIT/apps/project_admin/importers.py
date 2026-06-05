@@ -13,7 +13,21 @@ campos de titular/mensura definida en el formulario.
 import csv
 import io
 
+import openpyxl
+
 from .forms import ProjectForm
+from .models import Project
+
+# Líneas que empiezan con este prefijo en el CSV se ignoran (guía/comentarios).
+COMMENT_PREFIX = '#'
+
+# Nombres de las hojas de la plantilla Excel.
+PROJECTS_SHEET = 'Proyectos'
+CLIENTS_SHEET = 'Clientes'
+
+# Valores válidos para mostrar en mensajes y en la guía de la plantilla.
+TIPO_VALUES = [c[0] for c in Project.TYPE_CHOICES]
+TIPO_MENS_VALUES = [c[0] for c in Project.MENS_CHOICES]
 
 # Columna que identifica al cliente por su ID interno. Se valida aparte porque
 # ``ProjectForm`` excluye el campo ``client`` (lo asigna la vista).
@@ -82,18 +96,66 @@ REQUIRED_HEADERS = ['tipo', CLIENT_COLUMN]
 # Tope de filas de datos por lote, para evitar abusos.
 MAX_ROWS = 1000
 
+# Inverso de COLUMN_MAP: campo del modelo -> encabezado CSV, para que los errores
+# nombren la columna del archivo (ej. "tipo") en vez de la etiqueta del modelo.
+FIELD_TO_HEADER = {field: header for header, field in COLUMN_MAP.items()}
+
 
 def _form_errors_to_text(form):
-    """Aplana los errores de un ProjectForm a un texto legible por fila."""
+    """Aplana los errores de un ProjectForm a un texto legible por fila.
+
+    Usa el nombre de la columna del archivo (ej. ``tipo``) en vez de la etiqueta
+    del modelo, y para ``tipo`` agrega la lista de valores admitidos.
+    """
     parts = []
     for field, error_list in form.errors.items():
-        label = form.fields[field].label if field in form.fields else field
-        parts.append(f"{label}: {' '.join(error_list)}")
+        column = FIELD_TO_HEADER.get(field, field)
+        msg = f"{column}: {' '.join(error_list)}"
+        if field == 'type':
+            msg += f" (valores válidos: {', '.join(TIPO_VALUES)})"
+        parts.append(msg)
     return '; '.join(parts)
 
 
+def _cell_to_str(value):
+    """Convierte una celda de Excel a texto. Los enteros (ej. cliente_id) no
+    deben quedar como '1.0'."""
+    if value is None:
+        return ''
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    return str(value).strip()
+
+
+def _rows_from_upload(uploaded_file):
+    """Devuelve ``(rows, error)`` con las filas del archivo subido (.xlsx o .csv).
+
+    Detecta el formato por la firma de bytes (los .xlsx son ZIP → empiezan con
+    ``PK``). Para Excel lee la hoja "Proyectos" (o la activa). ``error`` es un
+    string si no se pudo leer, o ``None`` si todo bien.
+    """
+    raw = uploaded_file.read()
+
+    if raw[:2] == b'PK':  # archivo Excel (.xlsx)
+        try:
+            wb = openpyxl.load_workbook(io.BytesIO(raw), read_only=True, data_only=True)
+        except Exception:
+            return [], 'No se pudo leer el archivo Excel. Verificá que sea un .xlsx válido.'
+        ws = wb[PROJECTS_SHEET] if PROJECTS_SHEET in wb.sheetnames else wb.active
+        rows = [[_cell_to_str(c) for c in row] for row in ws.iter_rows(values_only=True)]
+        wb.close()
+        return rows, None
+
+    # CSV (UTF-8 con BOM opcional, el que escribe Excel).
+    try:
+        text = raw.decode('utf-8-sig')
+    except UnicodeDecodeError:
+        return [], 'No se pudo leer el archivo. Guardalo como CSV (UTF-8) o como Excel (.xlsx).'
+    return list(csv.reader(io.StringIO(text))), None
+
+
 def parse_and_validate(uploaded_file, clients_by_id):
-    """Parsea y valida un CSV de proyectos.
+    """Parsea y valida una planilla de proyectos (.xlsx o .csv).
 
     Args:
         uploaded_file: el archivo subido (objeto file-like con bytes).
@@ -109,37 +171,49 @@ def parse_and_validate(uploaded_file, clients_by_id):
     valid = []
     errors = []
 
-    # Decodificar (UTF-8 con BOM opcional, el que escribe Excel).
-    try:
-        raw = uploaded_file.read()
-        text = raw.decode('utf-8-sig')
-    except UnicodeDecodeError:
-        return [], [(0, 'No se pudo leer el archivo. Guardalo como CSV con codificación UTF-8.')]
+    rows, read_error = _rows_from_upload(uploaded_file)
+    if read_error:
+        return [], [(0, read_error)]
 
-    reader = csv.DictReader(io.StringIO(text))
+    def _is_comment(row):
+        return row and row[0].lstrip().startswith(COMMENT_PREFIX)
 
-    if not reader.fieldnames:
+    # El encabezado es la primera línea no vacía y no comentada.
+    header = None
+    header_line = 0
+    for idx, row in enumerate(rows, start=1):
+        if not row or _is_comment(row) or not any(c.strip() for c in row):
+            continue
+        header = [h.strip() for h in row]
+        header_line = idx
+        break
+
+    if header is None:
         return [], [(0, 'El archivo está vacío o no tiene encabezados.')]
 
-    headers = {h.strip() for h in reader.fieldnames if h}
-    missing = [h for h in REQUIRED_HEADERS if h not in headers]
+    missing = [h for h in REQUIRED_HEADERS if h not in header]
     if missing:
         return [], [(0, f"Faltan columnas requeridas: {', '.join(missing)}. "
                         f"Descargá la plantilla para usar el formato correcto.")]
 
     data_rows = 0
-    # enumerate desde 2: fila 1 es el encabezado.
-    for row_num, row in enumerate(reader, start=2):
-        # Normalizar valores (None -> '' y trim).
-        values = {(k or '').strip(): (v or '').strip() for k, v in row.items()}
+    for idx in range(header_line, len(rows)):
+        row = rows[idx]
+        line_num = idx + 1  # número de línea real en el archivo (1-based)
+
+        if _is_comment(row):
+            continue
+
+        # Mapear encabezado -> valor (zip tolera filas con columnas de más/menos).
+        values = {h: (v or '').strip() for h, v in zip(header, row)}
 
         # Saltear filas completamente vacías.
-        if not any(values.get(h) for h in TEMPLATE_HEADERS):
+        if not any(values.get(h) for h in header):
             continue
 
         data_rows += 1
         if data_rows > MAX_ROWS:
-            errors.append((row_num, f"Se superó el tope de {MAX_ROWS} filas; el resto se ignoró."))
+            errors.append((line_num, f"Se superó el tope de {MAX_ROWS} filas; el resto se ignoró."))
             break
 
         # Resolver el cliente por ID interno.
@@ -147,7 +221,7 @@ def parse_and_validate(uploaded_file, clients_by_id):
         try:
             client = clients_by_id[int(client_raw)]
         except (ValueError, KeyError):
-            errors.append((row_num, f"cliente «{client_raw or '(vacío)'}» no encontrado."))
+            errors.append((line_num, f"cliente «{client_raw or '(vacío)'}» no encontrado."))
             continue
 
         # Construir los datos del proyecto y validarlos con ProjectForm.
@@ -162,11 +236,31 @@ def parse_and_validate(uploaded_file, clients_by_id):
             instance.client = client
             instance.account = None
             instance.closed = False
-            valid.append((row_num, instance))
+            valid.append((line_num, instance))
         else:
-            errors.append((row_num, _form_errors_to_text(form)))
+            errors.append((line_num, _form_errors_to_text(form)))
 
     if data_rows == 0 and not errors:
         return [], [(0, 'El archivo no tiene filas de datos.')]
 
     return valid, errors
+
+
+def build_template_xlsx(clients):
+    """Genera la plantilla Excel: hoja "Proyectos" (para cargar) + hoja
+    "Clientes" (referencia ID → Nombre del usuario). Devuelve los bytes del .xlsx.
+    """
+    wb = openpyxl.Workbook()
+
+    ws = wb.active
+    ws.title = PROJECTS_SHEET
+    ws.append(TEMPLATE_HEADERS)
+
+    cs = wb.create_sheet(CLIENTS_SHEET)
+    cs.append([CLIENT_COLUMN, 'Nombre'])
+    for client in clients:
+        cs.append([client.id, client.name])
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
