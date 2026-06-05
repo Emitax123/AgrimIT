@@ -1,0 +1,38 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% block form %}
+  <div class="container-form" style="max-width: 820px; margin: 0 auto; padding: 1rem;">
+    <span class="form-title">Resultado de la importación</span>
+
+    <p style="font-size: 1.1rem; margin: 1rem 0;">
+      ✅ <strong>{{ created }}</strong> proyecto{{ created|pluralize:"s" }} creado{{ created|pluralize:"s" }}.
+      {% if errors %}
+        · ⚠️ <strong>{{ errors|length }}</strong> fila{{ errors|length|pluralize:"s" }} con error.
+      {% endif %}
+    </p>
+
+    {% if errors %}
+      <h4>Filas no importadas</h4>
+      <table style="width: 100%; border-collapse: collapse; margin-top: 0.5rem;">
+        <thead>
+          <tr><th style="text-align: left; border-bottom: 1px solid #ccc; padding: 4px; width: 80px;">Fila</th>
+              <th style="text-align: left; border-bottom: 1px solid #ccc; padding: 4px;">Motivo</th></tr>
+        </thead>
+        <tbody>
+          {% for row_num, reason in errors %}
+            <tr>
+              <td style="padding: 4px; vertical-align: top;">{% if row_num %}{{ row_num }}{% else %}—{% endif %}</td>
+              <td style="padding: 4px; color: #c0392b;">{{ reason }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p style="margin-top: 1rem; color: #666;">Corregí esas filas en el archivo y volvé a subirlo.</p>
+    {% endif %}
+
+    <div style="margin-top: 1.5rem;">
+      <a href="{% url 'import_projects' %}" class="toggle-btn active">Importar otro archivo</a>
+      <a href="{% url 'projects' %}" class="toggle-btn" style="margin-left: 0.5rem;">Ver proyectos</a>
+    </div>
+  </div>
+{% endblock %}

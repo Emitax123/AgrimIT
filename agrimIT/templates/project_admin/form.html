@@ -431,18 +431,31 @@
       // Real-time validation when client list changes
       clientList.addEventListener('change', function () {
         if (this.value !== '') {
-          // Client selected, clear and disable manual inputs
-          clientNameInput.value = ''
-          clientPhoneInput.value = ''
+          // Client selected: autofill (read-only display) and disable manual inputs
           clientNameInput.disabled = true
           clientPhoneInput.disabled = true
-    
+
           // Remove any errors
           removeError(clientNameInput)
           removeError(clientPhoneInput)
           removeError(clientList)
+
+          // Fetch the selected client's data (scoped to current user) and autofill
+          fetch(`/clients/${this.value}/json/`)
+            .then((response) => (response.ok ? response.json() : null))
+            .then((data) => {
+              if (data) {
+                clientNameInput.value = data.name || ''
+                clientPhoneInput.value = data.phone || ''
+              }
+            })
+            .catch(() => {
+              // Silent failure: the pk is still submitted via the dropdown
+            })
         } else {
-          // No client selected, enable manual inputs
+          // No client selected: clear and re-enable manual inputs
+          clientNameInput.value = ''
+          clientPhoneInput.value = ''
           clientNameInput.disabled = false
           clientPhoneInput.disabled = false
         }

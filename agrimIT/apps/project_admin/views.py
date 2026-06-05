@@ -1,3 +1,4 @@
+import csv
 import io
 import time
 from django.utils import timezone
@@ -15,7 +16,8 @@ logger = logging.getLogger(__name__)
 from django.conf import settings
 from apps.accounting.views import create_acc_entry, create_account, get_or_create_account
 from apps.clients.models import Client
-from apps.project_admin.forms import FileFieldForm, ProjectForm, ProjectFullForm
+from apps.project_admin.forms import CsvImportForm, FileFieldForm, ProjectForm, ProjectFullForm
+from apps.project_admin.importers import TEMPLATE_HEADERS, parse_and_validate
 from apps.project_admin.models import Event, Project, ProjectFiles
 from apps.accounting.models import Account, MonthlyFinancialSummary
 from django.db.models import Q
@@ -120,6 +122,97 @@ def delete_view(request: HttpRequest, pk: int) -> HttpResponse:
     except Project.DoesNotExist:
         logger.error(f"Project with pk {pk} does not exist for current user.")
         return redirect('index')
+
+#Duplicacion de proyecto
+@login_required
+@transaction.atomic
+def duplicate_view(request: HttpRequest, pk: int) -> HttpResponse:
+    """ Duplicate a project (same client/user, fresh empty account, no movements).
+
+    Agrimensores often load several projects from the same area with almost
+    identical nomenclature. This clones the source project so the user only
+    edits the delta. POST-only since it mutates state.
+    """
+    if request.method != 'POST':
+        return redirect('projectview', pk=pk)
+    try:
+        project = Project.objects.filter(user=request.user).get(pk=pk)
+    except Project.DoesNotExist:
+        logger.error(f"User {request.user.id} tried to duplicate project {pk} which doesn't exist or isn't theirs.")
+        return redirect('projects')
+
+    # Clone the instance: new PK, no account/movements, not archived.
+    project.pk = None
+    project.account = None
+    project.closed = False
+    project.save()
+    new_pk = project.pk
+
+    # Give the copy its own empty account (zeroed, no movements).
+    create_account(new_pk)
+    save_in_history(new_pk, 'newp', "Proyecto duplicado", request.user)
+
+    logger.info("Project duplicated", extra={
+        'user_id': request.user.id,
+        'source_project_id': pk,
+        'new_project_id': new_pk,
+    })
+    # Open the edit form so the user can adjust what changes (e.g. la parcela).
+    return redirect('fullmodification', pk=new_pk)
+
+#Descarga de la plantilla CSV para importacion masiva
+@login_required
+def import_template_csv(request: HttpRequest) -> HttpResponse:
+    """ Return the fixed-header CSV template for the bulk project import. """
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="plantilla_proyectos.csv"'
+    # BOM so Excel opens the CSV as UTF-8.
+    response.write('﻿')
+    writer = csv.writer(response)
+    writer.writerow(TEMPLATE_HEADERS)
+    return response
+
+#Importacion masiva de proyectos desde CSV
+@login_required
+def import_view(request: HttpRequest) -> HttpResponse:
+    """ Bulk-import projects from a CSV file.
+
+    Validates every row, then creates only the valid ones inside a single
+    transaction and reports the rejected rows without aborting the batch.
+    """
+    clients = Client.objects.filter(user=request.user).order_by('name')
+    if request.method == 'POST':
+        form = CsvImportForm(request.POST, request.FILES)
+        if form.is_valid():
+            clients_by_id = {c.id: c for c in clients}
+            valid, errors = parse_and_validate(form.cleaned_data['file_field'], clients_by_id)
+
+            created = 0
+            with transaction.atomic():
+                for _row_num, instance in valid:
+                    instance.user = request.user
+                    instance.save()
+                    create_account(instance.pk)
+                    save_in_history(instance.pk, 'newp', 'Proyecto importado', request.user)
+                    created += 1
+
+            logger.info("Bulk project import finished", extra={
+                'user_id': request.user.id,
+                'created': created,
+                'errors': len(errors),
+            })
+            return render(request, 'project_admin/import_result.html', {
+                'created': created,
+                'errors': errors,
+            })
+    else:
+        form = CsvImportForm()
+
+    return render(request, 'project_admin/import_form.html', {
+        'form': form,
+        'clients': clients,
+        'headers': TEMPLATE_HEADERS,
+    })
 
 #Archivado de proyectos
 @login_required

@@ -1,0 +1,55 @@
+{% extends 'base/base_template.html' %}
+{% load static %}
+{% block form %}
+  <div class="container-form" style="max-width: 820px; margin: 0 auto; padding: 1rem;">
+    <span class="form-title">Importar proyectos desde CSV</span>
+
+    <ol style="margin: 1rem 0; line-height: 1.6;">
+      <li>Descargá la plantilla CSV (ya trae las columnas correctas).</li>
+      <li>Completá una fila por proyecto. Solo <strong>tipo</strong> y <strong>cliente_id</strong> son obligatorios.</li>
+      <li>El <strong>cliente_id</strong> es el ID interno de un cliente tuyo (ver la tabla de abajo).</li>
+      <li>Guardá el archivo como CSV (UTF-8) y subilo. Se crearán solo las filas válidas; las demás se reportan con su motivo.</li>
+    </ol>
+
+    <p><strong>tipo</strong> debe ser uno de: Estado Parcelario, Mensura, Amojonamiento, Relevamiento, Legajo Parcelario.
+       Los campos <em>_num</em> de la nomenclatura admiten solo números.</p>
+
+    <div style="margin: 1rem 0;">
+      <a href="{% url 'import_projects_template' %}" class="toggle-btn active">⬇️ Descargar plantilla CSV</a>
+    </div>
+
+    <details style="margin: 1rem 0;">
+      <summary style="cursor: pointer; font-weight: bold;">Tus clientes (ID — Nombre)</summary>
+      {% if clients %}
+        <table style="width: 100%; border-collapse: collapse; margin-top: 0.5rem;">
+          <thead>
+            <tr><th style="text-align: left; border-bottom: 1px solid #ccc; padding: 4px;">ID</th>
+                <th style="text-align: left; border-bottom: 1px solid #ccc; padding: 4px;">Nombre</th></tr>
+          </thead>
+          <tbody>
+            {% for client in clients %}
+              <tr><td style="padding: 4px;">{{ client.id }}</td><td style="padding: 4px;">{{ client.name }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p>No tenés clientes cargados todavía. Creá un cliente antes de importar proyectos.</p>
+      {% endif %}
+    </details>
+
+    <form method="post" enctype="multipart/form-data" style="margin-top: 1.5rem;">
+      {% csrf_token %}
+      {% if form.file_field.errors %}
+        <div style="color: #c0392b; margin-bottom: 0.5rem;">
+          {{ form.file_field.errors|striptags }}
+        </div>
+      {% endif %}
+      <div class="input-field" style="margin-bottom: 1rem;">
+        <label for="{{ form.file_field.id_for_label }}">{{ form.file_field.label }}</label>
+        {{ form.file_field }}
+      </div>
+      <button type="submit" class="toggle-btn active">Subir e importar</button>
+      <a href="{% url 'projects' %}" class="toggle-btn" style="margin-left: 0.5rem;">Cancelar</a>
+    </form>
+  </div>
+{% endblock %}

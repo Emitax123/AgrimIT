@@ -257,8 +257,8 @@ def create_manual_acc_entry (request, pk):
     if not POST, then renders a template with the previous mentioned form
    
     """
+    project = get_object_or_404(Project, id=pk, user=request.user)
     if request.method == 'POST':
-        project = get_object_or_404(Project, id=pk, user=request.user)
         # Handle form submission
         form = ManualAccountEntryForm(request.POST)
         if form.is_valid():
@@ -286,7 +286,7 @@ def create_manual_acc_entry (request, pk):
         # Render the form
         form = ManualAccountEntryForm()
 
-    return render(request, 'accounting/account_form.html', {'form': form})
+    return render(request, 'accounting/account_form.html', {'form': form, 'project': project})
 
 @login_required
 def accounting_mov_display(request: HttpRequest, 

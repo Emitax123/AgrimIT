@@ -50,12 +50,12 @@ Montos validados, `ClientForm` sin exponer `user`, validadores catastrales, typo
 ### [Plan 03 — Agilizar la carga de datos](03-carga-de-datos.md)
 **Prioridad del usuario.** Autocompletado, duplicación, importación masiva, cliente inline.
 
-- [ ] 4.1 — Autocompletar cliente (endpoint JSON + script)
-- [ ] 4.2 — Duplicar / clonar proyecto
-- [ ] 4.3 — Importación masiva CSV/Excel (mayor multiplicador)
+- [x] 4.1 — Autocompletar cliente (endpoint JSON + script)
+- [x] 4.2 — Duplicar / clonar proyecto
+- [x] 4.3 — Importación masiva CSV (solo proyectos; cliente por ID; mayor multiplicador)
 - [ ] 4.4 — Crear cliente inline (modal AJAX)
 - [ ] 4.5 — Recordar últimos valores en sesión
-- [ ] 4.6 — Carga financiera más rápida
+- [x] 4.6 — Carga financiera más rápida
 
 ### [Plan 04 — Deuda técnica](04-deuda-tecnica.md)
 Tests, refactors, roles de equipo, índices, Redis, CSP, logging. **Al final.**
