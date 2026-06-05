@@ -94,6 +94,22 @@ class FileFieldForm(forms.Form):
         return file
 
 
+class CsvImportForm(forms.Form):
+    """Subida del CSV para la importación masiva de proyectos."""
+    file_field = forms.FileField(
+        label='Archivo CSV',
+        validators=[FileExtensionValidator(allowed_extensions=['csv'])],
+    )
+
+    def clean_file_field(self):
+        file = self.cleaned_data['file_field']
+        if file and file.size > MAX_UPLOAD_SIZE:
+            raise forms.ValidationError(
+                f"El archivo supera el tamaño máximo permitido ({filesizeformat(MAX_UPLOAD_SIZE)})."
+            )
+        return file
+
+
 class ProjectNoteForm(forms.ModelForm):
     """Formulario para crear y editar notas de proyecto"""
     class Meta:

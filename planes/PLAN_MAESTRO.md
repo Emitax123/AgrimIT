@@ -52,7 +52,7 @@ Montos validados, `ClientForm` sin exponer `user`, validadores catastrales, typo
 
 - [x] 4.1 — Autocompletar cliente (endpoint JSON + script)
 - [x] 4.2 — Duplicar / clonar proyecto
-- [ ] 4.3 — Importación masiva CSV/Excel (mayor multiplicador)
+- [x] 4.3 — Importación masiva CSV (solo proyectos; cliente por ID; mayor multiplicador)
 - [ ] 4.4 — Crear cliente inline (modal AJAX)
 - [ ] 4.5 — Recordar últimos valores en sesión
 - [x] 4.6 — Carga financiera más rápida

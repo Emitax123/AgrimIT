@@ -4,6 +4,10 @@
 <link rel="stylesheet" type="text/css" href="{% static 'css/project_list.css' %}" />
 <div id="galeria-work" class="galeria-work">
 
+  <div style="display: flex; justify-content: flex-end; padding: 0.5rem 1rem;">
+    <a href="{% url 'import_projects' %}" class="toggle-btn active">📥 Importar proyectos</a>
+  </div>
+
   <div class="projects-cont">
     {% if not projects %}
       <span style="font-weight: bold;">No se encontraron resultados</span>
