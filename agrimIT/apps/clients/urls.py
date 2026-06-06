@@ -7,6 +7,7 @@ urlpatterns = [
     path('clients/create', views.create_client_view, name='clientcreate'),
     path('clients/projectcreate/<int:pk>', views.create_for_client, name='clientprojectcreate'),
     path('clients/<int:pk>/json/', views.client_json, name='client_json'),
+    path('clients/create/ajax/', views.client_create_ajax, name='client_create_ajax'),
     path('create/clientedislist/<int:pk>', views.clientedislist, name='clientedislist'),
     path('create/deleteclient/<int:pk>', views.deleteclient, name='deleteclient'),
 ]

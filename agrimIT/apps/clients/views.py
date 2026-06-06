@@ -159,6 +159,33 @@ def create_for_client(request: HttpRequest, pk: int) -> HttpResponse:
     form = ProjectForm()
     return render (request, 'clients/project_for_client.html', {'form':form})
 
+#Alta rapida de cliente via AJAX desde el formulario de proyecto (tarea 4.4)
+@login_required
+@transaction.atomic
+def client_create_ajax(request: HttpRequest) -> JsonResponse:
+    """Create a client inline from the project form and return it as JSON.
+
+    Used by the "+ Nuevo cliente" modal so the user can add a client without
+    leaving the project form. Mirrors the manual-create path: only name and
+    phone are captured (id_type defaults to DNI, id_number stays empty).
+    The client is always scoped to request.user.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Metodo no permitido.'}, status=405)
+
+    name = (request.POST.get('name') or '').strip()
+    if not name:
+        return JsonResponse({'error': 'El nombre es obligatorio.'}, status=400)
+
+    client = Client.objects.create(
+        user=request.user,
+        name=name,
+        phone=(request.POST.get('phone') or '').strip(),
+        flag=True,
+    )
+    save_client_history(client.pk, 'newc', f"Se ha creado un nuevo cliente: {client.name}", request.user)
+    return JsonResponse({'id': client.pk, 'name': client.name})
+
 #Datos de un cliente en JSON para autocompletar el formulario de proyecto
 @login_required
 def client_json(request: HttpRequest, pk: int) -> JsonResponse:

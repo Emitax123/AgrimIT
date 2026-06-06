@@ -368,30 +368,23 @@ def create_view(request: HttpRequest) -> HttpResponse:
                 # Associate the current user with the project
                 form_instance.user = request.user
                 
-                client = None
+                # El alta de cliente se hace siempre por el dropdown (modal "+ Nuevo
+                # cliente", tarea 4.4). Un proyecto referencia un cliente existente.
                 client_pk = request.POST.get('client-pk') or request.POST.get('client-list')
-                if client_pk:
-                    client = get_object_or_404(Client, pk=client_pk, user=request.user)
-                    logger.info("Existing client selected", extra={
-                        'user_id': request.user.id,
-                        'client_id': client_pk
+                if not client_pk:
+                    logger.warning("Project creation without client", extra={'user_id': request.user.id})
+                    clients = Client.objects.filter(user=request.user, flag=True).order_by('name')
+                    return render(request, 'project_admin/form.html', {
+                        'form': form,
+                        'clients': clients,
+                        'error': 'Debe seleccionar o crear un cliente.',
                     })
-                else:
-                    client_name = request.POST.get('client-name')
-                    client = Client.objects.filter(user=request.user, name=client_name).first()
-                    if not client:
-                        client = Client.objects.create(
-                            name=client_name,
-                            phone=request.POST.get('client-phone'),
-                            user=request.user,
-                            email=request.POST.get('client-email'),
-                        )
-                        logger.info("New client created", extra={
-                            'user_id': request.user.id,
-                            'client_name': client_name,
-                            'client_id': client.id
-                        })
-                        
+                client = get_object_or_404(Client, pk=client_pk, user=request.user)
+                logger.info("Existing client selected", extra={
+                    'user_id': request.user.id,
+                    'client_id': client_pk
+                })
+
                 form_instance.client = client
                 form_instance.save()
                 #Se guarda la instancia
