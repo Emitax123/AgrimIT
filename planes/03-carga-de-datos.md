@@ -40,13 +40,15 @@ La mejora de mayor impacto en tiempo. Aplica a `Project`, `Client` y `AccountMov
 
 ### 4.4 Crear cliente inline (modal AJAX) — esfuerzo medio
 
-- [ ] Modal "+ Nuevo cliente" dentro del form de proyecto
-- [ ] Crear cliente vía POST AJAX y dejarlo seleccionado
-- [ ] No perder lo ya cargado en el formulario
+- [x] Modal "+ Nuevo cliente" dentro del form de proyecto
+- [x] Crear cliente vía POST AJAX (`clients/create/ajax/`) y dejarlo seleccionado
+- [x] No perder lo ya cargado en el formulario (sin recarga)
+- [x] Modal pasa a ser la única vía de alta: inputs nombre/teléfono quedan solo-lectura; se quita el alta "a medias" del submit en `create_view`
+- [x] Test del endpoint (primer test del repo): login, scope por usuario, nombre vacío → 400
 
 ### 4.5 Recordar últimos valores — esfuerzo bajo
 
-- [ ] Pre-cargar `partido` / `circ` / `sect` con los del último proyecto creado por el usuario en la sesión
+- [ ] ~~Pre-cargar `partido` / `circ` / `sect` con los del último proyecto~~ — N/A: cubierto por 4.2 (Duplicar copia toda la nomenclatura). Decidido con el usuario.
 
 ### 4.6 Carga financiera más rápida — esfuerzo bajo
 **Archivo:** `account_form.html`

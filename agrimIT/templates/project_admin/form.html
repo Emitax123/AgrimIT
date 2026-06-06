@@ -35,6 +35,7 @@
                     <option value="{{ Client.pk }}">{{ Client.name }}</option>
                   {% endfor %}
                 </select>
+                <button type="button" class="toggle-btn" id="new-client">+ Nuevo cliente</button>
                 <button type="button" class="toggle-btn red" id="remove-client">Eliminar</button>
                 <script></script>
               </div>
@@ -45,11 +46,11 @@
               <div id="clien-data" class="fields">
                 <div class="input-field">
                   <label for="client-name">Nombre y apellido</label>
-                  <input type="text" name="client-name" id="client-name" placeholder="Nombre y apellido" required />
+                  <input type="text" name="client-name" id="client-name" placeholder="Elegi o crea un cliente" readonly />
                 </div>
                 <div class="input-field">
                   <label for="client-phone">Telefono</label>
-                  <input type="text" name="client-phone" id="client-phone" placeholder="Telefono" required />
+                  <input type="text" name="client-phone" id="client-phone" placeholder="Telefono" readonly />
                 </div>
               </div>
               <!-- Datos Titular dentro de content 2 -->
@@ -173,6 +174,29 @@
           </div>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal: alta rapida de cliente (tarea 4.4). Fuera del form/.form-group a
+       proposito: es position:fixed y usa su propio fetch (no se envia con el
+       form). Asi evita la regla `div.form-group div.content div { display:flex }`
+       de projectform.css que lo forzaria visible pese al atributo [hidden]. -->
+  <div id="new-client-overlay" class="modal-overlay" hidden>
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="new-client-title">
+      <span id="new-client-title" class="form-subtitle">Nuevo cliente</span>
+      <div class="input-field">
+        <label for="new-client-name">Nombre y apellido</label>
+        <input type="text" id="new-client-name" placeholder="Nombre y apellido" />
+      </div>
+      <div class="input-field">
+        <label for="new-client-phone">Telefono</label>
+        <input type="text" id="new-client-phone" placeholder="Telefono" />
+      </div>
+      <small id="new-client-error" class="error-text" style="color: red; display: none;"></small>
+      <div class="modal-actions">
+        <button type="button" class="toggle-btn" id="new-client-cancel">Cancelar</button>
+        <button type="button" class="toggle-btn active" id="new-client-save">Guardar</button>
+      </div>
     </div>
   </div>
 
@@ -325,39 +349,13 @@
         }
       } // Function to validate client data
       function validateClientData() {
-        const hasSelectedClient = clientList.value.trim() !== ''
-        const hasClientName = clientNameInput.value.trim() !== ''
-        const hasClientPhone = clientPhoneInput.value.trim() !== ''
-    
-        // Clear previous errors
+        // El alta se hace por el modal "+ Nuevo cliente"; siempre debe quedar
+        // un cliente elegido en el dropdown.
         removeError(clientList)
-        removeError(clientNameInput)
-        removeError(clientPhoneInput)
-    
-        // Case 1: Client is selected from dropdown
-        if (hasSelectedClient) {
-          return true
+        if (clientList.value.trim() === '') {
+          showError(clientList, 'Debe seleccionar o crear un cliente')
+          return false
         }
-    
-        // Case 2: No client selected, check if manual input is provided
-        if (!hasSelectedClient) {
-          if (!hasClientName && !hasClientPhone) {
-            // Neither client selected nor manual data entered
-            showError(clientList, 'Debe seleccionar un cliente o ingresar los datos manualmente')
-            return false
-          }
-    
-          if (!hasClientName) {
-            showError(clientNameInput, 'El nombre es requerido')
-            return false
-          }
-    
-          if (!hasClientPhone) {
-            showError(clientPhoneInput, 'El teléfono es requerido')
-            return false
-          }
-        }
-    
         return true
       } // Function to validate project type
       function validateProjectType() {
@@ -483,6 +481,116 @@
         if (this.value.trim() !== '') {
           removeError(this)
         }
+      })
+    })
+  </script>
+
+  <style>
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    /* El atributo [hidden] (UA) lo pisa el display:flex de autor; forzar oculto. */
+    .modal-overlay[hidden] {
+      display: none;
+    }
+    .modal-box {
+      background: #fff;
+      padding: 24px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 8px;
+    }
+  </style>
+
+  <!-- Modal "+ Nuevo cliente" (tarea 4.4): crea el cliente via AJAX y lo deja
+       seleccionado sin recargar, para no perder lo cargado en el proyecto. -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const overlay = document.getElementById('new-client-overlay')
+      const openBtn = document.getElementById('new-client')
+      const cancelBtn = document.getElementById('new-client-cancel')
+      const saveBtn = document.getElementById('new-client-save')
+      const nameField = document.getElementById('new-client-name')
+      const phoneField = document.getElementById('new-client-phone')
+      const errorBox = document.getElementById('new-client-error')
+      const dropdown = document.getElementById('client-list')
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value
+
+      const showModalError = (msg) => {
+        errorBox.textContent = msg
+        errorBox.style.display = 'block'
+      }
+      const openModal = () => {
+        errorBox.style.display = 'none'
+        nameField.value = ''
+        phoneField.value = ''
+        overlay.hidden = false
+        nameField.focus()
+      }
+      const closeModal = () => {
+        overlay.hidden = true
+      }
+
+      openBtn.addEventListener('click', openModal)
+      cancelBtn.addEventListener('click', closeModal)
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal()
+      })
+
+      saveBtn.addEventListener('click', function () {
+        const name = nameField.value.trim()
+        if (name === '') {
+          showModalError('El nombre es obligatorio.')
+          nameField.focus()
+          return
+        }
+        errorBox.style.display = 'none'
+        saveBtn.disabled = true
+
+        const body = new FormData()
+        body.append('name', name)
+        body.append('phone', phoneField.value.trim())
+
+        fetch('/clients/create/ajax/', {
+          method: 'POST',
+          headers: { 'X-CSRFToken': csrfToken },
+          body: body,
+        })
+          .then((response) => response.json().then((data) => ({ ok: response.ok, data })))
+          .then(({ ok, data }) => {
+            if (!ok) {
+              showModalError(data.error || 'No se pudo crear el cliente.')
+              return
+            }
+            // Agregar el cliente nuevo al dropdown, seleccionarlo y disparar el
+            // autocompletado existente (tarea 4.1) que llena los campos display.
+            const option = document.createElement('option')
+            option.value = data.id
+            option.textContent = data.name
+            dropdown.appendChild(option)
+            dropdown.value = data.id
+            dropdown.dispatchEvent(new Event('change'))
+            closeModal()
+          })
+          .catch(() => showModalError('Error de conexion. Intente nuevamente.'))
+          .finally(() => {
+            saveBtn.disabled = false
+          })
       })
     })
   </script>
