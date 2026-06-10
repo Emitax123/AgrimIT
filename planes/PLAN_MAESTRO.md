@@ -60,11 +60,11 @@ Montos validados, `ClientForm` sin exponer `user`, validadores catastrales, typo
 ### [Plan 04 — Deuda técnica](04-deuda-tecnica.md)
 Tests, refactors, roles de equipo, índices, Redis, CSP, logging. **Al final.**
 
-- [ ] Tests (pytest-django + factory-boy)
+- [x] Tests (pytest-django + factory-boy) — control de acceso (24) + lógica financiera (7)
 - [ ] Mover lógica de negocio a modelos/señales
 - [ ] `RoleRequiredMixin` para teams
 - [ ] Migrar FBV → CBV con `TenantMixin`
-- [ ] Índice `['user', 'flag']` en `Client`
+- [x] Índice `['user', 'flag']` en `Client`
 - [ ] Rate limiting → Redis
-- [ ] Endurecer CSP
-- [ ] Logging estructurado (JSON)
+- [x] Endurecer CSP — directivas seguras (falta nonces para quitar `'unsafe-inline'`)
+- [x] Logging estructurado (JSON)

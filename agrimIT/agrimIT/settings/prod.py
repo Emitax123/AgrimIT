@@ -217,9 +217,9 @@ LOGGING = {
             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
             'style': '{',
         },
-        'json_formatter': {
-            'format': 'LEVEL={levelname} TIME={asctime} MODULE={module} PROCESS={process} THREAD={thread} MESSAGE={message}',
-            'style': '{',
+        # Logging estructurado real (una linea JSON por registro) para Railway.
+        'json': {
+            '()': 'agrimIT.logging_formatters.JSONFormatter',
         },
         'simple': {
             'format': '{levelname} {asctime} {message}',
@@ -230,12 +230,12 @@ LOGGING = {
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            'formatter': 'json',
         },
         'error_console': {
             'level': 'ERROR',
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            'formatter': 'json',
         },
     },
     'root': {

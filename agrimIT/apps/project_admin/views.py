@@ -512,21 +512,26 @@ def mod_view(request: HttpRequest, pk: int) -> HttpResponse:
 @transaction.atomic
 def full_mod_view(request: HttpRequest, pk: int) -> HttpResponse:
     """ Modify all fields of an existing project """
-    if request.method == 'POST':
+    # Scoped to the current user: a project of another user (or nonexistent)
+    # redirects instead of raising an unhandled DoesNotExist (500).
+    try:
         instance = Project.objects.filter(user=request.user).get(pk=pk)
+    except Project.DoesNotExist:
+        logger.error(f"User {request.user.id} tried to access project {pk} which doesn't exist or isn't theirs.")
+        return redirect('projects')
+
+    if request.method == 'POST':
         form = ProjectFullForm(request.POST, instance=instance)
-        
         if form.is_valid():
             try:
                 form.save()
-                msg = "Se ha modificado un proyecto"   
+                msg = "Se ha modificado un proyecto"
                 save_in_history(instance.pk, 'modp', msg, request.user)
                 return redirect('projectview', pk=pk)
             except Exception as e:
                 logger.error(f"Error saving full project modification: {str(e)}")
                 return render(request, 'project_admin/full_mod_template.html', {'error': 'Error saving project.'})
     else:
-        instance = Project.objects.filter(user=request.user).get(pk=pk)
         form = ProjectFullForm(instance=instance)
     return render (request, 'project_admin/full_mod_template.html', {'form':form, 'project':instance})
 

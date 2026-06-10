@@ -16,3 +16,9 @@ class Client(models.Model):
     phone = models.CharField(max_length=20, verbose_name='Telefono')
     def __str__(self):
         return f"{self.name} ({self.id_type}: {self.id_number})"
+
+    class Meta:
+        # El dropdown de clientes y varias vistas consultan filter(user=..., flag=True).
+        indexes = [
+            models.Index(fields=['user', 'flag']),
+        ]

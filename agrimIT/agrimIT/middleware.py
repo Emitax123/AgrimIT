@@ -47,14 +47,22 @@ class SecurityHeadersMiddleware:
             # Referrer Policy
             'Referrer-Policy': 'strict-origin-when-cross-origin',
             
-            # Content Security Policy (basic)
+            # Content Security Policy.
+            # NOTA: script-src/style-src mantienen 'unsafe-inline' porque varias
+            # plantillas usan <script> y style="" inline. Quitarlo requiere migrar
+            # a nonces por request (refactor pendiente). Mientras tanto se endurece
+            # el resto: object-src, base-uri, frame-ancestors y form-action.
             'Content-Security-Policy': (
                 "default-src 'self'; "
                 "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
                 "font-src 'self' https://fonts.gstatic.com; "
                 "img-src 'self' data: https:; "
-                "connect-src 'self';"
+                "connect-src 'self'; "
+                "object-src 'none'; "
+                "base-uri 'self'; "
+                "frame-ancestors 'self'; "
+                "form-action 'self';"
             ),
             
             # Permissions Policy (formerly Feature Policy)
