@@ -60,7 +60,7 @@ Montos validados, `ClientForm` sin exponer `user`, validadores catastrales, typo
 ### [Plan 04 — Deuda técnica](04-deuda-tecnica.md)
 Tests, refactors, roles de equipo, índices, Redis, CSP, logging. **Al final.**
 
-- [ ] Tests (pytest-django + factory-boy)
+- [~] Tests (pytest-django + factory-boy) — setup + control de acceso ✓; falta lógica financiera
 - [ ] Mover lógica de negocio a modelos/señales
 - [ ] `RoleRequiredMixin` para teams
 - [ ] Migrar FBV → CBV con `TenantMixin`

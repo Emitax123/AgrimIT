@@ -11,8 +11,9 @@
 ### 1. Sin tests
 No hay suite automatizada. Sugerido: `pytest-django` + `factory-boy`.
 
-- [ ] Configurar `pytest-django` + `factory-boy`
-- [ ] Tests de control de acceso (un usuario no ve/edita datos de otro)
+- [x] Configurar `pytest-django` + `factory-boy` (`pytest.ini`, `conftest.py` con factories, `requirements-dev.txt`)
+- [x] Tests de control de acceso (un usuario no ve/edita datos de otro) — 24 tests en `tests/test_access_control.py`
+  - Hallazgo: `full_mod_view` hacía `.get(pk)` sin `try/except` → 500 en cross-user. Endurecido a `redirect('projects')` como sus hermanas.
 - [ ] Tests de lógica financiera (`networth`, resúmenes mensuales)
 
 ### 2. Lógica de negocio en vistas
