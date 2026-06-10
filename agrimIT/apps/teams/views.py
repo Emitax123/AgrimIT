@@ -78,18 +78,15 @@ def team_create(request):
 def team_detail(request, pk):
     """Ver detalles de un equipo"""
     team = get_object_or_404(Team, pk=pk, is_active=True)
-    
-    # Verificar que el usuario tenga acceso (propietario o miembro)
-    is_owner = team.owner == request.user
-    is_member = TeamMembership.objects.filter(
-        team=team,
-        user=request.user,
-        is_active=True
-    ).exists()
-    
-    if not (is_owner or is_member):
+
+    # Verificar que el usuario tenga acceso (owner, member o viewer)
+    user_role = team.get_user_role(request.user)
+    if user_role is None:
         messages.error(request, 'No tienes permiso para ver este grupo.')
         return redirect('team_list')
+
+    is_owner = user_role == 'owner'
+    is_member = user_role in ('member', 'viewer')
     
     # Obtener miembros
     members = TeamMembership.objects.filter(
@@ -112,6 +109,7 @@ def team_detail(request, pk):
         'team': team,
         'is_owner': is_owner,
         'is_member': is_member,
+        'user_role': user_role,
         'members': members,
         'shared_projects': shared_projects,
         'add_member_form': add_member_form,

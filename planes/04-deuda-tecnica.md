@@ -29,8 +29,12 @@ Cálculo de patrimonio y actualización de `MonthlyFinancialSummary` viven en `a
 ### 3. Roles de equipo sin uso
 `TeamMembership.ROLE_CHOICES` (`member`/`viewer`) existe pero no se aplica en autorización.
 
-- [ ] Crear un `RoleRequiredMixin`
-- [ ] Aplicarlo en las vistas de `teams`
+- [x] Crear un `RoleRequiredMixin` (en `apps/utils/mixins.py`, base para futuras CBV)
+- [x] Aplicarlo en las vistas de `teams`
+  - Helpers de rol en el modelo `Team` (`get_user_role`, `user_can_view/manage/share`, `shareable_by`) como fuente de verdad.
+  - Semántica: owner = control total · member = comparte sus propios proyectos · viewer = solo lectura.
+  - `ShareProjectForm` ahora ofrece los grupos donde el usuario es owner **o** member; el viewer queda bloqueado.
+  - 15 tests en `tests/test_team_roles.py`.
 
 ### 4. Duplicación de filtrado por usuario
 El patrón `filter(user=request.user)` se repite en 15+ vistas FBV.
@@ -62,8 +66,8 @@ Solo stdout.
 
 ## Verificación
 
-- [ ] `pytest` corre y los tests de control de acceso + financieros pasan.
-- [x] Confirmar que el cálculo financiero sigue funcionando tras moverlo a modelos/señales. (7 tests financieros + 2 nuevos de la señal, verdes)
-- [ ] Probar que un `viewer` no puede ejecutar acciones de `member` en teams.
+- [x] `pytest` corre y los tests de control de acceso + financieros pasan.
+- [ ] Confirmar que el cálculo financiero sigue funcionando tras moverlo a modelos/señales.
+- [x] Probar que un `viewer` no puede ejecutar acciones de `member` en teams. (cubierto por `tests/test_team_roles.py`)
 - [ ] Verificar que las consultas a `Client` usan el índice nuevo (EXPLAIN).
 - [ ] Confirmar rate limiting distribuido con Redis entre múltiples workers.
