@@ -14,7 +14,8 @@ No hay suite automatizada. Sugerido: `pytest-django` + `factory-boy`.
 - [x] Configurar `pytest-django` + `factory-boy` (`pytest.ini`, `conftest.py` con factories, `requirements-dev.txt`)
 - [x] Tests de control de acceso (un usuario no ve/edita datos de otro) — 24 tests en `tests/test_access_control.py`
   - Hallazgo: `full_mod_view` hacía `.get(pk)` sin `try/except` → 500 en cross-user. Endurecido a `redirect('projects')` como sus hermanas.
-- [ ] Tests de lógica financiera (`networth`, resúmenes mensuales)
+- [x] Tests de lógica financiera (`networth`, resúmenes mensuales) — 7 tests en `tests/test_financial_logic.py`
+- [x] Fix `.gitignore`: la regla `test_*.py` ignoraba toda la suite; anclada a la raíz (`/test_*.py`)
 
 ### 2. Lógica de negocio en vistas
 Cálculo de patrimonio y actualización de `MonthlyFinancialSummary` viven en `accounting/views.py`.
@@ -35,7 +36,7 @@ El patrón `filter(user=request.user)` se repite en 15+ vistas FBV.
 ### 5. Índice faltante
 `Client` se consulta con `filter(user=..., flag=True)` frecuentemente.
 
-- [ ] Agregar `Index(fields=['user', 'flag'])` al modelo `Client` + migración
+- [x] Agregar `Index(fields=['user', 'flag'])` al modelo `Client` + migración (`0004`)
 
 ### 6. Rate limiting con `LocMemCache` en prod
 No es distribuido (no escala entre workers de gunicorn).
@@ -45,12 +46,13 @@ No es distribuido (no escala entre workers de gunicorn).
 ### 7. CSP permisivo
 `middleware.py` permite `'unsafe-inline'` en scripts/estilos.
 
-- [ ] Endurecer la política CSP cuando sea posible
+- [x] Endurecer la política CSP — agregadas `object-src 'none'`, `base-uri 'self'`, `frame-ancestors 'self'`, `form-action 'self'` (+ tests).
+- [ ] Pendiente (follow-up): quitar `'unsafe-inline'` de `script-src`/`style-src` migrando a nonces por request (requiere refactor de los `<script>` y `style=""` inline en plantillas).
 
 ### 8. Logging en prod
 Solo stdout.
 
-- [ ] Considerar logging estructurado (JSON) para Railway
+- [x] Logging estructurado (JSON) para Railway — `JSONFormatter` propio (sin deps) que incluye los `extra=`; handlers de consola de `prod.py` en JSON.
 
 ---
 
