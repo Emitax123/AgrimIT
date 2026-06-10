@@ -1,5 +1,10 @@
+import logging
+
 from django.db import models
+from django.db.models import F
 from apps.users.models import User
+
+logger = logging.getLogger(__name__)
 
 # Remove circular import - Project will reference Account via OneToOneField
 
@@ -26,6 +31,22 @@ class Account(models.Model):
         Consistent with MonthlyFinancialSummary.net_worth.
         """
         return self.advance - self.expense
+
+    def apply_movement(self, movement):
+        """Apply a saved AccountMovement's effect to this account's balances.
+
+        ADV/EXP acumulan sobre el saldo actual; EST fija el presupuesto al
+        último valor. Usa F() para una actualización atómica en la base.
+        Centraliza lo que antes vivía en ``accounting.views.create_acc_entry``
+        (Plan 04, item 2).
+        """
+        if movement.movement_type == 'ADV':
+            Account.objects.filter(pk=self.pk).update(advance=F('advance') + movement.amount)
+        elif movement.movement_type == 'EXP':
+            Account.objects.filter(pk=self.pk).update(expense=F('expense') + movement.amount)
+        elif movement.movement_type == 'EST':
+            Account.objects.filter(pk=self.pk).update(estimated=movement.amount)
+
     class Meta:
         verbose_name = "Cobranza"
         verbose_name_plural = "Cobranzas"
@@ -70,6 +91,15 @@ class MonthlyFinancialSummary(models.Model):
     total_expenses = models.DecimalField(max_digits=20, decimal_places=2, default=0.00, verbose_name="Gastos Total")
     
 
+    # Mapa tipo de proyecto -> campo de ganancia neta por categoría.
+    INCOME_FIELD_BY_TYPE = {
+        'Mensura': 'income_mensura',
+        'Estado Parcelario': 'income_est_parc',
+        'Amojonamiento': 'income_amoj',
+        'Relevamiento': 'income_relev',
+        'Legajo Parcelario': 'income_leg',
+    }
+
     income_mensura = models.DecimalField(max_digits=20, decimal_places=2, default=0.00, verbose_name="Ganancia Neta Mensura")
     income_est_parc = models.DecimalField(max_digits=20, decimal_places=2, default=0.00, verbose_name="Ganancia Neta Est Parcelario")
     income_leg = models.DecimalField(max_digits=20, decimal_places=2, default=0.00, verbose_name="Ganancia Neta Legajos")
@@ -102,6 +132,44 @@ class MonthlyFinancialSummary(models.Model):
         """
         return self.total_advance - self.total_expenses
     
+    @classmethod
+    def record_movement(cls, movement, project_type=None):
+        """Agrega un AccountMovement ya guardado al resumen de su mes.
+
+        ADV suma a ``total_advance`` y a la ganancia neta de la categoría del
+        proyecto; EXP suma a ``total_expenses`` y resta de la ganancia neta;
+        EST no afecta totales. Las actualizaciones usan F() (atómicas).
+        El resumen se crea si no existe. Centraliza la lógica que vivía en
+        ``accounting.views.create_acc_entry`` (Plan 04, item 2).
+        """
+        created_at = movement.created_at
+        summary, _ = cls.objects.get_or_create(
+            user=movement.user,
+            year=created_at.year,
+            month=created_at.month,
+        )
+
+        updates = {}
+        income_delta = None
+        if movement.movement_type == 'ADV':
+            updates['total_advance'] = F('total_advance') + movement.amount
+            income_delta = movement.amount
+        elif movement.movement_type == 'EXP':
+            updates['total_expenses'] = F('total_expenses') + movement.amount
+            income_delta = -movement.amount
+        # EST: no modifica totales ni ganancia neta.
+
+        if income_delta is not None and project_type:
+            income_field = cls.INCOME_FIELD_BY_TYPE.get(project_type)
+            if income_field:
+                updates[income_field] = F(income_field) + income_delta
+            else:
+                logger.error(f"Unknown project type: {project_type}. Cannot update summary.")
+
+        if updates:
+            cls.objects.filter(pk=summary.pk).update(**updates)
+        return summary
+
     @classmethod
     def initialize(cls, year, month):
         """

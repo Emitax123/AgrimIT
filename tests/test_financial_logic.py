@@ -10,7 +10,7 @@ from decimal import Decimal
 import pytest
 
 from apps.accounting.models import Account, AccountMovement, MonthlyFinancialSummary
-from apps.accounting.views import create_acc_entry
+from apps.accounting.views import create_acc_entry, get_or_create_account
 
 pytestmark = pytest.mark.django_db
 
@@ -96,3 +96,34 @@ def test_presupuesto_setea_estimated_sin_tocar_networth(project_factory):
     project.refresh_from_db()
     assert project.account.estimated == Decimal("5000.00")
     assert project.account.networth == Decimal("0.00")
+
+
+# --- Señal post_save de AccountMovement (Plan 04, item 2) --------------------
+# La lógica vive en la señal: crear un AccountMovement ya actualiza la cuenta y
+# el resumen mensual, sin pasar por create_acc_entry.
+
+def test_la_senal_aplica_el_efecto_al_crear_movimiento(project_factory):
+    project = project_factory(type="Mensura")
+    account, _ = get_or_create_account(project)
+
+    AccountMovement.objects.create(
+        user=project.user, account=account,
+        amount=Decimal("800.00"), movement_type="ADV", description="x",
+    )
+
+    account.refresh_from_db()
+    assert account.advance == Decimal("800.00")
+    summary = MonthlyFinancialSummary.objects.get(user=project.user)
+    assert summary.total_advance == Decimal("800.00")
+    assert summary.income_mensura == Decimal("800.00")
+
+
+def test_movimiento_est_no_afecta_totales_del_resumen(project_factory):
+    project = project_factory(type="Mensura")
+
+    create_acc_entry(project, "est", new_value=Decimal("5000.00"))
+
+    summary = MonthlyFinancialSummary.objects.get(user=project.user)
+    assert summary.total_advance == Decimal("0.00")
+    assert summary.total_expenses == Decimal("0.00")
+    assert summary.income_mensura == Decimal("0.00")

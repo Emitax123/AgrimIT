@@ -61,7 +61,7 @@ Montos validados, `ClientForm` sin exponer `user`, validadores catastrales, typo
 Tests, refactors, roles de equipo, índices, Redis, CSP, logging. **Al final.**
 
 - [x] Tests (pytest-django + factory-boy) — control de acceso (24) + lógica financiera (7)
-- [ ] Mover lógica de negocio a modelos/señales
+- [x] Mover lógica de negocio a modelos/señales (señal `post_save` en `AccountMovement` + métodos de modelo)
 - [ ] `RoleRequiredMixin` para teams
 - [ ] Migrar FBV → CBV con `TenantMixin`
 - [x] Índice `['user', 'flag']` en `Client`

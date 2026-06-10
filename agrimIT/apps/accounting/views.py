@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from django.utils import timezone
 from typing import Optional
 import logging
@@ -87,156 +87,79 @@ def create_account(project_id: int) -> Optional[Account]:
     account, created = get_or_create_account_by_id(project_id)
     return account
 
-def create_acc_entry(project: Project, 
-                     field: str, 
-                     old_value: Optional[Decimal] = None, 
+_FIELD_TO_MOVEMENT_TYPE = {'adv': 'ADV', 'exp': 'EXP', 'est': 'EST'}
+
+
+def _coerce_decimal(value) -> Decimal:
+    """Convertir cualquier entrada a Decimal; None o valores inválidos -> 0.00."""
+    if value is None:
+        return Decimal('0.00')
+    if isinstance(value, Decimal):
+        return value
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, ValueError, TypeError):
+        return Decimal('0.00')
+
+
+def _default_movement_description(field: str, amount: Decimal) -> str:
+    """Descripción por defecto del movimiento según el campo y el signo del monto."""
+    if field == 'adv':
+        return f"Se devolvieron ${abs(amount)}" if amount < 0 else f"Se cobraron ${amount}"
+    if field == 'exp':
+        return f"Se redujo el gasto en ${abs(amount)}" if amount < 0 else f"Se ingreso el gasto de ${amount}"
+    return f"Se ingreso costo final de ${amount}"
+
+
+def create_acc_entry(project: Project,
+                     field: str,
+                     old_value: Optional[Decimal] = None,
                      new_value: Optional[Decimal] = None,
                      msg: Optional[str] = None,
                      ) -> Optional[Account]:
     """
-    Create an account entry for a project when a field is updated.
-     Args:
-        project_id: The ID of the project.
-        field: The field being updated ('adv', 'exp', or 'est').
-        old_value: The previous value.
-        new_value: The new value.
-        msg: Optional message for the movement description.
-        
-    Returns:
-        The updated account object, or None if the operation failed.
-    """
-    # Ensure we're working with Decimal objects to avoid type errors
-    if old_value is None:
-        old_value = Decimal('0.00')
-    elif not isinstance(old_value, Decimal):
-        try:
-            old_value = Decimal(str(old_value))
-        except:
-            old_value = Decimal('0.00')
-            
-    if new_value is None:
-        new_value = Decimal('0.00')
-    elif not isinstance(new_value, Decimal):
-        try:
-            new_value = Decimal(str(new_value))
-        except:
-            new_value = Decimal('0.00')
+    Registra un movimiento de cuenta para un proyecto.
 
-    logger.debug(f"Processing: project_id={project.id}, field={field}, old_value={old_value}, new_value={new_value}")
+    Crea el ``AccountMovement``; el efecto sobre los saldos del ``Account`` y el
+    resumen mensual (``MonthlyFinancialSummary``) lo aplica la señal post_save
+    de AccountMovement (``apps/accounting/signals.py``). Plan 04, item 2.
+
+    Args:
+        project: El proyecto.
+        field: El campo afectado ('adv', 'exp', o 'est').
+        old_value: Sin uso (se conserva por compatibilidad de firma).
+        new_value: El monto del movimiento.
+        msg: Descripción opcional del movimiento.
+
+    Returns:
+        El Account actualizado, o None si la operación falló.
+    """
+    new_value = _coerce_decimal(new_value)
+
+    movement_type = _FIELD_TO_MOVEMENT_TYPE.get(field)
+    if movement_type is None:
+        logger.error(f"Invalid field type '{field}'")
+        return None
 
     try:
         with transaction.atomic():
-            # Get project
             project = get_object_or_404(Project, id=project.id)
-            logger.debug(f"Found project: {project}")
-            
-            # Get or create account using the helper function
-            account, created = get_or_create_account(project)
-            logger.info(f"{'Created new' if created else 'Using existing'} account for project {project.id}")
-            
-            # Get or create the monthly summary
-            current_year = int(timezone.now().year)
-            current_month = int(timezone.now().month)
-            
-            monthly_summary, createdm = MonthlyFinancialSummary.objects.get_or_create(
+            account, _ = get_or_create_account(project)
+
+            description = msg if msg is not None else _default_movement_description(field, new_value)
+
+            AccountMovement.objects.create(
                 user=project.user,
-                year=current_year,
-                month=current_month,
-                defaults={
-                    'total_advance': Decimal('0.00'),
-                    'total_expenses': Decimal('0.00'),
-                    'income_mensura': Decimal('0.00'),
-                    'income_est_parc': Decimal('0.00'),
-                    'income_leg': Decimal('0.00'),
-                    'income_amoj': Decimal('0.00'),
-                    'income_relev': Decimal('0.00'),
-                }
-            )
-            
-            if createdm:
-                logger.info(f"Monthly summary created for {current_year}-{current_month}")
-            else:
-                logger.debug(f"Using existing monthly summary for {current_year}-{current_month}")
-            
-            # Process based on field type
-            if field == 'adv':
-                if created:
-                    # For new accounts, set the initial value directly
-                    Account.objects.filter(id=account.id).update(advance=new_value)
-                else:
-                    # For existing accounts, add to current value
-                    Account.objects.filter(id=account.id).update(advance=F('advance') + new_value)
-                
-                if createdm:
-                    # For new monthly summaries, set the initial value directly
-                    MonthlyFinancialSummary.objects.filter(id=monthly_summary.id).update(total_advance=new_value)
-                else:
-                    # For existing summaries, add to current value
-                    MonthlyFinancialSummary.objects.filter(id=monthly_summary.id).update(total_advance=F('total_advance') + new_value)
-                
-                define_type_for_summary(monthly_summary, project.type, new_value)
-                if new_value < 0:
-                    acc_mov_description = f"Se devolvieron ${abs(new_value)}"
-                else:
-                    acc_mov_description = f"Se cobraron ${new_value}"
-                    
-            elif field == 'exp':
-                logger.debug(f"Monthly expenses before update: {monthly_summary.total_expenses}")
-                
-                if created:
-                    # For new accounts, set the initial value directly
-                    Account.objects.filter(id=account.id).update(expense=new_value)
-                else:
-                    # For existing accounts, add to current value
-                    Account.objects.filter(id=account.id).update(expense=F('expense') + new_value)
-
-                if createdm:
-                    # For new monthly summaries, set the initial value directly
-                    MonthlyFinancialSummary.objects.filter(id=monthly_summary.id).update(total_expenses=new_value)
-                else:
-                    # For existing summaries, add to current value
-                    MonthlyFinancialSummary.objects.filter(id=monthly_summary.id).update(total_expenses=F('total_expenses') + new_value)
-                
-                define_type_for_summary(monthly_summary, project.type, -new_value)
-                if new_value < 0:
-                    acc_mov_description = f"Se redujo el gasto en ${abs(new_value)}"
-                else:
-                    acc_mov_description = f"Se ingreso el gasto de ${new_value}"  
-                    
-                # Refresh to see actual values after update
-                monthly_summary.refresh_from_db()
-                logger.debug(f"Monthly expenses after update: {monthly_summary.total_expenses}") 
-                
-            elif field == 'est':
-                Account.objects.filter(id=account.id).update(estimated=new_value)
-                acc_mov_description = f"Se ingreso costo final de ${new_value}"
-            else:
-                logger.error(f"Invalid field type '{field}'")
-                return None
-            
-    
-            
-            
-
-            # No need to save explicitly since we're using .update() which saves to DB directly
-            # The .update() calls above already persisted the changes to the database
-            
-            # Use custom message if provided, otherwise use default description
-            description = msg if msg is not None else acc_mov_description
-            
-            # Create movement record
-            movement = AccountMovement.objects.create(
-                user = project.user,
                 account=account,
-                
                 amount=new_value,
-                movement_type='ADV' if field == 'adv' else 'EXP' if field == 'exp' else 'EST',
-                description=description
+                movement_type=movement_type,
+                description=description,
             )
-            logger.info(f"Created movement record: {movement}")
-            
-            return account
-            
+
+        # Reflejar en el objeto en memoria los cambios que la señal persistió.
+        account.refresh_from_db()
+        return account
+
     except Project.DoesNotExist:
         logger.error(f"Project with id {project.id} does not exist")
         return None
@@ -344,42 +267,6 @@ def accounting_mov_display(request: HttpRequest,
     }
     
     return render(request, 'accounting/accounting_history.html', context)
-
-def define_type_for_summary(summary: MonthlyFinancialSummary, 
-                            project_type: str, 
-                            amount: Decimal
-                            ) -> None:
-    """
-    Helper function to define the project type and update the summary using F() expressions.
-    This ensures atomic database updates and prevents race conditions.
-    """
-    summary_id = summary.id
-    
-    if project_type == 'Mensura':
-        MonthlyFinancialSummary.objects.filter(id=summary_id).update(
-            income_mensura=F('income_mensura') + amount
-        )
-      
-    elif project_type == 'Estado Parcelario':
-        MonthlyFinancialSummary.objects.filter(id=summary_id).update(
-            income_est_parc=F('income_est_parc') + amount
-        )
-    elif project_type == 'Amojonamiento':
-        MonthlyFinancialSummary.objects.filter(id=summary_id).update(
-            income_amoj=F('income_amoj') + amount
-        )
-    elif project_type == 'Relevamiento':
-        MonthlyFinancialSummary.objects.filter(id=summary_id).update(
-            income_relev=F('income_relev') + amount
-        )
-    elif project_type == 'Legajo Parcelario':
-        MonthlyFinancialSummary.objects.filter(id=summary_id).update(
-            income_leg=F('income_leg') + amount
-        )
-    else:
-        logger.error(f"Unknown project type: {project_type}. Cannot update summary.")
-
-
 
 def get_monthly_networth_data(year: int, user: User) -> tuple[list, list]:
     """

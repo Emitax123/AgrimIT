@@ -20,7 +20,11 @@ No hay suite automatizada. Sugerido: `pytest-django` + `factory-boy`.
 ### 2. Lógica de negocio en vistas
 Cálculo de patrimonio y actualización de `MonthlyFinancialSummary` viven en `accounting/views.py`.
 
-- [ ] Mover a métodos de modelo o señales `post_save` sobre `AccountMovement`
+- [x] Mover a métodos de modelo o señales `post_save` sobre `AccountMovement`
+  - Señal `post_save` en `apps/accounting/signals.py` (registrada en `apps.py::ready`).
+  - Lógica en el modelo: `Account.apply_movement()` y `MonthlyFinancialSummary.record_movement()` (+ mapa `INCOME_FIELD_BY_TYPE`).
+  - `create_acc_entry` queda fina: solo crea el `AccountMovement`; la señal aplica el efecto.
+  - `define_type_for_summary` eliminada (migrada al modelo). Sin migración (solo métodos).
 
 ### 3. Roles de equipo sin uso
 `TeamMembership.ROLE_CHOICES` (`member`/`viewer`) existe pero no se aplica en autorización.
@@ -59,7 +63,7 @@ Solo stdout.
 ## Verificación
 
 - [ ] `pytest` corre y los tests de control de acceso + financieros pasan.
-- [ ] Confirmar que el cálculo financiero sigue funcionando tras moverlo a modelos/señales.
+- [x] Confirmar que el cálculo financiero sigue funcionando tras moverlo a modelos/señales. (7 tests financieros + 2 nuevos de la señal, verdes)
 - [ ] Probar que un `viewer` no puede ejecutar acciones de `member` en teams.
 - [ ] Verificar que las consultas a `Client` usan el índice nuevo (EXPLAIN).
 - [ ] Confirmar rate limiting distribuido con Redis entre múltiples workers.
