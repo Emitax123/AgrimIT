@@ -62,7 +62,7 @@ Tests, refactors, roles de equipo, índices, Redis, CSP, logging. **Al final.**
 
 - [x] Tests (pytest-django + factory-boy) — control de acceso (24) + lógica financiera (7)
 - [ ] Mover lógica de negocio a modelos/señales
-- [ ] `RoleRequiredMixin` para teams
+- [x] `RoleRequiredMixin` para teams (roles `member`/`viewer` aplicados; member comparte, viewer solo lee)
 - [ ] Migrar FBV → CBV con `TenantMixin`
 - [x] Índice `['user', 'flag']` en `Client`
 - [ ] Rate limiting → Redis

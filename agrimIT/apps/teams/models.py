@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 from apps.users.models import User
 from apps.project_admin.models import Project
 
@@ -34,10 +35,48 @@ class Team(models.Model):
     def get_members_count(self):
         """Retorna el número total de miembros incluido el propietario"""
         return self.memberships.filter(is_active=True).count() + 1
-    
+
     def get_shared_projects_count(self):
         """Retorna el número de proyectos compartidos con este grupo"""
         return self.shared_projects.filter(is_active=True).count()
+
+    # --- Roles y permisos (Plan 04, item 3) -------------------------------
+    # Jerarquía: owner > member > viewer.
+    #   owner  -> control total del grupo (editar/eliminar, gestionar miembros).
+    #   member -> colaborador: puede compartir sus propios proyectos con el grupo.
+    #   viewer -> solo lectura: ver el grupo y los proyectos compartidos.
+
+    def get_user_role(self, user):
+        """Rol efectivo de `user` en este grupo: 'owner'/'member'/'viewer' o None."""
+        if not user or not user.is_authenticated:
+            return None
+        if self.owner_id == user.id:
+            return 'owner'
+        membership = self.memberships.filter(user=user, is_active=True).first()
+        return membership.role if membership else None
+
+    def user_can_view(self, user):
+        """True si `user` puede ver el grupo (owner, member o viewer)."""
+        return self.get_user_role(user) is not None
+
+    def user_can_manage(self, user):
+        """True si `user` puede gestionar el grupo (solo el owner)."""
+        return self.get_user_role(user) == 'owner'
+
+    def user_can_share(self, user):
+        """True si `user` puede compartir proyectos con el grupo (owner o member)."""
+        return self.get_user_role(user) in ('owner', 'member')
+
+    @classmethod
+    def shareable_by(cls, user):
+        """Grupos activos donde `user` puede compartir: propios o donde es member."""
+        if not user or not user.is_authenticated:
+            return cls.objects.none()
+        return cls.objects.filter(
+            Q(owner=user) |
+            Q(memberships__user=user, memberships__role='member', memberships__is_active=True),
+            is_active=True,
+        ).distinct()
 
 
 class TeamMembership(models.Model):

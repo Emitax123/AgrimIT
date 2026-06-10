@@ -1,5 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib import messages
 from django.http import JsonResponse
@@ -52,6 +52,33 @@ class AgrimITBaseView(TenantMixin):
         })
         
         return context
+
+
+class RoleRequiredMixin(LoginRequiredMixin):
+    """
+    Restrict access to a detail/object view by the requesting user's role on
+    the object, for objects that expose a ``get_user_role(user)`` method
+    (e.g. ``apps.teams.models.Team``).
+
+    Set ``required_roles`` to the roles allowed to access the view. If the
+    object returns a role outside that set (or ``None``), the user is
+    redirected to ``role_denied_url`` with an error message.
+
+    Foundation for the FBV->CBV migration (Plan 04, item 4). The teams FBVs
+    currently enforce the same rules inline via the model helpers.
+    """
+    required_roles = ()
+    role_denied_url = 'team_list'
+    role_denied_message = 'No tenés permiso para acceder a esto.'
+
+    def dispatch(self, request, *args, **kwargs):
+        obj = self.get_object()
+        self.object = obj
+        role = obj.get_user_role(request.user)
+        if role not in self.required_roles:
+            messages.error(request, self.role_denied_message)
+            return redirect(self.role_denied_url)
+        return super().dispatch(request, *args, **kwargs)
 
 
 class AjaxResponseMixin:
