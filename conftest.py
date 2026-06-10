@@ -58,6 +58,34 @@ class ProjectFactory(DjangoModelFactory):
     titular_phone = "1100000000"
 
 
+class TeamFactory(DjangoModelFactory):
+    class Meta:
+        model = "teams.Team"
+
+    owner = factory.SubFactory(UserFactory)
+    name = factory.Sequence(lambda n: f"Grupo {n}")
+
+
+class TeamMembershipFactory(DjangoModelFactory):
+    class Meta:
+        model = "teams.TeamMembership"
+
+    team = factory.SubFactory(TeamFactory)
+    user = factory.SubFactory(UserFactory)
+    role = "viewer"
+    is_active = True
+
+
+class ProjectShareFactory(DjangoModelFactory):
+    class Meta:
+        model = "teams.ProjectShare"
+
+    project = factory.SubFactory(ProjectFactory)
+    team = factory.SubFactory(TeamFactory)
+    # Por defecto, comparte el dueño del proyecto.
+    shared_by = factory.SelfAttribute("project.user")
+
+
 # --- Fixtures ----------------------------------------------------------------
 
 @pytest.fixture
@@ -92,3 +120,18 @@ def client_factory(db):
 @pytest.fixture
 def project_factory(db):
     return ProjectFactory
+
+
+@pytest.fixture
+def team_factory(db):
+    return TeamFactory
+
+
+@pytest.fixture
+def membership_factory(db):
+    return TeamMembershipFactory
+
+
+@pytest.fixture
+def project_share_factory(db):
+    return ProjectShareFactory

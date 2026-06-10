@@ -177,12 +177,10 @@ class ShareProjectForm(forms.ModelForm):
         self.project = kwargs.pop('project', None)
         super().__init__(*args, **kwargs)
         
-        # Filtrar solo los equipos del usuario actual
+        # Grupos donde el usuario puede compartir: propios (owner) o donde es
+        # member (no viewer). Ver Team.shareable_by (Plan 04, item 3).
         if self.user:
-            self.fields['team'].queryset = Team.objects.filter(
-                owner=self.user,
-                is_active=True
-            ).order_by('name')
+            self.fields['team'].queryset = Team.shareable_by(self.user).order_by('name')
         
         # Si no hay equipos disponibles
         if not self.fields['team'].queryset.exists():
