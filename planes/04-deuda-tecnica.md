@@ -67,7 +67,7 @@ Solo stdout.
 ## Verificación
 
 - [x] `pytest` corre y los tests de control de acceso + financieros pasan.
-- [ ] Confirmar que el cálculo financiero sigue funcionando tras moverlo a modelos/señales.
+- [x] Confirmar que el cálculo financiero sigue funcionando tras moverlo a modelos/señales. (7 tests financieros + 2 nuevos de la señal, verdes)
 - [x] Probar que un `viewer` no puede ejecutar acciones de `member` en teams. (cubierto por `tests/test_team_roles.py`)
 - [ ] Verificar que las consultas a `Client` usan el índice nuevo (EXPLAIN).
 - [ ] Confirmar rate limiting distribuido con Redis entre múltiples workers.
