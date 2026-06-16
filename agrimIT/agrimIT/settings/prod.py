@@ -114,6 +114,13 @@ for domain in railway_domains:
     if domain not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(domain)
 
+# Custom domain (apex + www) from CUSTOM_DOMAIN env
+_custom_domain = os.environ.get('CUSTOM_DOMAIN')
+if _custom_domain:
+    for host in (_custom_domain, f'www.{_custom_domain}'):
+        if host not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(host)
+
 # Log the allowed hosts for debugging
 import logging
 railway_logger = logging.getLogger(__name__)
@@ -187,10 +194,11 @@ csrf_origins = [
     'https://*.railway.app',  # Wildcard for Railway subdomains
 ]
 
-# Add custom domain if configured
+# Add custom domain (apex + www) if configured
 custom_domain = os.environ.get('CUSTOM_DOMAIN')
 if custom_domain:
     csrf_origins.append(f'https://{custom_domain}')
+    csrf_origins.append(f'https://www.{custom_domain}')
 
 CSRF_TRUSTED_ORIGINS = csrf_origins
 
