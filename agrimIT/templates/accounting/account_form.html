@@ -1,70 +1,70 @@
 {% extends 'base/base_template.html' %}
 {% load static %}
 {% load widget_tweaks %}
-{% block form %}
-  <link rel="stylesheet" type="text/css" href="{% static 'css/accmovform.css' %}" />
 
-  <div class="form-container">
-    <h3 style="text-align: center; margin-bottom: 6px; color: #333;">Nuevo Movimiento Contable</h3>
-    {% if project %}
-      <p style="text-align: center; margin-bottom: 30px; color: #666; font-size: 0.9rem;">
-        Cliente: <strong>{{ project.client.name|default:"—" }}</strong>
-        {% if project.partido or project.partida %}
-          · Nomenclatura: {{ project.partido|default:"—" }} / {{ project.partida|default:"—" }}
-        {% endif %}
-      </p>
-    {% endif %}
-    <form method="post">
-      {% csrf_token %}
+{% block topbar %}
+  <div>
+    <h1>Nuevo movimiento</h1>
+    <div class="sub">
+      {% if project %}{{ project.type|default:"Proyecto" }} · {{ project.client.name|default:"—" }}{% else %}Movimiento contable{% endif %}
+    </div>
+  </div>
+{% endblock %}
 
-      <div class="form-group">
-        <label for="{{ form.movement_type.id_for_label }}">{{ form.movement_type.label }}</label>
-        {{ form.movement_type|add_class:'form-control'|attr:'placeholder:Seleccione el tipo de movimiento' }}
-      </div>
+{% block content %}
+  <div class="panel" style="max-width:560px">
+    <div class="head"><h2>Registrar movimiento</h2></div>
+    <div class="body">
+      <form method="post">
+        {% csrf_token %}
 
-      <div class="form-group">
-        <label for="{{ form.amount.id_for_label }}">{{ form.amount.label }}</label>
-        {{ form.amount|add_class:'form-control'|attr:'placeholder:Ingrese el monto (ej. 1500.50)' }}
-        <div class="quick-amounts" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;">
-          <button type="button" class="toggle-btn" data-amount="50000">+50.000</button>
-          <button type="button" class="toggle-btn" data-amount="100000">+100.000</button>
-          <button type="button" class="toggle-btn" data-amount="250000">+250.000</button>
-          <button type="button" class="toggle-btn" data-amount="500000">+500.000</button>
-          <button type="button" class="toggle-btn red" id="clear-amount">Limpiar</button>
+        <div class="fgrid" style="grid-template-columns:1fr">
+          <div>
+            <label class="fl" for="{{ form.movement_type.id_for_label }}">{{ form.movement_type.label }}</label>
+            {% render_field form.movement_type class="std" %}
+            {% for err in form.movement_type.errors %}<div style="font-size:.72rem;color:var(--red);margin-top:4px">{{ err }}</div>{% endfor %}
+          </div>
+
+          <div>
+            <label class="fl" for="{{ form.amount.id_for_label }}">{{ form.amount.label }}</label>
+            {% render_field form.amount class="std" placeholder="Ingrese el monto (ej. 150000)" %}
+            <div class="quick-amounts" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">
+              <button type="button" class="btn btn-ghost btn-sm" data-amount="50000">+50.000</button>
+              <button type="button" class="btn btn-ghost btn-sm" data-amount="100000">+100.000</button>
+              <button type="button" class="btn btn-ghost btn-sm" data-amount="250000">+250.000</button>
+              <button type="button" class="btn btn-ghost btn-sm" data-amount="500000">+500.000</button>
+              <button type="button" class="btn btn-red btn-sm" id="clear-amount">Limpiar</button>
+            </div>
+            {% for err in form.amount.errors %}<div style="font-size:.72rem;color:var(--red);margin-top:4px">{{ err }}</div>{% endfor %}
+          </div>
+
+          <div>
+            <label class="fl" for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+            {% render_field form.description class="std" placeholder="Describa el motivo de este movimiento…" %}
+            {% for err in form.description.errors %}<div style="font-size:.72rem;color:var(--red);margin-top:4px">{{ err }}</div>{% endfor %}
+          </div>
         </div>
-      </div>
 
-      <div class="form-group">
-        <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
-        {{ form.description|add_class:'form-control'|attr:'placeholder:Describa detalladamente el motivo de este movimiento contable...'|attr:'rows:4' }}
-      </div>
-
-      <div class="form-group">
-        <button type="submit" class="toggle-btn active">Guardar Movimiento</button>
-      </div>
-    </form>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px">
+          <button type="button" class="btn btn-ghost" onclick="history.back()">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar movimiento</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      const amountInput = document.getElementById('id_amount')
+      const amountInput = document.getElementById('{{ form.amount.id_for_label }}')
       if (!amountInput) return
-
-      // Quick-amount buttons add their value to the current amount.
       document.querySelectorAll('.quick-amounts [data-amount]').forEach(function (btn) {
         btn.addEventListener('click', function () {
           const current = parseFloat(amountInput.value) || 0
-          const add = parseFloat(this.dataset.amount) || 0
-          amountInput.value = (current + add).toFixed(2)
+          amountInput.value = (current + (parseFloat(this.dataset.amount) || 0)).toFixed(2)
         })
       })
-
       const clearBtn = document.getElementById('clear-amount')
-      if (clearBtn) {
-        clearBtn.addEventListener('click', function () {
-          amountInput.value = ''
-        })
-      }
+      if (clearBtn) clearBtn.addEventListener('click', function () { amountInput.value = '' })
     })
   </script>
 {% endblock %}

@@ -22,7 +22,8 @@ from apps.project_admin.importers import (
 )
 from apps.project_admin.models import Event, Project, ProjectFiles
 from apps.accounting.models import Account, MonthlyFinancialSummary
-from django.db.models import Q
+from django.db.models import Q, Sum, F, DecimalField, Value
+from django.db.models.functions import Coalesce
 from decimal import Decimal as Dec, InvalidOperation
 from django.contrib.auth.decorators import login_required
 from collections import defaultdict
@@ -70,21 +71,101 @@ def save_in_history(project_pk: int, event_type: str, msg: str, user=None):
     except Exception as e:
         logger.error(f"Cannot save history: {e}")
 
+_MONTHS_ES = {
+    1: "enero", 2: "febrero", 3: "marzo", 4: "abril", 5: "mayo", 6: "junio",
+    7: "julio", 8: "agosto", 9: "septiembre", 10: "octubre", 11: "noviembre", 12: "diciembre",
+}
+
+
+def _month_label(month: int) -> str:
+    """Nombre del mes en español (neutro), o cadena vacía si es inválido."""
+    return _MONTHS_ES.get(int(month), "")
+
+
+def _pesos(value) -> str:
+    """Formato de moneda es-AR: pesos enteros con separador de miles con punto.
+    Ej: Decimal('1234567.00') -> '1.234.567'."""
+    n = int(round(value or 0))
+    return f"{n:,}".replace(",", ".")
+
+
 @login_required
 def index(request):
+    user = request.user
+    now = timezone.now()
+    current_year = int(now.year)
+    current_month = int(now.month)
+    if current_month == 1:
+        prev_year, prev_month = current_year - 1, 12
+    else:
+        prev_year, prev_month = current_year, current_month - 1
+
+    # --- KPI 1: proyectos activos (+ nuevos este mes) ---
+    project_count = Project.objects.filter(user=user, closed=False).count()
+    new_this_month = Project.objects.filter(
+        user=user, created__year=current_year, created__month=current_month
+    ).count()
+
+    # --- KPI 2: ingresos del mes y variación vs mes anterior ---
+    cur_summary = MonthlyFinancialSummary.objects.filter(
+        user=user, year=current_year, month=current_month
+    ).first()
+    prev_summary = MonthlyFinancialSummary.objects.filter(
+        user=user, year=prev_year, month=prev_month
+    ).first()
+    income_current = cur_summary.total_advance if cur_summary else Dec("0.00")
+    income_prev = prev_summary.total_advance if prev_summary else Dec("0.00")
+    if income_prev and income_prev != 0:
+        income_delta_pct = (income_current - income_prev) / income_prev * 100
+        income_up = income_delta_pct >= 0
+        # Formato es-AR: separador decimal con coma, 1 decimal, sin signo.
+        income_delta_str = f"{abs(income_delta_pct):.1f}".replace(".", ",")
+    else:
+        income_delta_pct = None
+        income_up = None
+        income_delta_str = None
+    net_income = cur_summary.net_worth if cur_summary else Dec("0.00")  # compat
+
+    # --- KPI 3: por cobrar (saldo = estimated - advance, proyectos abiertos) ---
+    receivable_accounts = Account.objects.filter(
+        project__user=user, project__closed=False, estimated__gt=0
+    ).annotate(saldo=F('estimated') - F('advance')).filter(saldo__gt=0)
+    receivables_total = receivable_accounts.aggregate(
+        total=Coalesce(Sum('saldo'), Value(Dec("0.00")), output_field=DecimalField())
+    )['total']
+    receivables_count = receivable_accounts.count()
+
+    # --- KPI 4: clientes ---
+    clients_total = Client.objects.filter(user=user).count()
+    # Nota: el contador del sidebar (clients_count/project_count/receivables_count)
+    # lo provee el context processor `sidebar_counters` de forma consistente en toda la app.
+
+    # --- Listas del dashboard ---
     projects = Project.objects.select_related('client')\
         .prefetch_related('files')\
-        .filter(user=request.user).order_by('-created')[:10]
-    clients_count = Client.objects.filter(user=request.user, flag=True).count()
-    project_count = Project.objects.filter(user=request.user, closed=False).count()
-    net_income = Dec("0.00")
-    current_year = int(timezone.now().year)
-    current_month = int(timezone.now().month)
-    summary = MonthlyFinancialSummary.objects.filter(
-        year=current_year, month=current_month, user=request.user
-        ).first()
-    net_income = summary.net_worth if summary else Dec("0.00")
-    return render (request, 'base/Index.html', {'projects': projects, 'clients_count': clients_count, 'project_count': project_count, 'net_income': net_income})
+        .filter(user=user).order_by('-created')[:5]
+    recent_events = Event.objects.filter(user=user).order_by('-time')[:5]
+
+    return render(request, 'base/Index.html', {
+        'project_count': project_count,
+        'new_this_month': new_this_month,
+        'income_current': income_current,
+        'income_current_fmt': _pesos(income_current),
+        'income_delta_pct': income_delta_pct,
+        'income_up': income_up,
+        'income_delta_str': income_delta_str,
+        'prev_month_label': _month_label(prev_month),
+        'current_month_label': _month_label(current_month),
+        'current_year': current_year,
+        'receivables_total': receivables_total,
+        'receivables_total_fmt': _pesos(receivables_total),
+        'receivables_count': receivables_count,
+        'clients_total': clients_total,
+        'projects': projects,
+        'recent_events': recent_events,
+        # claves retro-compatibles
+        'net_income': net_income,
+    })
 
 #Eliminación de2 proyecto
 @login_required
@@ -236,67 +317,97 @@ def close_view(request: HttpRequest, pk: int) -> HttpResponse:
         logger.error(f"Project with pk {pk} does not exist for current user.")
         return redirect('projects')
 
+# Mapa de tipos para los chips del listado (mismo orden que el mockup §4.2)
+PROJECT_TYPE_MAP = {
+    1: "Mensura",
+    2: "Estado Parcelario",
+    3: "Amojonamiento",
+    4: "Relevamiento",
+    5: "Legajo Parcelario",
+}
+
+
+def _apply_estado(queryset, estado: str):
+    """Filtra por estado del segmento Activos/Cerrados/Todos."""
+    if estado == 'cerrados':
+        return queryset.filter(closed=True)
+    if estado == 'todos':
+        return queryset
+    return queryset.filter(closed=False)  # 'activos' (default)
+
+
+def _project_counts(user):
+    """(activos, totales) del usuario para el subtítulo del topbar."""
+    total = Project.objects.filter(user=user).count()
+    active = Project.objects.filter(user=user, closed=False).count()
+    return active, total
+
+
 #Todos los proyectos
 @login_required
 def projectlist_view(request: HttpRequest) -> HttpResponse:
     """ List all projects for the current user """
+    active_count, total_count = _project_counts(request.user)
     if request.method == 'POST':
-        if request.POST.get('search-input')!="":
-            query = request.POST.get('search-input')
+        query = request.POST.get('search-input', '')
+        if query:
             projects = Project.objects.select_related('client')\
                 .prefetch_related('files')\
                 .filter(user=request.user)\
                 .filter(Q(client__name__icontains=query) | Q(partida__icontains=query))\
                 .order_by('-created')
-            
-            if not projects.exists():
-                return render (request, 'project_admin/project_list_template.html', {'no_projects':True})
-        actual_pag, pages = paginate_queryset(request, projects)
-        return render (request, 'project_admin/project_list_template.html', {'projects':actual_pag, 'pages':pages})
+            actual_pag, pages = paginate_queryset(request, projects)
+            return render(request, 'project_admin/project_list_template.html', {
+                'projects': actual_pag, 'pages': pages, 'show_filters': False,
+                'search_query': query, 'active_count': active_count, 'total_count': total_count,
+            })
+        # Búsqueda vacía: cae al listado normal.
 
-    else:
-        actual_pag, pages = paginate_queryset(request, 
-            Project.objects.select_related('client')
-            .prefetch_related('files', 'events')
-            .filter(user=request.user, closed=False)
-            .order_by('-created')
-        )
-    return render (request, 'project_admin/project_list_template.html', {'projects':actual_pag, 'pages':pages})
+    estado = request.GET.get('estado', 'activos')
+    qs = Project.objects.select_related('client')\
+        .prefetch_related('files', 'events')\
+        .filter(user=request.user)
+    qs = _apply_estado(qs, estado).order_by('-created')
+    actual_pag, pages = paginate_queryset(request, qs)
+    return render(request, 'project_admin/project_list_template.html', {
+        'projects': actual_pag, 'pages': pages, 'show_filters': True,
+        'estado': estado, 'active_type': None,
+        'active_count': active_count, 'total_count': total_count,
+    })
 
 #Proyectos por cliente
 @login_required
 def alt_projectlist_view(request: HttpRequest, pk: int) -> HttpResponse:
     """ List projects for a specific client """
+    client = Client.objects.filter(user=request.user, pk=pk).first()
     projects = Project.objects.select_related('client')\
         .prefetch_related('files')\
         .filter(user=request.user, client__pk=pk).order_by('-created')
-    if not projects.exists():
-        return render (request, 'project_admin/project_list_template.html', {'no_projects':True})
     actual_pag, pages = paginate_queryset(request, projects)
-    return render (request, 'project_admin/project_list_template.html', {'projects':actual_pag, 'pages':pages})
+    return render(request, 'project_admin/project_list_template.html', {
+        'projects': actual_pag, 'pages': pages, 'show_filters': False,
+        'list_title': f"Proyectos de {client.name}" if client else "Proyectos del cliente",
+    })
 
 #Proyectos por tipo
 @login_required
 def projectlistfortype_view(request: HttpRequest, type: int) -> HttpResponse:
     """ List projects for a specific type """
-    #Mensuras
-    type_map = {
-        1: "Mensura",
-        2: "Estado Parcelario",
-        3: "Amojonamiento",
-        4: "Relevamiento",
-        5: "Legajo Parcelario"
-    }
-    project_type = type_map.get(type)
+    project_type = PROJECT_TYPE_MAP.get(type)
+    active_count, total_count = _project_counts(request.user)
     if not project_type:
-        return render(request, 'project__admin/project_list_template.html', {'no_projects': True})
-    projects = Project.objects.select_related('client')\
+        return redirect('projects')
+    estado = request.GET.get('estado', 'activos')
+    qs = Project.objects.select_related('client')\
         .prefetch_related('files')\
-        .filter(user=request.user, type=project_type, closed=False).order_by('-created')
-    actual_pag, pages = paginate_queryset(request, projects)
-    if not projects.exists():
-        return render (request, 'project_admin/project_list_template.html', {'no_projects':True})
-    return render (request, 'project_admin/project_list_template.html', {'projects':actual_pag, 'pages':pages})
+        .filter(user=request.user, type=project_type)
+    qs = _apply_estado(qs, estado).order_by('-created')
+    actual_pag, pages = paginate_queryset(request, qs)
+    return render(request, 'project_admin/project_list_template.html', {
+        'projects': actual_pag, 'pages': pages, 'show_filters': True,
+        'estado': estado, 'active_type': type,
+        'active_count': active_count, 'total_count': total_count,
+    })
 
 #Vista de un proyecto
 @login_required
@@ -319,19 +430,24 @@ def project_view(request: HttpRequest, pk: int) -> HttpResponse:
             project=project
         ).select_related('team', 'shared_by').order_by('-shared_at')
         
+        account = project.account
+        saldo = (account.estimated or Dec("0")) - (account.advance or Dec("0")) if account else Dec("0")
+
         file = project.files.first()
         if file:
             return render(request, 'project_admin/project_template.html', {
-                'project': project, 
-                'account': project.account, 
+                'project': project,
+                'account': account,
+                'saldo': saldo,
                 'file_url': file.url,
                 'shared_with_teams': shared_with_teams
             })
         else:
             form = FileFieldForm()
         return render(request, 'project_admin/project_template.html', {
-            'project': project, 
-            'account': project.account, 
+            'project': project,
+            'account': account,
+            'saldo': saldo,
             'form': form,
             'shared_with_teams': shared_with_teams
         })
@@ -536,27 +652,46 @@ def full_mod_view(request: HttpRequest, pk: int) -> HttpResponse:
     return render (request, 'project_admin/full_mod_template.html', {'form':form, 'project':instance})
 
 #Vista de historial
+# Filtros del segmento (Todo/Proyectos/Clientes/Cobros) -> tipos de Event (§4.9).
+# "Cobros" no tiene tipo propio en el modelo (los movimientos no generan Event),
+# por lo que queda como filtro vacío; se mantiene por fidelidad a la spec.
+HISTORY_FILTERS = {
+    'proyectos': ['newp', 'modp', 'deletep', 'file_add', 'file_del'],
+    'clientes': ['newc', 'deletec'],
+    'cobros': [],
+}
+MESES_ES = [
+    '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+]
+
+
 @login_required
 def history_view(request: HttpRequest) -> HttpResponse:
     """ View the history of events for the current user """
-    events = Event.objects.filter(user=request.user).order_by('-time')[:100]
-    if not events:
-        return render (request, 'project_admin/history_template.html', {'no_events':True})
-    grouped_objects_def = defaultdict(lambda: defaultdict(list))
-    for e in events:
-        
-        if e.type == 'deletep' or e.type == 'deletec':
-            e.link = False
-        else:
-            e.link = True
-        year = e.time.year
-        month = e.time.month
-        grouped_objects_def[year][month].append(e)
+    active_filter = request.GET.get('filter', 'todo')
+    if active_filter not in HISTORY_FILTERS:
+        active_filter = 'todo'
 
-    for obj in grouped_objects_def:
-       grouped_objects_def[obj].default_factory = None
-    grouped_objects = dict(grouped_objects_def)
-    return render (request, 'project_admin/history_template.html', {'yearlist':grouped_objects})
+    events = Event.objects.filter(user=request.user)
+    if active_filter != 'todo':
+        events = events.filter(type__in=HISTORY_FILTERS[active_filter])
+    events = events.order_by('-time')[:100]
+
+    context = {'active_filter': active_filter}
+    if not events:
+        context['no_events'] = True
+        return render(request, 'project_admin/history_template.html', context)
+
+    # Agrupar por "Mes Año" (etiqueta en español), conservando el orden -time.
+    grouped = defaultdict(list)
+    for e in events:
+        e.link = e.type not in ('deletep', 'deletec')
+        label = f"{MESES_ES[e.time.month]} {e.time.year}"
+        grouped[label].append(e)
+
+    context['groups'] = dict(grouped)
+    return render(request, 'project_admin/history_template.html', context)
 
 #Modulo de busqueda
 @login_required

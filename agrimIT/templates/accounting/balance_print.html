@@ -1,0 +1,81 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Balance {{ year }} — AgrimIT</title>
+  <link rel="icon" href="{% static 'img/logo-cut.png' %}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/design-system.css' %}">
+  <style>
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);margin:0;padding:28px 16px}
+    .pr-wrap{max-width:800px;margin:0 auto;background:#fff;border-radius:14px;padding:32px 38px;box-shadow:var(--shadow)}
+    .pr-head{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid var(--primary);padding-bottom:16px;margin-bottom:20px}
+    .pr-head h1{margin:0;font-size:1.4rem;font-weight:800}
+    .pr-head .logo{display:flex;gap:12px;align-items:center}
+    .pr-head img{width:40px;height:auto}
+    .pr-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+    .pr-kpi{background:var(--bg);border-radius:12px;padding:14px 16px}
+    .pr-kpi .name{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3)}
+    .pr-kpi .value{font-size:1.4rem;font-weight:800;letter-spacing:-.02em;margin-top:4px}
+    table{width:100%;border-collapse:collapse;font-size:.86rem}
+    th{text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);padding:8px 10px;border-bottom:1px solid var(--border)}
+    td{padding:9px 10px;border-bottom:1px solid var(--border)}
+    td.num,th.num{text-align:right}
+    tr.total td{font-weight:800;border-top:2px solid var(--text)}
+    .no-print{text-align:right;margin:0 auto 14px;max-width:800px}
+    @media print{
+      /* design-system.css oculta `body *` para el modal de factura; en esta
+         página standalone hay que volver a mostrar todo. */
+      body *{visibility:visible}
+      body{background:#fff;padding:0}
+      .pr-wrap{max-width:none;box-shadow:none;border-radius:0}
+      .no-print{display:none}
+      @page{size:A4;margin:14mm}
+    }
+  </style>
+</head>
+<body onload="window.print()">
+  <div class="no-print">
+    <button class="btn btn-primary btn-sm" onclick="window.print()">🖨 Imprimir</button>
+  </div>
+  <div class="pr-wrap">
+    <div class="pr-head">
+      <div class="logo">
+        <img src="{% static 'img/logo-cut.png' %}" alt="" onerror="this.style.display='none'">
+        <h1>Balance {{ year }}</h1>
+      </div>
+      <div style="text-align:right;color:var(--text-2);font-size:.8rem">AgrimIT<br>Neto anual: <b>${{ neto_anual }}</b></div>
+    </div>
+
+    {% if kpis %}
+    <div class="pr-kpis">
+      <div class="pr-kpi"><div class="name">Ingresos del mes</div><div class="value">${{ kpis.ingresos.value_fmt }}</div></div>
+      <div class="pr-kpi"><div class="name">Gastos del mes</div><div class="value">${{ kpis.gastos.value_fmt }}</div></div>
+      <div class="pr-kpi"><div class="name">Neto del mes</div><div class="value">${{ kpis.neto.value_fmt }}</div></div>
+      <div class="pr-kpi"><div class="name">Proyectos facturados</div><div class="value">{{ kpis.facturados.value_fmt }}</div></div>
+    </div>
+    {% endif %}
+
+    <table>
+      <thead>
+        <tr><th>Mes</th><th class="num">Proyectos</th><th class="num">Neto</th></tr>
+      </thead>
+      <tbody>
+        {% for mt in monthly_totals %}
+        <tr>
+          <td>{{ mt.month }}</td>
+          <td class="num">{{ mt.project_count }}</td>
+          <td class="num">${{ mt.total_networth }}</td>
+        </tr>
+        {% endfor %}
+        <tr class="total">
+          <td>Total anual</td>
+          <td class="num"></td>
+          <td class="num">${{ neto_anual }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

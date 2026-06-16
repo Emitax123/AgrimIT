@@ -14,7 +14,7 @@ class TeamForm(forms.ModelForm):
         widget=forms.Textarea(attrs={
             'rows': 3,
             'placeholder': 'Ingrese los nombres de usuario separados por comas (ej: usuario1, usuario2, usuario3)',
-            'class': 'form-control'
+            'class': 'std'
         }),
         label='Miembros del Equipo',
         help_text='Escriba los nombres de usuario de las personas que desea agregar, separados por comas.'
@@ -25,11 +25,11 @@ class TeamForm(forms.ModelForm):
         fields = ['name', 'description']
         widgets = {
             'name': forms.TextInput(attrs={
-                'class': 'form-control',
+                'class': 'std',
                 'placeholder': 'Nombre del grupo'
             }),
             'description': forms.Textarea(attrs={
-                'class': 'form-control',
+                'class': 'std',
                 'rows': 4,
                 'placeholder': 'Descripción del grupo (opcional)'
             }),
@@ -108,7 +108,7 @@ class AddMemberForm(forms.Form):
     username = forms.CharField(
         max_length=150,
         widget=forms.TextInput(attrs={
-            'class': 'form-control',
+            'class': 'std',
             'placeholder': 'Nombre de usuario'
         }),
         label='Usuario a Agregar'
@@ -116,7 +116,7 @@ class AddMemberForm(forms.Form):
     
     role = forms.ChoiceField(
         choices=TeamMembership.ROLE_CHOICES,
-        widget=forms.Select(attrs={'class': 'form-control'}),
+        widget=forms.Select(attrs={'class': 'std'}),
         label='Rol',
         initial='viewer'
     )
@@ -160,9 +160,9 @@ class ShareProjectForm(forms.ModelForm):
         model = ProjectShare
         fields = ['team', 'notes']
         widgets = {
-            'team': forms.Select(attrs={'class': 'form-control'}),
+            'team': forms.Select(attrs={'class': 'std'}),
             'notes': forms.Textarea(attrs={
-                'class': 'form-control',
+                'class': 'std',
                 'rows': 3,
                 'placeholder': 'Notas adicionales (opcional)'
             }),

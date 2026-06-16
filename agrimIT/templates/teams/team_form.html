@@ -1,66 +1,51 @@
 {% extends 'base/base_template.html' %}
 {% load static %}
 
-{% block extra_css %}
-  <link rel="stylesheet" href="{% static 'css/teams.css' %}" />
+{% block topbar %}
+  <div>
+    <h1>{{ action }} grupo de trabajo</h1>
+    <div class="sub">Definí el nombre, la descripción y los miembros del grupo</div>
+  </div>
 {% endblock %}
 
 {% block content %}
-  <div class="container">
-    <div class="fila">
-      <div class="form-header">
-        <h1>{{ action }} Grupo de Trabajo</h1>
-      </div>
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
 
-      {% if messages %}
-        <div class="messages-container">
-          {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-          {% endfor %}
+  <div class="panel" style="max-width:880px">
+    <div class="body">
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="ffield">
+          <label class="fl" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+          {{ form.name }}
+          {% if form.name.errors %}<div class="err">{{ form.name.errors.0 }}</div>{% endif %}
         </div>
-      {% endif %}
 
-      <div class="form-container">
-        <form method="post" class="team-form">
-          {% csrf_token %}
+        <div class="ffield">
+          <label class="fl" for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+          {{ form.description }}
+          {% if form.description.errors %}<div class="err">{{ form.description.errors.0 }}</div>{% endif %}
+        </div>
 
-          <div class="form-group">
-            <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
-            {{ form.name }}
-            {% if form.name.errors %}
-              <div class="error-message">{{ form.name.errors.0 }}</div>
-            {% endif %}
-          </div>
+        <div class="ffield">
+          <label class="fl" for="{{ form.members_usernames.id_for_label }}">{{ form.members_usernames.label }}</label>
+          {{ form.members_usernames }}
+          {% if form.members_usernames.help_text %}<small class="hint">{{ form.members_usernames.help_text }}</small>{% endif %}
+          {% if form.members_usernames.errors %}<div class="err">{{ form.members_usernames.errors.0 }}</div>{% endif %}
+        </div>
 
-          <div class="form-group">
-            <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
-            {{ form.description }}
-            {% if form.description.errors %}
-              <div class="error-message">{{ form.description.errors.0 }}</div>
-            {% endif %}
-          </div>
-
-          <div class="form-group">
-            <label for="{{ form.members_usernames.id_for_label }}">{{ form.members_usernames.label }}</label>
-            {{ form.members_usernames }}
-            <small class="form-help">{{ form.members_usernames.help_text }}</small>
-            {% if form.members_usernames.errors %}
-              <div class="error-message">{{ form.members_usernames.errors.0 }}</div>
-            {% endif %}
-          </div>
-
-          <div class="form-actions">
-            <button type="submit" class="btn btn-primary">
-              {% if action == 'Crear' %}
-                Crear Grupo
-              {% else %}
-                Guardar Cambios
-              {% endif %}
-            </button>
-            <a href="{% url 'team_list' %}" class="btn btn-secondary">Cancelar</a>
-          </div>
-        </form>
-      </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px">
+          <a href="{% url 'team_list' %}" class="btn btn-ghost">Cancelar</a>
+          <button type="submit" class="btn btn-primary">
+            {% if action == 'Crear' %}Crear grupo{% else %}Guardar cambios{% endif %}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 {% endblock %}

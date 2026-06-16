@@ -256,8 +256,7 @@ def accounting_mov_display(request: HttpRequest,
     
     # Get the final queryset ordered by date (newest first)
     accounts_mov = accounts_query.order_by('-created_at')
-    
-    
+
     # Pass the filter parameters to the template context to maintain state
     context = {
         'accounts_mov': accounts_mov,
@@ -265,7 +264,13 @@ def accounting_mov_display(request: HttpRequest,
         'end_date': request.GET.get('end-date', ''),
         'project_id': pk  # Pass the project ID to the template
     }
-    
+
+    # Cuentas por cobrar con aging (§7.3): solo en la vista global (sin proyecto puntual).
+    if pk is None:
+        receivables = get_receivables(request.user)
+        context['receivables'] = receivables
+        context['receivables_count'] = receivables['count']
+
     return render(request, 'accounting/accounting_history.html', context)
 
 def get_monthly_networth_data(year: int, user: User) -> tuple[list, list]:
@@ -332,6 +337,14 @@ def month_str_short(number):
 
 def format_currency(value):
     return f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+def pesos(value) -> str:
+    """Formato es-AR sin decimales: 1234567 -> '1.234.567' (separador de miles con punto)."""
+    try:
+        n = int(round(float(value or 0)))
+    except (TypeError, ValueError):
+        n = 0
+    return f"{n:,}".replace(",", ".")
 
 def chart_data_format(data: dict) -> dict:
     """
@@ -666,7 +679,8 @@ def balance_anual(year: int, user: User) -> tuple[list, list]:
             
             monthly_totals.append({
                 'month': month_str(summary.month),
-                'total_networth': format_currency(summary.net_worth),
+                'total_networth': pesos(summary.net_worth),
+                'net_raw': float(summary.net_worth or 0),
                 'project_count': project_counts.get(month_num, 0)
             })
             year_networth += summary.net_worth
@@ -674,63 +688,348 @@ def balance_anual(year: int, user: User) -> tuple[list, list]:
             # If no summary exists for this month, create a default one
             monthly_totals.append({
                 'month': month_name,
-                'total_networth': format_currency(0),
+                'total_networth': pesos(0),
+                'net_raw': 0.0,
                 'project_count': project_counts.get(month_num, 0)
             })
-    return monthly_totals, format_currency(year_networth)
+    return monthly_totals, pesos(year_networth)
+
+# ---------------------------------------------------------------------------
+# Helpers de finanzas (Fase 3 — REDESIGN §7.1, §7.2, §7.5, §7.6, §7.3)
+# ---------------------------------------------------------------------------
+
+# Clave de tipo (querystring) -> columna neta por tipo en MonthlyFinancialSummary.
+INCOME_FIELD_BY_TIPO = {
+    'mensura': 'income_mensura',
+    'est_parc': 'income_est_parc',
+    'amoj': 'income_amoj',
+    'relev': 'income_relev',
+    'leg': 'income_leg',
+}
+# Clave de tipo -> etiqueta visible.
+TIPO_LABELS = {
+    'mensura': 'Mensuras',
+    'est_parc': 'Est. Parcelarios',
+    'amoj': 'Amojonamientos',
+    'relev': 'Relevamientos',
+    'leg': 'Legajos',
+}
+# Clave de tipo -> valor de Project.type (para contar proyectos facturados por tipo).
+TIPO_TO_PROJECT_TYPE = {
+    'mensura': 'Mensura',
+    'est_parc': 'Estado Parcelario',
+    'amoj': 'Amojonamiento',
+    'relev': 'Relevamiento',
+    'leg': 'Legajo Parcelario',
+}
+
+
+def _prev_year_month(year: int, month: int) -> tuple[int, int]:
+    """Mes/año anterior, manejando el salto enero -> diciembre del año previo."""
+    if month == 1:
+        return year - 1, 12
+    return year, month - 1
+
+
+def _count_facturados(user: User, year: int, month: int, project_type: Optional[str] = None) -> int:
+    """Proyectos del usuario con al menos un movimiento ADV en el mes (opcional por tipo)."""
+    qs = Project.objects.filter(
+        user=user,
+        account__movements__movement_type='ADV',
+        account__movements__created_at__year=year,
+        account__movements__created_at__month=month,
+    )
+    if project_type:
+        qs = qs.filter(type=project_type)
+    return qs.distinct().count()
+
+
+def get_balance_kpis(user: User, year: int, month: int, tipo: Optional[str] = None) -> dict:
+    """
+    KPIs comparativos del mes vs el mes anterior (§7.1).
+
+    Devuelve un dict con 'ingresos', 'gastos', 'neto', 'facturados' (cada uno con
+    value_fmt, delta_str, up, good, has_prev) y 'prev_month_label'. Para gastos,
+    'good' es True cuando bajan. Con `tipo` activo solo se computa el neto del tipo
+    (Ingresos/Gastos brutos quedan sin desglose, §7.5).
+    """
+    prev_year, prev_month = _prev_year_month(year, month)
+    cur = MonthlyFinancialSummary.objects.filter(user=user, year=year, month=month).first()
+    prev = MonthlyFinancialSummary.objects.filter(user=user, year=prev_year, month=prev_month).first()
+
+    def _pct_kpi(actual, anterior, good_when_up=True):
+        actual = Decimal(str(actual or 0))
+        anterior = Decimal(str(anterior or 0))
+        if anterior != 0:
+            pct = (actual - anterior) / abs(anterior) * 100
+            up = actual >= anterior
+            return {
+                'value_fmt': pesos(actual),
+                'delta_str': f"{abs(pct):.1f}".replace('.', ','),
+                'up': up,
+                'good': (up if good_when_up else not up),
+                'has_prev': True,
+            }
+        return {'value_fmt': pesos(actual), 'delta_str': None,
+                'up': None, 'good': None, 'has_prev': False}
+
+    cur_adv = (cur.total_advance if cur else 0) or 0
+    cur_exp = (cur.total_expenses if cur else 0) or 0
+    prev_adv = (prev.total_advance if prev else 0) or 0
+    prev_exp = (prev.total_expenses if prev else 0) or 0
+
+    if tipo and tipo in INCOME_FIELD_BY_TIPO:
+        col = INCOME_FIELD_BY_TIPO[tipo]
+        cur_net = getattr(cur, col, 0) if cur else 0
+        prev_net = getattr(prev, col, 0) if prev else 0
+        ptype = TIPO_TO_PROJECT_TYPE[tipo]
+        neto = _pct_kpi(cur_net, prev_net, good_when_up=True)
+        # Sin desglose bruto por tipo: marcar Ingresos/Gastos como no disponibles.
+        sin_desglose = {'value_fmt': '—', 'delta_str': None, 'up': None,
+                        'good': None, 'has_prev': False, 'no_desglose': True}
+        ingresos = dict(sin_desglose)
+        gastos = dict(sin_desglose)
+    else:
+        ptype = None
+        ingresos = _pct_kpi(cur_adv, prev_adv, good_when_up=True)
+        gastos = _pct_kpi(cur_exp, prev_exp, good_when_up=False)
+        neto = _pct_kpi(Decimal(str(cur_adv)) - Decimal(str(cur_exp)),
+                        Decimal(str(prev_adv)) - Decimal(str(prev_exp)), good_when_up=True)
+
+    cur_fact = _count_facturados(user, year, month, ptype)
+    prev_fact = _count_facturados(user, prev_year, prev_month, ptype)
+    diff = cur_fact - prev_fact
+    facturados = {
+        'value_fmt': cur_fact,
+        'delta_str': (f"+{diff}" if diff > 0 else (str(diff) if diff < 0 else None)),
+        'up': (diff > 0 if diff != 0 else None),
+        'good': (diff > 0 if diff != 0 else None),
+        'has_prev': diff != 0,
+    }
+
+    return {
+        'ingresos': ingresos,
+        'gastos': gastos,
+        'neto': neto,
+        'facturados': facturados,
+        'prev_month_label': month_str(prev_month),
+    }
+
+
+def get_monthly_income_expense(year: int, user: User, tipo: Optional[str] = None) -> dict:
+    """
+    Series mensuales para el gráfico anual (§7.6). Sin tipo: ingresos/gastos brutos
+    + neto acumulado. Con tipo: el neto de ese tipo por mes (gastos en cero, §7.5).
+    """
+    if tipo and tipo in INCOME_FIELD_BY_TIPO:
+        col = INCOME_FIELD_BY_TIPO[tipo]
+        rows = MonthlyFinancialSummary.objects.filter(year=year, user=user).values('month', col)
+        net_by_month = {r['month']: float(r[col] or 0) for r in rows}
+        labels, ingresos, neto_acum = [], [], []
+        acc = 0.0
+        for m in range(1, 13):
+            labels.append(month_str_short(m))
+            n = net_by_month.get(m, 0.0)
+            ingresos.append(n)
+            acc += n
+            neto_acum.append(round(acc, 2))
+        return {'labels': labels, 'ingresos': ingresos, 'gastos': [0.0] * 12,
+                'neto_acum': neto_acum, 'mode': 'tipo', 'tipo_label': TIPO_LABELS[tipo]}
+
+    rows = MonthlyFinancialSummary.objects.filter(year=year, user=user)\
+        .values('month', 'total_advance', 'total_expenses')
+    adv_by_month = {r['month']: float(r['total_advance'] or 0) for r in rows}
+    exp_by_month = {r['month']: float(r['total_expenses'] or 0) for r in rows}
+    labels, ingresos, gastos, neto_acum = [], [], [], []
+    acc = 0.0
+    for m in range(1, 13):
+        labels.append(month_str_short(m))
+        i = adv_by_month.get(m, 0.0)
+        g = exp_by_month.get(m, 0.0)
+        ingresos.append(i)
+        gastos.append(g)
+        acc += (i - g)
+        neto_acum.append(round(acc, 2))
+    return {'labels': labels, 'ingresos': ingresos, 'gastos': gastos,
+            'neto_acum': neto_acum, 'mode': 'bruto', 'tipo_label': None}
+
+
+def get_top_clients(user: User, year: int, n: int = 5) -> list:
+    """
+    Top N clientes por facturación (movimientos ADV) del año (§7.6).
+    Cada item: {name, projects_count, total, total_fmt, pct} (pct sobre el máximo).
+    """
+    rows = (AccountMovement.objects
+            .filter(user=user, movement_type='ADV', created_at__year=year)
+            .values('account__project__client', 'account__project__client__name')
+            .annotate(total=Sum('amount'),
+                      projects_count=Count('account__project', distinct=True))
+            .order_by('-total'))
+    result = []
+    for r in rows:
+        if r['account__project__client'] is None:
+            continue
+        total = r['total'] or Decimal('0.00')
+        result.append({
+            'name': r['account__project__client__name'] or '—',
+            'projects_count': r['projects_count'],
+            'total': total,
+            'total_fmt': pesos(total),
+        })
+        if len(result) >= n:
+            break
+    max_total = max((float(r['total']) for r in result), default=0.0) or 1.0
+    for r in result:
+        r['pct'] = round(float(r['total']) / max_total * 100, 1)
+    return result
+
+
+def get_receivables(user: User) -> dict:
+    """
+    Cuentas por cobrar con aging (§7.3). Considera proyectos NO cerrados con
+    estimated > 0 y saldo (estimated − advance) > 0. La antigüedad se mide desde el
+    último movimiento ADV de la cuenta, o desde project.created si nunca cobró.
+    Devuelve {rows, buckets, total, total_fmt, count}.
+    """
+    accounts = (Account.objects
+                .filter(project__user=user, project__closed=False, estimated__gt=0)
+                .annotate(saldo=F('estimated') - F('advance'))
+                .filter(saldo__gt=0)
+                .select_related('project', 'project__client'))
+    today = timezone.now().date()
+    buckets = {
+        'al_dia': {'total': Decimal('0.00'), 'count': 0},
+        'b30_60': {'total': Decimal('0.00'), 'count': 0},
+        'b60_90': {'total': Decimal('0.00'), 'count': 0},
+        'b90': {'total': Decimal('0.00'), 'count': 0},
+    }
+    rows = []
+    total = Decimal('0.00')
+    for acc in accounts:
+        project = acc.project
+        last_adv = (AccountMovement.objects
+                    .filter(account=acc, movement_type='ADV')
+                    .order_by('-created_at').first())
+        last_date = last_adv.created_at if last_adv else None
+        ref_date = last_date.date() if last_date else project.created.date()
+        days = (today - ref_date).days
+        saldo = acc.saldo
+        total += saldo
+        if days < 30:
+            key = 'al_dia'
+        elif days < 60:
+            key = 'b30_60'
+        elif days < 90:
+            key = 'b60_90'
+        else:
+            key = 'b90'
+        buckets[key]['total'] += saldo
+        buckets[key]['count'] += 1
+        rows.append({
+            'project': project,
+            'client': project.client,
+            'last_payment_date': last_date,
+            'saldo': saldo,
+            'saldo_fmt': pesos(saldo),
+            'days': days,
+        })
+    rows.sort(key=lambda r: r['days'], reverse=True)
+    for b in buckets.values():
+        b['total_fmt'] = pesos(b['total'])
+    return {
+        'rows': rows,
+        'buckets': buckets,
+        'total': total,
+        'total_fmt': pesos(total),
+        'count': len(rows),
+    }
+
 
 #Balance
 @login_required
 def balance(request: HttpRequest) -> HttpResponse:
+    """
+    Balances (REDESIGN §4.6, §7.1/§7.2/§7.5/§7.6).
+
+    Acepta el mes/año por GET (?year=&month=, navegación con flechas §7.2) y mantiene
+    compatibilidad con el POST `date` (YYYY-MM) histórico. Filtro por tipo de trabajo
+    vía GET ?tipo= (§7.5). Default: mes/año actual.
+    """
+    now = datetime.now()
     method_post = False
     non_exist = False
+
     if request.method == 'POST':
         method_post = True
-        #Aqui el user selecciona el mes y año
-        date = request.POST.get('date')
+        date = request.POST.get('date') or ''
         date_split = date.split("-")
-        month = int(date_split[1])
-        year = int(date_split[0])
-       
-
+        try:
+            year = int(date_split[0])
+            month = int(date_split[1])
+        except (IndexError, ValueError):
+            year, month = now.year, now.month
     else:
-        #Si no selecciona nada, se toma el mes y año actual
-        month = datetime.now().month
-        year = datetime.now().year
-        #Obtengo los proyectos del mes y año actual, pero solo los que no estan cerrados
+        try:
+            year = int(request.GET.get('year', now.year))
+            month = int(request.GET.get('month', now.month))
+        except (TypeError, ValueError):
+            year, month = now.year, now.month
+        if not 1 <= month <= 12:
+            year, month = now.year, now.month
+
+    # Tipo de trabajo activo (None = "Todos los tipos").
+    tipo = request.GET.get('tipo')
+    if tipo not in INCOME_FIELD_BY_TIPO:
+        tipo = None
+
+    # Navegación de mes (flechas ‹ ›) y deshabilitar el avance si es el mes actual.
+    prev_year, prev_month = _prev_year_month(year, month)
+    next_year, next_month = (year + 1, 1) if month == 12 else (year, month + 1)
+    next_disabled = (year > now.year) or (year == now.year and month >= now.month)
+
+    kpis = chart_tipo = None
+    monthly_totals, year_total, top_clients = [], pesos(0), []
+    chart_anual = get_monthly_income_expense(year, request.user, tipo)
     try:
         balance_data = get_financial_data(year, month, request.user)
-        data, year_total = balance_anual(year, request.user)
-        if balance_data['objects']['monthly_summary'] is None:
-            non_exist = True
-            chart_data = None
-        else:
-            chart_data = chart_data_format(balance_data)
-        
+        monthly_totals, year_total = balance_anual(year, request.user)
+        top_clients = get_top_clients(request.user, year)
+        kpis = get_balance_kpis(request.user, year, month, tipo)
+        non_exist = balance_data['objects']['monthly_summary'] is None
+        nbt = balance_data['raw']['net_by_type']
+        chart_tipo = {
+            'labels': ['Mensuras', 'Est. Parcelarios', 'Amojonamientos', 'Relevamientos', 'Legajos'],
+            'values': [
+                float(nbt['mensura']), float(nbt['estado_parcelario']),
+                float(nbt['amojonamiento']), float(nbt['relevamiento']),
+                float(nbt['legajo_parcelario']),
+            ],
+        }
     except Exception as e:
-        # Manejo de errores
-        logger.error(f"Error al sdsaobtener datos financieros: {e}")
+        logger.error(f"Error al obtener datos financieros del balance: {e}")
         non_exist = True
-        
 
-    return render (request, 'accounting/balance.html', {
-        'method_post':method_post,
-        'total':balance_data['formatted']['total'], 
-        'adv':balance_data['formatted']['adv'], 
-        'pending':balance_data['formatted']['pending'],
-        'cant':balance_data['counts']['total'],
-        'cant_actual_month':balance_data['counts']['current_month'],
-        'cant_previus_months':balance_data['counts']['previous_months'],
-        'gastos':balance_data['formatted']['exp'], 
-        'net':balance_data['formatted']['net'],
-        'month':month_str(month),
-        'month_number': month,  # Pass the numeric month as well 
-        'year':year,
-        'monthly_totals': data,
+    top_max = max((float(c['total']) for c in top_clients), default=0.0)
+
+    return render(request, 'accounting/balance.html', {
+        'method_post': method_post,
+        'month': month_str(month),
+        'month_number': month,
+        'year': year,
+        'tipo': tipo,
+        'tipo_labels': TIPO_LABELS,
+        'prev_year': prev_year, 'prev_month': prev_month,
+        'next_year': next_year, 'next_month': next_month,
+        'next_disabled': next_disabled,
+        'kpis': kpis,
+        'chart_anual': chart_anual,
+        'chart_tipo': chart_tipo,
+        'top_clients': top_clients,
+        'top_max': top_max,
+        'monthly_totals': monthly_totals,
         'neto_anual': year_total,
-        'chart_data': chart_data,
-        'non_exist': non_exist
-        })
+        'non_exist': non_exist,
+    })
     
     
 @login_required
@@ -837,15 +1136,247 @@ def bulk_create_accounts(projects: list[Project]) -> list[Account]:
         List of created/existing account instances.
     """
     accounts = []
-    
+
     try:
         with transaction.atomic():
             for project in projects:
                 account, created = get_or_create_account(project)
                 accounts.append(account)
-                
+
             logger.info(f"Processed {len(accounts)} accounts for {len(projects)} projects")
             return accounts
     except Exception as e:
         logger.error(f"Error bulk creating accounts: {e}")
         raise
+
+
+# ---------------------------------------------------------------------------
+# Fase 4 — Factura no oficial (§7.7) y exportes Excel/PDF (§7.4)
+# ---------------------------------------------------------------------------
+
+@login_required
+def invoice_view(request: HttpRequest, pk: int) -> HttpResponse:
+    """
+    Factura no oficial de un proyecto (REDESIGN §7.7). Página standalone imprimible.
+    Ownership owner-only, consistente con project_view.
+    """
+    from apps.users.models import StudioProfile
+
+    project = get_object_or_404(
+        Project.objects.select_related('account', 'client', 'user'),
+        pk=pk, user=request.user,
+    )
+    account, _ = get_or_create_account(project)
+    studio, _ = StudioProfile.objects.get_or_create(user=request.user)
+    adv_movs = account.movements.filter(movement_type='ADV').order_by('created_at')
+
+    now = timezone.now()
+    context = {
+        'project': project,
+        'client': project.client,
+        'account': account,
+        'studio': studio,
+        'adv_movs': adv_movs,
+        'estimated': account.estimated,
+        'total_pagos': account.advance,
+        'saldo': account.estimated - account.advance,
+        'doc_num': f"{project.pk:04d}-{now.year}",
+        'fecha': now,
+    }
+    return render(request, 'accounting/invoice.html', context)
+
+
+def _xlsx_response(workbook, filename: str) -> HttpResponse:
+    """Serializa un workbook openpyxl a una HttpResponse de descarga."""
+    from io import BytesIO
+    buffer = BytesIO()
+    workbook.save(buffer)
+    buffer.seek(0)
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
+@login_required
+def export_balance_xlsx(request: HttpRequest) -> HttpResponse:
+    """Export del balance anual a Excel (§7.4). GET ?year=Y."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+
+    now = datetime.now()
+    try:
+        year = int(request.GET.get('year', now.year))
+    except (TypeError, ValueError):
+        year = now.year
+
+    monthly_totals, _ = balance_anual(year, request.user)
+    series = get_monthly_income_expense(year, request.user)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = f"Balance {year}"
+
+    header_fill = PatternFill(start_color='2D72BA', end_color='2D72BA', fill_type='solid')
+    header_font = Font(color='FFFFFF', bold=True)
+    money_fmt = '#,##0'
+
+    ws['A1'] = f"AgrimIT — Balance {year}"
+    ws['A1'].font = Font(bold=True, size=14, color='2D72BA')
+
+    headers = ['Mes', 'Proyectos', 'Ingresos', 'Gastos', 'Neto']
+    header_row = 3
+    for col, title in enumerate(headers, start=1):
+        cell = ws.cell(row=header_row, column=col, value=title)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center')
+
+    tot_proj = tot_ing = tot_gas = tot_net = 0
+    for i, mt in enumerate(monthly_totals):
+        r = header_row + 1 + i
+        ingresos = series['ingresos'][i]
+        gastos = series['gastos'][i]
+        neto = mt['net_raw']
+        proj = mt['project_count']
+        ws.cell(row=r, column=1, value=mt['month'])
+        ws.cell(row=r, column=2, value=proj)
+        c_ing = ws.cell(row=r, column=3, value=round(ingresos))
+        c_gas = ws.cell(row=r, column=4, value=round(gastos))
+        c_net = ws.cell(row=r, column=5, value=round(neto))
+        for c in (c_ing, c_gas, c_net):
+            c.number_format = money_fmt
+        tot_proj += proj
+        tot_ing += ingresos
+        tot_gas += gastos
+        tot_net += neto
+
+    total_row = header_row + 1 + len(monthly_totals)
+    ws.cell(row=total_row, column=1, value='Total').font = Font(bold=True)
+    ws.cell(row=total_row, column=2, value=tot_proj).font = Font(bold=True)
+    for col, val in ((3, tot_ing), (4, tot_gas), (5, tot_net)):
+        c = ws.cell(row=total_row, column=col, value=round(val))
+        c.number_format = money_fmt
+        c.font = Font(bold=True)
+
+    widths = [14, 12, 16, 16, 16]
+    for col, w in enumerate(widths, start=1):
+        ws.column_dimensions[chr(64 + col)].width = w
+
+    return _xlsx_response(wb, f"agrimit_balance_{year}.xlsx")
+
+
+@login_required
+def export_movements_xlsx(request: HttpRequest) -> HttpResponse:
+    """Export de movimientos + cuentas por cobrar a Excel (§7.4). GET ?start=&end=."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+
+    header_fill = PatternFill(start_color='2D72BA', end_color='2D72BA', fill_type='solid')
+    header_font = Font(color='FFFFFF', bold=True)
+    money_fmt = '#,##0'
+
+    movs = (AccountMovement.objects
+            .select_related('account__project', 'account__project__client')
+            .exclude(movement_type='EST')
+            .filter(user=request.user))
+
+    start_date = request.GET.get('start')
+    end_date = request.GET.get('end')
+    try:
+        if start_date:
+            movs = movs.filter(created_at__gte=start_date)
+        if end_date:
+            end_next = (datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
+            movs = movs.filter(created_at__lt=end_next)
+    except ValueError:
+        pass
+    movs = movs.order_by('-created_at')
+
+    type_labels = {'ADV': 'Anticipo', 'EXP': 'Gasto'}
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Movimientos'
+    headers = ['Proyecto', 'Cliente', 'Movimiento', 'Monto', 'Fecha']
+    for col, title in enumerate(headers, start=1):
+        cell = ws.cell(row=1, column=col, value=title)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center')
+    for i, m in enumerate(movs, start=2):
+        project = m.account.project if m.account_id else None
+        client = project.client if project else None
+        ws.cell(row=i, column=1, value=(f"#{project.pk} {project.type}" if project else '—'))
+        ws.cell(row=i, column=2, value=(client.name if client else '—'))
+        ws.cell(row=i, column=3, value=type_labels.get(m.movement_type, m.movement_type))
+        c_amount = ws.cell(row=i, column=4, value=round(float(m.amount)))
+        c_amount.number_format = money_fmt
+        ws.cell(row=i, column=5, value=timezone.localtime(m.created_at).strftime('%d/%m/%Y'))
+    for col, w in enumerate((22, 22, 14, 16, 14), start=1):
+        ws.column_dimensions[chr(64 + col)].width = w
+
+    # Hoja 2: Por cobrar (aging)
+    receivables = get_receivables(request.user)
+    ws2 = wb.create_sheet('Por cobrar')
+    bucket_labels = [
+        ('al_dia', 'Al día (<30)'),
+        ('b30_60', '30-60 días'),
+        ('b60_90', '60-90 días'),
+        ('b90', '+90 días'),
+    ]
+    ws2.cell(row=1, column=1, value='Antigüedad').font = header_font
+    ws2.cell(row=1, column=1).fill = header_fill
+    ws2.cell(row=1, column=2, value='Proyectos').font = header_font
+    ws2.cell(row=1, column=2).fill = header_fill
+    ws2.cell(row=1, column=3, value='Total').font = header_font
+    ws2.cell(row=1, column=3).fill = header_fill
+    for i, (key, label) in enumerate(bucket_labels, start=2):
+        b = receivables['buckets'][key]
+        ws2.cell(row=i, column=1, value=label)
+        ws2.cell(row=i, column=2, value=b['count'])
+        c = ws2.cell(row=i, column=3, value=round(float(b['total'])))
+        c.number_format = money_fmt
+
+    detail_header = 7
+    headers2 = ['Proyecto', 'Cliente', 'Último cobro', 'Saldo', 'Antigüedad (días)']
+    for col, title in enumerate(headers2, start=1):
+        cell = ws2.cell(row=detail_header, column=col, value=title)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center')
+    for i, row in enumerate(receivables['rows'], start=detail_header + 1):
+        project = row['project']
+        client = row['client']
+        ws2.cell(row=i, column=1, value=f"#{project.pk} {project.type}")
+        ws2.cell(row=i, column=2, value=(client.name if client else '—'))
+        ws2.cell(row=i, column=3, value=(row['last_payment_date'].strftime('%d/%m/%Y')
+                                         if row['last_payment_date'] else 'Nunca'))
+        c = ws2.cell(row=i, column=4, value=round(float(row['saldo'])))
+        c.number_format = money_fmt
+        ws2.cell(row=i, column=5, value=row['days'])
+    for col, w in enumerate((22, 22, 16, 16, 18), start=1):
+        ws2.column_dimensions[chr(64 + col)].width = w
+
+    return _xlsx_response(wb, "agrimit_movimientos.xlsx")
+
+
+@login_required
+def export_balance_pdf(request: HttpRequest) -> HttpResponse:
+    """Resumen anual imprimible (§7.4, fallback window.print()). GET ?year=Y."""
+    now = datetime.now()
+    try:
+        year = int(request.GET.get('year', now.year))
+    except (TypeError, ValueError):
+        year = now.year
+
+    monthly_totals, year_total = balance_anual(year, request.user)
+    kpis = get_balance_kpis(request.user, year, now.month if year == now.year else 12)
+    return render(request, 'accounting/balance_print.html', {
+        'year': year,
+        'monthly_totals': monthly_totals,
+        'neto_anual': year_total,
+        'kpis': kpis,
+    })

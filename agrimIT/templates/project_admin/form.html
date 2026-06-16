@@ -1,597 +1,187 @@
 {% extends 'base/base_template.html' %}
 {% load static %}
 {% load widget_tweaks %}
-{% block form %}
-  <link rel="stylesheet" href="{% static 'css/projectform.css' %}" />
-  <div class="container-form">
-    <div class="form-location">
-      <form action="" method="POST" enctype="multipart/form-data">
-        <span class="form-title">Crear un nuevo proyecto</span>
-        {% csrf_token %}
-        <div class="form-group">
-          <!-- Content 1 -->
-          <div class="content" id="content1">
-            <div class="fields">
-              <span class="form-subtitle">Tipo de Proyecto</span>
-              <div class="input-field">
-                <label for="{{ form.type.id_for_label }}">{{ form.type.label }}</label>
-                {{ form.type }}
-              </div>
-              <div class="input-field">
-                <label for="{{ form.type_mens.id_for_label }}">{{ form.type_mens.label }}</label>
-                {{ form.type_mens }}
-              </div>
-            </div>
+
+{% block extra_css %}
+<style>
+  .modal-card{background:var(--surface);border-radius:14px;padding:24px;width:90%;max-width:380px;display:flex;flex-direction:column;gap:12px}
+  .field-error{color:var(--red);font-size:.72rem;margin-top:4px}
+  .sec-title{font-size:.83rem;font-weight:700;margin-bottom:10px;color:var(--text-2)}
+</style>
+{% endblock %}
+
+{% block topbar %}
+  <div>
+    <h1>Nuevo proyecto</h1>
+    <div class="sub">Los campos con * son obligatorios</div>
+  </div>
+{% endblock %}
+
+{% block content %}
+  {% if error %}<div class="panel" style="max-width:880px;margin-bottom:14px"><div class="body" style="color:var(--red)">{{ error }}</div></div>{% endif %}
+
+  <div class="panel" style="max-width:880px">
+    <form action="" method="POST" enctype="multipart/form-data" id="project-form">
+      {% csrf_token %}
+      <div class="body" style="display:flex;flex-direction:column;gap:22px">
+
+        <!-- Tipo de trabajo (chips -> select real oculto) -->
+        <div>
+          <label class="fl">Tipo de trabajo *</label>
+          <div class="chips" id="type-chips">
+            <button type="button" data-value="Mensura">Mensura</button>
+            <button type="button" data-value="Estado Parcelario">Est. Parcelario</button>
+            <button type="button" data-value="Amojonamiento">Amojonamiento</button>
+            <button type="button" data-value="Relevamiento">Relevamiento</button>
+            <button type="button" data-value="Legajo Parcelario">Legajo</button>
           </div>
-          <!-- End Content 1 -->
-          <!-- Content 2 -->
-          <div class="content" id="content2">
-            <div class="input-field">
-              <div class="client-list-cont">
-                <span class="form-subtitle">Datos cliente</span>
-                <select name="client-list" id="client-list">
-                  <option value="">Elegir cliente</option>
-                  {% for Client in clients %}
-                    <option value="{{ Client.pk }}">{{ Client.name }}</option>
-                  {% endfor %}
-                </select>
-                <button type="button" class="toggle-btn" id="new-client">+ Nuevo cliente</button>
-                <button type="button" class="toggle-btn red" id="remove-client">Eliminar</button>
-                <script></script>
-              </div>
-            </div>
-
-            <!-- Datos Cliente -->
-            <div class="client-data-cont">
-              <div id="clien-data" class="fields">
-                <div class="input-field">
-                  <label for="client-name">Nombre y apellido</label>
-                  <input type="text" name="client-name" id="client-name" placeholder="Elegi o crea un cliente" readonly />
-                </div>
-                <div class="input-field">
-                  <label for="client-phone">Telefono</label>
-                  <input type="text" name="client-phone" id="client-phone" placeholder="Telefono" readonly />
-                </div>
-              </div>
-              <!-- Datos Titular dentro de content 2 -->
-              <!--                                                                              
-              <div id="titular-data" style="margin: 20px;" class="fields">
-                <h4>Datos titular</h4>
-                <div style="margin-top:10px; height: 80px;" class="input-field">
-                <label for="{{ form.titular_name.id_for_label }}">{{ form.titular_name.label }}</label>
-                {{ form.titular_name }}
-                </div>
-                <div style="height: 80px;" class="input-field">
-                <label for="{{ form.titular_dni.id_for_label }}">{{ form.titular_dni.label }}</label>
-                {{ form.titular_dni }}
-                </div>
-                <div style="height: 80px;" class="input-field">
-                <label for="{{ form.titular_phone.id_for_label }}">{{ form.titular_phone.label }}</label>
-                {{ form.titular_phone }}
-                </div>
-              </div>                                                                              -->
-            </div>
-          </div> <!-- End content 2 -->
-
-          <!-- Content 3 -->
-          <div class="content" id="content3">
-            <span class="form-subtitle">Nomenclatura</span>
-            <div class="nomen-cont fields">
-              <div>
-                <div class="input-field">
-                  <label for="{{ form.partido.id_for_label }}">{{ form.partido.label }}</label>
-                  {{ form.partido|attr:'placeholder:Partido' }}
-                </div>
-                <div class="input-field">
-                  <label for="{{ form.partida.id_for_label }}">{{ form.partida.label }}</label>
-                  {{ form.partida|attr:'placeholder:Partido' }}
-                </div>
-                <div class="input-field">
-                  <label for="{{ form.circuns.id_for_label }}">{{ form.circuns.label }}</label>
-                  {{ form.circuns|attr:'placeholder:Cricunscripcion' }}
-                </div>
-                <div class="input-field">
-                  <label for="{{ form.seccion.id_for_label }}">{{ form.seccion.label }}</label>
-                  {{ form.seccion|attr:'placeholder:Seccion' }}
-                </div>
-              </div>
-
-              <div class="secciones">
-                <div class="input-field">
-                  <label for="">Chacra</label>
-                  <div class="sub-input">
-                    <input name="chacra_num" type="text" placeholder="Numero" maxlength="10" id="id_chacra_num" />
-                    <input name="chacra_letra" type="text" placeholder="Letra" maxlength="10" id="id_chacra_letra" />
-                  </div>
-                </div>
-                <div class="input-field">
-                  <label for="">Quinta</label>
-                  <div class="sub-input">
-                    <input name="quinta_num" type="text" placeholder="Numero" maxlength="10" id="id_quinta_num" />
-                    <input name="quinta_letra" type="text" placeholder="Letra" maxlength="10" id="id_quinta_letra" />
-                  </div>
-                </div>
-                <div class="input-field">
-                  <label for="">Fraccion</label>
-                  <div class="sub-input">
-                    <input name="fraccion_num" type="text" placeholder="Numero" maxlength="10" id="id_fraccion_num" />
-                    <input name="fraccion_letra" type="text" placeholder="Letra" maxlength="10" id="id_fraccion_letra" />
-                  </div>
-                </div>
-                <div class="input-field">
-                  <label for="">Manzana</label>
-                  <div class="sub-input">
-                    <input name="manzana_num" type="text" placeholder="Numero" maxlength="10" id="id_manzana_num" />
-                    <input name="manzana_letra" type="text" placeholder="Letra" maxlength="10" id="id_manzana_letra" />
-                  </div>
-                </div>
-                <div class="input-field">
-                  <label for="">Parcela</label>
-                  <div class="sub-input">
-                    <input name="parcela_num" type="text" placeholder="Numero" maxlength="10" id="id_parcela_num" />
-                    <input name="parcela_letra" type="text" placeholder="Letra" maxlength="10" id="id_parcela_letra" />
-                  </div>
-                </div>
-                <div class="input-field">
-                  <label for="">Subparcela</label>
-                  <div class="sub-input">
-                    <input name="subparcela" type="text" placeholder="Subparcela" maxlength="10" id="id_subparcela" />
-                  </div>
-                </div>
-              </div>
-
-              <div class="directions">
-                <span class="form-subtitle">Direccion</span>
-                <div class="input-field">
-                  <label for="">Calle</label>
-                  <div class="sub-input">
-                    <input name="direction" type="text" placeholder="Calle" id="id_direction" />
-                  </div>
-                </div>
-                <div class="input-field">
-                  <label for="">Altura</label>
-                  <div class="sub-input">
-                    <input name="direction_number" type="text" placeholder="Altura" id="id_direction_number" />
-                  </div>
-                </div>
-                <div class="input-field">
-                  <label for="">Piso</label>
-                  <div class="sub-input">
-                    <input name="floor" type="text" placeholder="Piso" maxlength="10" id="id_floor" />
-                  </div>
-                </div>
-                <div class="input-field">
-                  <label for="">Departamento</label>
-                  <div class="sub-input">
-                    <input name="depto" type="text" placeholder="Departamento" maxlength="10" id="id_depto" />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="container-button">
-              <button type="submit" class="toggle-btn active" name="save_and_backhome">Guardar</button>
-            </div>
+          <div style="display:none">{{ form.type }}</div>
+          <div id="type-error" class="field-error" style="display:none">Seleccioná un tipo de trabajo.</div>
+          <div id="mens-wrap" style="margin-top:12px;display:none">
+            <label class="fl">Tipo de mensura</label>
+            {{ form.type_mens|add_class:'std' }}
           </div>
         </div>
-      </form>
-    </div>
+
+        <!-- Cliente + N° de trámite -->
+        <div class="fgrid">
+          <div>
+            <label class="fl">Cliente *</label>
+            <select name="client-list" id="client-list" class="std">
+              <option value="">Seleccionar…</option>
+              {% for c in clients %}<option value="{{ c.pk }}">{{ c.name }}</option>{% endfor %}
+            </select>
+            <button type="button" class="btn btn-ghost btn-sm" id="new-client" style="margin-top:8px">+ Crear nuevo cliente</button>
+            <div id="client-error" class="field-error" style="display:none">Seleccioná o creá un cliente.</div>
+          </div>
+          <div>
+            <label class="fl">N° de trámite</label>
+            {{ form.process_num|add_class:'std' }}
+          </div>
+        </div>
+
+        <!-- Nomenclatura -->
+        <div>
+          <div class="sec-title">NOMENCLATURA</div>
+          <div class="fgrid">
+            <div><label class="fl">Partido</label>{{ form.partido|add_class:'std' }}</div>
+            <div><label class="fl">Partida</label>{{ form.partida|add_class:'std' }}</div>
+            <div><label class="fl">Circunscripción</label>{{ form.circ|add_class:'std' }}</div>
+            <div><label class="fl">Sección</label>{{ form.sect|add_class:'std' }}</div>
+            <div><label class="fl">Fracción (N°/letra)</label><div style="display:flex;gap:8px">{{ form.fraccion_num|add_class:'std' }}{{ form.fraccion_let|add_class:'std' }}</div></div>
+            <div><label class="fl">Quinta (N°/letra)</label><div style="display:flex;gap:8px">{{ form.quinta_num|add_class:'std' }}{{ form.quinta_let|add_class:'std' }}</div></div>
+            <div><label class="fl">Chacra (N°/letra)</label><div style="display:flex;gap:8px">{{ form.chacra_num|add_class:'std' }}{{ form.chacra_let|add_class:'std' }}</div></div>
+            <div><label class="fl">Manzana (N°/letra)</label><div style="display:flex;gap:8px">{{ form.manzana_num|add_class:'std' }}{{ form.manzana_let|add_class:'std' }}</div></div>
+            <div><label class="fl">Parcela (N°/letra)</label><div style="display:flex;gap:8px">{{ form.parcela_num|add_class:'std' }}{{ form.parcela_let|add_class:'std' }}</div></div>
+            <div><label class="fl">Subparcela</label>{{ form.subparcela|add_class:'std' }}</div>
+          </div>
+        </div>
+
+        <!-- Ubicación -->
+        <div>
+          <div class="sec-title">UBICACIÓN</div>
+          <div class="fgrid">
+            <div style="grid-column:span 2"><label class="fl">Calle</label>{{ form.street|add_class:'std' }}</div>
+            <div><label class="fl">Altura</label>{{ form.street_num|add_class:'std' }}</div>
+            <div><label class="fl">Piso</label>{{ form.floor|add_class:'std' }}</div>
+            <div><label class="fl">Depto</label>{{ form.dept|add_class:'std' }}</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+          <a href="{% url 'projects' %}" class="btn btn-ghost">Cancelar</a>
+          <button type="submit" class="btn btn-primary" name="save_and_backhome">Crear proyecto</button>
+        </div>
+      </div>
+    </form>
   </div>
 
-  <!-- Modal: alta rapida de cliente (tarea 4.4). Fuera del form/.form-group a
-       proposito: es position:fixed y usa su propio fetch (no se envia con el
-       form). Asi evita la regla `div.form-group div.content div { display:flex }`
-       de projectform.css que lo forzaria visible pese al atributo [hidden]. -->
-  <div id="new-client-overlay" class="modal-overlay" hidden>
-    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="new-client-title">
-      <span id="new-client-title" class="form-subtitle">Nuevo cliente</span>
-      <div class="input-field">
-        <label for="new-client-name">Nombre y apellido</label>
-        <input type="text" id="new-client-name" placeholder="Nombre y apellido" />
-      </div>
-      <div class="input-field">
-        <label for="new-client-phone">Telefono</label>
-        <input type="text" id="new-client-phone" placeholder="Telefono" />
-      </div>
-      <small id="new-client-error" class="error-text" style="color: red; display: none;"></small>
-      <div class="modal-actions">
-        <button type="button" class="toggle-btn" id="new-client-cancel">Cancelar</button>
-        <button type="button" class="toggle-btn active" id="new-client-save">Guardar</button>
+  <!-- Modal alta rápida de cliente -->
+  <div class="modal-bg" id="new-client-modal">
+    <div class="modal-card">
+      <span class="sec-title" style="margin:0">Nuevo cliente</span>
+      <div><label class="fl">Nombre y apellido *</label><input class="std" type="text" id="nc-name" placeholder="Nombre y apellido"></div>
+      <div><label class="fl">Teléfono</label><input class="std" type="text" id="nc-phone" placeholder="Teléfono"></div>
+      <small id="nc-error" class="field-error" style="display:none"></small>
+      <div style="display:flex;justify-content:flex-end;gap:8px">
+        <button type="button" class="btn btn-ghost btn-sm" id="nc-cancel">Cancelar</button>
+        <button type="button" class="btn btn-primary btn-sm" id="nc-save">Guardar</button>
       </div>
     </div>
   </div>
+{% endblock %}
 
-  <script>
-    const projectTypleSelect = document.getElementById('id_type')
-    projectTypleSelect.addEventListener('change', function () {
-      const mensElement = document.getElementById('id_type_mens')
-      if (this.value === 'Mensura') {
-        mensElement.disabled = false
-        mensElement.style.backgroundColor = ''
-        mensElement.style.color = ''
-        mensElement.style.cursor = ''
-      } else {
-        mensElement.value = '' // Clear the value if not Mensura
-        mensElement.disabled = true
-        mensElement.style.backgroundColor = '#f0f0f0'
-        mensElement.style.color = '#999'
-        mensElement.style.cursor = 'not-allowed'
-      }
-    })
-    
-    // Function to display error messages
-    const showError = (field, errorText) => {
-      if (!field) return
-      field.classList.add('error')
-    
-      // Remove existing error first
-      const container = field.closest('.input-field') || field.parentElement
-      const existingError = container.querySelector('.error-text')
-      if (existingError) {
-        existingError.remove()
-      }
-    
-      const errorElement = document.createElement('small')
-      errorElement.classList.add('error-text')
-      errorElement.innerText = errorText
-      errorElement.style.color = 'red'
-      errorElement.style.fontSize = '12px'
-      container.appendChild(errorElement)
+{% block extra_js %}
+<script>
+  (function () {
+    // --- Chips de tipo -> select real oculto ---
+    var typeSelect = document.getElementById('id_type');
+    var mensWrap = document.getElementById('mens-wrap');
+    var mensSelect = document.getElementById('id_type_mens');
+    var typeError = document.getElementById('type-error');
+
+    function syncMens() {
+      var isMensura = typeSelect.value === 'Mensura';
+      mensWrap.style.display = isMensura ? 'block' : 'none';
+      if (!isMensura && mensSelect) mensSelect.value = '';
     }
-    const removeError = (field) => {
-      if (!field) return
-      if (field.classList.contains('error')) {
-        field.classList.remove('error')
-        const container = field.closest('.input-field') || field.parentElement
-        const errorText = container.querySelector('.error-text')
-        if (errorText) {
-          errorText.remove()
-        }
-      }
-    }
-    
-    const clientInputs = document.getElementById('clien-data').querySelectorAll('input[type="text"]')
-    const selectedOption = document.getElementById('id_type')
-    //JS for content1
-    selectedOption.addEventListener('change', () => {
-      if (selectedOption.value !== '') {
-        removeError(selectedOption)
-      }
-    })
-    
-    const selectElement = document.getElementById('client-list')
-    selectElement.addEventListener('change', function () {
-      if (this.value !== '') {
-        clientInputs.forEach((input) => {
-          input.value = ''
-          input.style.backgroundColor = '#f0f0f0'
-          input.style.color = '#999'
-          input.style.cursor = 'not-allowed'
+    document.querySelectorAll('#type-chips button').forEach(function (btn) {
+      // Marcar como activo si coincide con el valor inicial del select
+      if (btn.getAttribute('data-value') === typeSelect.value) btn.classList.add('on');
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('#type-chips button').forEach(function (b) { b.classList.remove('on'); });
+        btn.classList.add('on');
+        typeSelect.value = btn.getAttribute('data-value');
+        typeError.style.display = 'none';
+        syncMens();
+      });
+    });
+    syncMens();
+
+    // --- Validación de envío ---
+    var form = document.getElementById('project-form');
+    var clientList = document.getElementById('client-list');
+    var clientError = document.getElementById('client-error');
+    form.addEventListener('submit', function (e) {
+      var ok = true;
+      if (!typeSelect.value) { typeError.style.display = 'block'; ok = false; }
+      if (!clientList.value) { clientError.style.display = 'block'; ok = false; }
+      if (!ok) { e.preventDefault(); toast('Completá los campos obligatorios.'); }
+    });
+    clientList.addEventListener('change', function () { if (clientList.value) clientError.style.display = 'none'; });
+
+    // --- Modal "+ Crear nuevo cliente" (AJAX) ---
+    var modal = document.getElementById('new-client-modal');
+    var ncName = document.getElementById('nc-name');
+    var ncPhone = document.getElementById('nc-phone');
+    var ncError = document.getElementById('nc-error');
+    var csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    document.getElementById('new-client').addEventListener('click', function () {
+      ncError.style.display = 'none'; ncName.value = ''; ncPhone.value = '';
+      modal.classList.add('open'); ncName.focus();
+    });
+    document.getElementById('nc-cancel').addEventListener('click', function () { modal.classList.remove('open'); });
+
+    document.getElementById('nc-save').addEventListener('click', function () {
+      var name = ncName.value.trim();
+      if (!name) { ncError.textContent = 'El nombre es obligatorio.'; ncError.style.display = 'block'; ncName.focus(); return; }
+      var body = new FormData();
+      body.append('name', name);
+      body.append('phone', ncPhone.value.trim());
+      fetch('/clients/create/ajax/', { method: 'POST', headers: { 'X-CSRFToken': csrf }, body: body })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok) { ncError.textContent = res.d.error || 'No se pudo crear el cliente.'; ncError.style.display = 'block'; return; }
+          var opt = document.createElement('option');
+          opt.value = res.d.id; opt.textContent = res.d.name;
+          clientList.appendChild(opt); clientList.value = res.d.id;
+          clientError.style.display = 'none';
+          modal.classList.remove('open');
+          toast('Cliente creado.');
         })
-      } else {
-        clientInputs.forEach((input) => {
-          input.style.backgroundColor = ''
-          input.style.color = ''
-          input.style.cursor = ''
-        })
-      }
-      clientInputs.forEach((input) => (input.disabled = selectElement.value !== ''))
-      clientInputs.forEach((input) => {
-        removeError(input)
-      })
-    })
-    
-    // Script to handle the removal of clients
-    const removeClientButton = document.getElementById('remove-client')
-    const clientList = document.getElementById('client-list')
-    removeClientButton.addEventListener('click', function (event) {
-      event.preventDefault()
-      const selectedClientId = clientList.value
-      if (selectedClientId) {
-        const clientName = clientList.options[clientList.selectedIndex].text
-        const confirmed = confirm(`¿Está seguro que desea eliminar al cliente "${clientName}"? Esta accion borra todos los proyectos asociados al cliente.`)
-        if (confirmed) {
-          fetch(`deleteclient/${selectedClientId}`)
-            .then((response) => {
-              if (response.ok) {
-                clientList.value = ''
-                const optionToRemove = clientList.querySelector(`option[value="${selectedClientId}"]`)
-                if (optionToRemove) {
-                  optionToRemove.remove()
-                }
-              }
-            })
-            .catch((error) => {
-              // Error handling without console logging
-            })
-          // Re-enable client inputs
-          clientInputs.forEach((input) => {
-            input.style.backgroundColor = ''
-            input.style.color = ''
-            input.style.cursor = ''
-            input.disabled = false
-          })
-        }
-      }
-    })
-  </script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const form = document.querySelector('form')
-      const clientList = document.getElementById('client-list')
-      const clientNameInput = document.getElementById('client-name')
-      const clientPhoneInput = document.getElementById('client-phone')
-      const submitButton = document.querySelector('button[type="submit"]')
-    
-      // Function to show error message
-      function showError(field, message) {
-        // Remove any existing error
-        removeError(field)
-    
-        field.classList.add('error')
-        const errorElement = document.createElement('small')
-        errorElement.classList.add('error-text')
-        errorElement.textContent = message
-        errorElement.style.color = 'red'
-        errorElement.style.fontSize = '12px'
-    
-        // Find the right container to append the error
-        const container = field.closest('.input-field') || field.parentElement
-        container.appendChild(errorElement)
-      }
-    
-      // Function to remove error message
-      function removeError(field) {
-        field.classList.remove('error')
-        const container = field.closest('.input-field') || field.parentElement
-        const existingError = container.querySelector('.error-text')
-        if (existingError) {
-          existingError.remove()
-        }
-      } // Function to validate client data
-      function validateClientData() {
-        // El alta se hace por el modal "+ Nuevo cliente"; siempre debe quedar
-        // un cliente elegido en el dropdown.
-        removeError(clientList)
-        if (clientList.value.trim() === '') {
-          showError(clientList, 'Debe seleccionar o crear un cliente')
-          return false
-        }
-        return true
-      } // Function to validate project type
-      function validateProjectType() {
-        const projectTypeSelect = document.getElementById('id_type')
-        if (!projectTypeSelect) {
-          return true
-        }
-    
-        const hasProjectType = projectTypeSelect.value.trim() !== ''
-    
-        // Clear previous errors
-        removeError(projectTypeSelect)
-    
-        if (!hasProjectType) {
-          showError(projectTypeSelect, 'Debe seleccionar un tipo de proyecto')
-          return false
-        }
-    
-        return true
-      }
-    
-      // Combined validation function
-      function validateForm() {
-        const clientValid = validateClientData()
-        const projectTypeValid = validateProjectType()
-    
-        return clientValid && projectTypeValid
-      }
-      // Form submission validation
-      form.addEventListener(
-        'submit',
-        function (event) {
-          const isValid = validateForm()
-    
-          if (!isValid) {
-            event.preventDefault()
-            event.stopPropagation()
-            event.stopImmediatePropagation()
-    
-            // Disable submit button temporarily
-            if (submitButton) {
-              submitButton.disabled = true
-              setTimeout(() => {
-                submitButton.disabled = false
-              }, 2000)
-            }
-    
-            alert('Por favor complete todos los campos requeridos antes de enviar el formulario')
-            return false
-          }
-    
-          return true
-        },
-        true
-      ) // Use capture phase to ensure this runs first      // Additional backup prevention on button click
-      if (submitButton) {
-        submitButton.addEventListener(
-          'click',
-          function (event) {
-            if (!validateForm()) {
-              event.preventDefault()
-              event.stopPropagation()
-              event.stopImmediatePropagation()
-              alert('Por favor complete todos los campos requeridos antes de enviar el formulario')
-              return false
-            }
-          },
-          true
-        )
-      }
-      // Real-time validation when client list changes
-      clientList.addEventListener('change', function () {
-        if (this.value !== '') {
-          // Client selected: autofill (read-only display) and disable manual inputs
-          clientNameInput.disabled = true
-          clientPhoneInput.disabled = true
-
-          // Remove any errors
-          removeError(clientNameInput)
-          removeError(clientPhoneInput)
-          removeError(clientList)
-
-          // Fetch the selected client's data (scoped to current user) and autofill
-          fetch(`/clients/${this.value}/json/`)
-            .then((response) => (response.ok ? response.json() : null))
-            .then((data) => {
-              if (data) {
-                clientNameInput.value = data.name || ''
-                clientPhoneInput.value = data.phone || ''
-              }
-            })
-            .catch(() => {
-              // Silent failure: the pk is still submitted via the dropdown
-            })
-        } else {
-          // No client selected: clear and re-enable manual inputs
-          clientNameInput.value = ''
-          clientPhoneInput.value = ''
-          clientNameInput.disabled = false
-          clientPhoneInput.disabled = false
-        }
-      })
-    
-      // Real-time validation for project type
-      const projectTypeSelect = document.getElementById('id_type')
-      if (projectTypeSelect) {
-        projectTypeSelect.addEventListener('change', function () {
-          if (this.value !== '') {
-            removeError(this)
-          }
-        })
-      }
-    
-      // Remove errors when user starts typing
-      clientNameInput.addEventListener('input', function () {
-        if (this.value.trim() !== '') {
-          removeError(this)
-          removeError(clientList)
-        }
-      })
-    
-      clientPhoneInput.addEventListener('input', function () {
-        if (this.value.trim() !== '') {
-          removeError(this)
-        }
-      })
-    })
-  </script>
-
-  <style>
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    /* El atributo [hidden] (UA) lo pisa el display:flex de autor; forzar oculto. */
-    .modal-overlay[hidden] {
-      display: none;
-    }
-    .modal-box {
-      background: #fff;
-      padding: 24px;
-      border-radius: 8px;
-      width: 90%;
-      max-width: 360px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .modal-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 8px;
-    }
-  </style>
-
-  <!-- Modal "+ Nuevo cliente" (tarea 4.4): crea el cliente via AJAX y lo deja
-       seleccionado sin recargar, para no perder lo cargado en el proyecto. -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const overlay = document.getElementById('new-client-overlay')
-      const openBtn = document.getElementById('new-client')
-      const cancelBtn = document.getElementById('new-client-cancel')
-      const saveBtn = document.getElementById('new-client-save')
-      const nameField = document.getElementById('new-client-name')
-      const phoneField = document.getElementById('new-client-phone')
-      const errorBox = document.getElementById('new-client-error')
-      const dropdown = document.getElementById('client-list')
-      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value
-
-      const showModalError = (msg) => {
-        errorBox.textContent = msg
-        errorBox.style.display = 'block'
-      }
-      const openModal = () => {
-        errorBox.style.display = 'none'
-        nameField.value = ''
-        phoneField.value = ''
-        overlay.hidden = false
-        nameField.focus()
-      }
-      const closeModal = () => {
-        overlay.hidden = true
-      }
-
-      openBtn.addEventListener('click', openModal)
-      cancelBtn.addEventListener('click', closeModal)
-      overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) closeModal()
-      })
-
-      saveBtn.addEventListener('click', function () {
-        const name = nameField.value.trim()
-        if (name === '') {
-          showModalError('El nombre es obligatorio.')
-          nameField.focus()
-          return
-        }
-        errorBox.style.display = 'none'
-        saveBtn.disabled = true
-
-        const body = new FormData()
-        body.append('name', name)
-        body.append('phone', phoneField.value.trim())
-
-        fetch('/clients/create/ajax/', {
-          method: 'POST',
-          headers: { 'X-CSRFToken': csrfToken },
-          body: body,
-        })
-          .then((response) => response.json().then((data) => ({ ok: response.ok, data })))
-          .then(({ ok, data }) => {
-            if (!ok) {
-              showModalError(data.error || 'No se pudo crear el cliente.')
-              return
-            }
-            // Agregar el cliente nuevo al dropdown, seleccionarlo y disparar el
-            // autocompletado existente (tarea 4.1) que llena los campos display.
-            const option = document.createElement('option')
-            option.value = data.id
-            option.textContent = data.name
-            dropdown.appendChild(option)
-            dropdown.value = data.id
-            dropdown.dispatchEvent(new Event('change'))
-            closeModal()
-          })
-          .catch(() => showModalError('Error de conexion. Intente nuevamente.'))
-          .finally(() => {
-            saveBtn.disabled = false
-          })
-      })
-    })
-  </script>
+        .catch(function () { ncError.textContent = 'Error de conexión. Intentá de nuevo.'; ncError.style.display = 'block'; });
+    });
+  })();
+</script>
 {% endblock %}

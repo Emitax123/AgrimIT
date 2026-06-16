@@ -1,353 +1,78 @@
-<html>
+<!DOCTYPE html>
+<html lang="es">
   <head>
     {% load static %}
     <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="csrf-token" content="{{ csrf_token }}" />
     <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}" />
     <link rel="shortcut icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}" />
     <link rel="apple-touch-icon" href="{% static 'img/favicon.svg' %}" />
-    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}" />
-    <link rel="stylesheet" type="text/css" href="{% static 'css/teams.css' %}" />
-    <link rel="stylesheet" type="text/css" href="{% static 'css/responsive.css' %}" />
+    <title>AgrimIT</title>
 
+    <!-- Google Fonts: Inter (reemplaza Open Sans, §2.2) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet" />
-    <meta charset="utf-8" />
-    <meta name="csrf-token" content="{{ csrf_token }}" />
-    <title>AgrimIT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- (1) Design System primero (§2) -->
+    <link rel="stylesheet" type="text/css" href="{% static 'css/design-system.css' %}" />
+    <!-- (2) CSS por página (opcional) -->
+    {% block extra_css %}{% endblock %}
 
     <!-- Frontend Logger -->
     <script src="{% static 'js/logger.js' %}"></script>
   </head>
-  <body>
-    <!-- COMIENZO NAVBAR -->
-    <nav>
-      <div class="navbar">
-        <div id="logo">
-          <a href="{% url 'index' %}"><img src="{% static 'img/logo.png' %}" /></a>
+  <body class="ds">
+    <div class="layout">
+      {% with cur=request.resolver_match.url_name %}
+      <aside class="sidebar" id="sidebar">
+        <a href="{% url 'index' %}" class="brand">
+          <span class="mark"><img src="{% static 'img/logo-cut.png' %}" alt="AgrimIT" /></span>
+          AgrimIT
+        </a>
+        <nav class="snav">
+          <div class="label">General</div>
+          <a href="{% url 'index' %}" class="{% if cur == 'index' %}active{% endif %}"><span class="ico">⌂</span> Inicio</a>
+          <a href="{% url 'balance' %}" class="{% if cur == 'balance' %}active{% endif %}"><span class="ico">◔</span> Balances</a>
+          <a href="{% url 'accounting_display' %}" class="{% if cur == 'accounting_display' or cur == 'accform' %}active{% endif %}"><span class="ico">$</span> Cobranzas</a>
+
+          <div class="label">Gestión</div>
+          <a href="{% url 'projects' %}" class="{% if cur == 'projects' or cur == 'projectslisttype' or cur == 'projectslist' or cur == 'projectview' or cur == 'modification' or cur == 'fullmodification' or cur == 'duplicate' or cur == 'close' or cur == 'upload' or cur == 'download' or cur == 'deletefile' or cur == 'project_notes' %}active{% endif %}"><span class="ico">▤</span> Proyectos</a>
+          <a href="{% url 'create' %}" class="{% if cur == 'create' or cur == 'import_projects' %}active{% endif %}"><span class="ico">✚</span> Nuevo proyecto</a>
+          <a href="{% url 'clients' %}" class="{% if cur == 'clients' or cur == 'clientcreate' or cur == 'clientprojectcreate' or cur == 'deleteclient' %}active{% endif %}"><span class="ico">◉</span> Clientes</a>
+          <a href="{% url 'history' %}" class="{% if cur == 'history' %}active{% endif %}"><span class="ico">↺</span> Historial</a>
+
+          <div class="label">Colaboración</div>
+          <a href="{% url 'team_list' %}" class="{% if cur == 'team_list' or cur == 'team_create' or cur == 'team_detail' or cur == 'project_share' or cur == 'project_unshare' %}active{% endif %}"><span class="ico">⬡</span> Grupos</a>
+          <a href="{% url 'shared_projects' %}" class="{% if cur == 'shared_projects' %}active{% endif %}"><span class="ico">⇄</span> Compartidos</a>
+        </nav>
+        {% if request.user.is_authenticated %}
+        <div class="foot">
+          <span class="avatar">{{ request.user.username|slice:":2"|upper }}</span>
+          <div>
+            <strong>{{ request.user.first_name|default:request.user.username }}</strong>
+            <div class="sub-line">Agrimensor · <a href="{% url 'logout' %}" class="link-out">Salir</a></div>
+          </div>
         </div>
+        {% endif %}
+      </aside>
+      {% endwith %}
 
-        <!-- Botón hamburger para móvil -->
-        <button class="hamburger-btn" id="hamburger-btn" aria-label="Menú">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
+      <div class="overlay" id="overlay"></div>
 
-        <!-- Overlay para cerrar menú en móvil -->
-        <div class="nav-overlay" id="nav-overlay"></div>
-
-        <div class="nav-list" id="nav-list">
-          <ul class="nav-dropdown">
-            <li>
-              <a href="{% url 'index' %}">Inicio</a>
-            </li>
-            <li>
-              <a href="{% url 'projects' %}" data-submenu="projects-submenu">Proyectos</a>
-              <ul class="navbar-submenu" id="projects-submenu">
-                <li>
-                  <a href="{% url 'projects' %}">Todos</a>
-                </li>
-                <li>
-                  <a href="{% url 'projectslisttype' type=1 %}">Mensuras</a>
-                </li>
-                <li>
-                  <a href="{% url 'projectslisttype' type=2 %}">Est.Parcelarios</a>
-                </li>
-                <li>
-                  <a href="{% url 'projectslisttype' type=3 %}">Amojonamientos</a>
-                </li>
-                <li>
-                  <a href="{% url 'projectslisttype' type=4 %}">Relevamientos</a>
-                </li>
-                <li>
-                  <a href="{% url 'projectslisttype' type=5 %}">Legajos</a>
-                </li>
-              </ul>
-            </li>
-            <li>
-              <a href="{% url 'balance' %}" data-submenu="balance-submenu">Balances</a>
-              <ul class="navbar-submenu" id="balance-submenu">
-                <li>
-                  <a href="{% url 'balance' %}">Resumen</a>
-                </li>
-                <li>
-                  <a href="{% url 'accounting_display' %}">Cobranzas</a>
-                </li>
-              </ul>
-            </li>
-            <li>
-              <a href="{% url 'history' %}">Historial</a>
-            </li>
-            <li>
-              <a href="{% url 'create' %}">Formulario</a>
-            </li>
-            <li>
-              <a href="{% url 'clients' %}">Clientes</a>
-            </li>
-            <li>
-              <a href="{% url 'team_list' %}" data-submenu="teams-submenu">Grupos</a>
-              <ul class="navbar-submenu" id="teams-submenu">
-                <li>
-                  <a href="{% url 'team_list' %}">Mis Grupos</a>
-                </li>
-                <li>
-                  <a href="{% url 'team_create' %}">Crear Grupo</a>
-                </li>
-                <li>
-                  <a href="{% url 'shared_projects' %}">Proyectos Compartidos</a>
-                </li>
-              </ul>
-            </li>
-            <!-- FORMULARIO DE BÚSQUEDA -->
-            <li>
-              <form autocomplete="off" method="post" id="search-form" style="display: flex; flex-flow: row;" action="{% url 'projects' %}">
-                {% csrf_token %}
-                <input autocomplete="off" type="text" id="search-input" name="search-input" placeholder="Buscar proyecto..." />
-                <input type="hidden" id="project-link" data-url="{% url 'projectview' pk=0 %}" />
-                <button class="search-button" id="search-button" type="submit"><img style="width: 25px; height: 25px;" src="{% static 'img/search-icon.svg' %}" alt="Buscar" /></button>
-                <div id="search-results">
-                  <!-- This div will be populated with search results -->
-                </div>
-              </form>
-              <div id="results-cont" class="results-cont"></div>
-            </li>
-            {% if request.user.is_authenticated %}
-              <li class="logout">
-                <a href="{% url 'logout' %}">Cerrar sesión</a>
-              </li>
-            {% endif %}
-          </ul>
-        </div>
-      </div>
-    </nav>
-    <!-- FIN NAVBAR -->
-    <div class="container">
-      <div class="fila">
-        {% block content %}
-          {% block index %}
-
-          {% endblock %}
-          {% block form %}
-
-          {% endblock %}
-          {% block graph %}
-
-          {% endblock %}
-        {% endblock %}
-      </div>
+      <main class="main">
+        <header class="topbar">
+          <button class="hamb" id="navToggle" aria-label="Abrir menú">☰</button>
+          {% block topbar %}{% endblock %}
+        </header>
+        {% block content %}{% endblock %}
+      </main>
     </div>
-  </body>
 
-  <script>
-    // Navbar functionality - Complete solution
-    document.addEventListener('DOMContentLoaded', function () {
-      const hamburgerBtn = document.getElementById('hamburger-btn')
-      const navList = document.getElementById('nav-list')
-      const navOverlay = document.getElementById('nav-overlay')
-      const toggleButtons = document.querySelectorAll('[data-submenu]')
-    
-      // Hamburger menu functionality
-      if (hamburgerBtn && navList && navOverlay) {
-        hamburgerBtn.addEventListener('click', function () {
-          const isActive = navList.classList.contains('active')
-    
-          if (isActive) {
-            // Cerrar menú
-            hamburgerBtn.classList.remove('active')
-            navList.classList.remove('active')
-            navOverlay.classList.remove('active')
-            document.body.style.overflow = ''
-          } else {
-            // Abrir menú
-            hamburgerBtn.classList.add('active')
-            navList.classList.add('active')
-            navOverlay.classList.add('active')
-            document.body.style.overflow = 'hidden'
-          }
-        })
-    
-        // Cerrar menú al hacer click en overlay
-        navOverlay.addEventListener('click', function () {
-          hamburgerBtn.classList.remove('active')
-          navList.classList.remove('active')
-          navOverlay.classList.remove('active')
-          document.body.style.overflow = ''
-        })
-    
-        // Cerrar menú al cambiar tamaño de ventana (si se cambia a desktop)
-        window.addEventListener('resize', function () {
-          if (window.innerWidth > 1024) {
-            hamburgerBtn.classList.remove('active')
-            navList.classList.remove('active')
-            navOverlay.classList.remove('active')
-            document.body.style.overflow = ''
-    
-            // Cerrar todos los submenús en móvil
-            document.querySelectorAll('.navbar-submenu').forEach((submenu) => {
-              submenu.classList.remove('show')
-            })
-          }
-        })
-      }
-    
-      // Submenu functionality
-      toggleButtons.forEach((button) => {
-        const submenuId = button.getAttribute('data-submenu')
-        const submenu = document.getElementById(submenuId)
-    
-        if (submenu) {
-          // Mobile: Click to toggle - simplificado
-          button.addEventListener('click', function (e) {
-            if (window.innerWidth <= 1024) {
-              e.preventDefault()
-              e.stopPropagation()
-    
-              // Cerrar todos los otros submenús
-              document.querySelectorAll('.navbar-submenu').forEach((other) => {
-                if (other !== submenu) {
-                  other.classList.remove('show')
-                }
-              })
-    
-              // Toggle del actual
-              submenu.classList.toggle('show')
-            }
-          }) // Desktop: Solo hover functionality
-          const parentLi = button.closest('li')
-          if (parentLi) {
-            let hoverTimeout
-    
-            parentLi.addEventListener('mouseenter', function () {
-              if (window.innerWidth > 1024) {
-                clearTimeout(hoverTimeout)
-                submenu.classList.add('show')
-              }
-            })
-    
-            parentLi.addEventListener('mouseleave', function () {
-              if (window.innerWidth > 1024) {
-                hoverTimeout = setTimeout(() => {
-                  submenu.classList.remove('show')
-                }, 150)
-              }
-            })
-    
-            // Cancelar el cierre por hover si el mouse está sobre el submenú
-            submenu.addEventListener('mouseenter', function () {
-              if (window.innerWidth > 1024) {
-                clearTimeout(hoverTimeout)
-              }
-            })
-    
-            submenu.addEventListener('mouseleave', function () {
-              if (window.innerWidth > 1024) {
-                submenu.classList.remove('show')
-              }
-            })
-          }
-        }
-      })
-    })
-    
-    // JavaScript for search functionality
-    // This script handles the search input, fetches results from the server, and displays them in a dropdown.
-    // It also includes debouncing to optimize performance and event listeners for user interactions.
-    // The search results are displayed in a dropdown below the input field, and clicking outside the dropdown closes it.
-    document.addEventListener('DOMContentLoaded', function () {
-      const searchInput = document.getElementById('search-input')
-      const resultsContainer = document.getElementById('results-cont')
-      const searchForm = document.getElementById('search-form')
-      const projectLinkUrl = document.getElementById('project-link').dataset.url
-      let searchTimeout
-      let isSearchActive = false
-    
-      searchInput.addEventListener('keyup', () => {
-        const query = searchInput.value.trim()
-        if (!query) {
-          clearResults()
-          isSearchActive = false
-          return
-        }
-    
-        clearTimeout(searchTimeout)
-        searchTimeout = setTimeout(() => {
-          clearResults()
-          performSearch(query)
-        }, 300)
-      })
-    
-      // Click handlers
-      searchInput.addEventListener('click', () => {
-        if (isSearchActive) {
-          resultsContainer.classList.add('show')
-        }
-      })
-    
-      document.addEventListener('click', (event) => {
-        if (!searchInput.contains(event.target) && !resultsContainer.contains(event.target)) {
-          resultsContainer.classList.remove('show')
-        }
-      })
-    
-      // Search functionality
-      async function performSearch(query) {
-        try {
-          const response = await fetch(`/search/?query=${encodeURIComponent(query)}`)
-          if (!response.ok) throw new Error('Search failed')
-    
-          const data = await response.json()
-          if (data.results?.length) {
-            isSearchActive = true
-            displayResults(data.results)
-          } else {
-            isSearchActive = false
-            clearResults()
-          }
-        } catch (error) {
-          console.error('Search error:', error)
-          isSearchActive = false
-        }
-      }
-    
-      function displayResults(results) {
-        clearResults()
-    
-        const fragment = document.createDocumentFragment()
-    
-        results.forEach((result) => {
-          const link = document.createElement('a')
-          if (result.closed) {
-            link.className = 'closed-project'
-          }
-          link.href = projectLinkUrl.replace('0', result.id)
-    
-          const titleSpan = document.createElement('span')
-          titleSpan.textContent = result.type
-    
-          const dateSpan = document.createElement('span')
-          dateSpan.textContent = result.datecreated
-          dateSpan.classList.add('date-search')
-    
-          link.append(titleSpan, dateSpan)
-          fragment.appendChild(link)
-        })
-    
-        const seeMoreButton = document.createElement('button')
-        seeMoreButton.className = 'search-button see-more'
-        seeMoreButton.textContent = 'Ver más'
-        seeMoreButton.onclick = () => searchForm.submit()
-        fragment.appendChild(seeMoreButton)
-        resultsContainer.appendChild(fragment)
-        resultsContainer.classList.add('show')
-      }
-    
-      function clearResults() {
-        resultsContainer.innerHTML = ''
-        resultsContainer.classList.remove('show')
-      }
-    })
-  </script>
+    <div class="toast" id="toast"></div>
+
+    <script src="{% static 'js/ui.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+  </body>
 </html>

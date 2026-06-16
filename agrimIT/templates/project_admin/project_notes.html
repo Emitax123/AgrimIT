@@ -1,144 +1,106 @@
 {% extends 'base/base_template.html' %}
 {% load static %}
+{% load widget_tweaks %}
 
 {% block extra_css %}
-  <link rel="stylesheet" href="{% static 'css/project_notes.css' %}" />
+<style>
+  .note-card{border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;background:var(--surface)}
+  .note-card .note-title{font-size:.95rem;font-weight:700;margin:0}
+  .note-meta{font-size:.72rem;color:var(--text-3);display:flex;gap:12px;margin-top:2px}
+  .note-description{font-size:.85rem;color:var(--text-2);margin:10px 0}
+  .note-footer{display:flex;justify-content:space-between;align-items:center;font-size:.74rem;color:var(--text-3)}
+  .note-actions{display:flex;gap:8px}
+</style>
+{% endblock %}
+
+{% block topbar %}
+  <div>
+    <h1>📝 Notas del proyecto</h1>
+    <div class="sub">{{ project.type }}{% if project.client %} — {{ project.client.name }}{% endif %}</div>
+  </div>
+  <a href="{% url 'projectview' pk=project.pk %}" class="btn btn-ghost ml-auto">← Volver al proyecto</a>
 {% endblock %}
 
 {% block content %}
-  <div class="notes-container">
-    <div class="notes-header">
-      <div class="notes-header-info">
-        <h1>📝 Notas del Proyecto</h1>
-        <p class="project-ref">{{ project.type }} - {{ project.get_nomenclature_display }}</p>
-        <a href="{% url 'projectview' pk=project.pk %}" class="btn-back">← Volver al proyecto</a>
+  <div class="grid">
+    <div class="dcol" style="display:flex;flex-direction:column;gap:16px">
+      <div class="panel">
+        <div class="head"><h2>Historial de notas ({{ notes.count }})</h2></div>
+        <div class="body">
+          {% if notes %}
+            {% for note in notes %}
+              <div class="note-card" data-note-id="{{ note.id }}">
+                <h3 class="note-title">{{ note.title }}</h3>
+                <div class="note-meta">
+                  <span>📅 {{ note.created|date:"d/m/Y H:i" }}</span>
+                  {% if note.updated != note.created %}<span>✏️ {{ note.updated|date:"d/m/Y H:i" }}</span>{% endif %}
+                </div>
+                <p class="note-description">{{ note.description|linebreaks }}</p>
+                <div class="note-footer">
+                  <span>👤 {{ note.user.username }}</span>
+                  <div class="note-actions">
+                    <a href="{% url 'edit_project_note' pk=project.pk note_id=note.id %}" class="btn btn-ghost btn-sm">✏️ Editar</a>
+                    <button class="btn btn-red btn-sm btn-delete" data-note-id="{{ note.id }}">🗑️ Eliminar</button>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div style="text-align:center;padding:32px;color:var(--text-3)">Aún no hay notas para este proyecto.</div>
+          {% endif %}
+        </div>
       </div>
     </div>
 
-    <!-- Formulario para agregar/editar nota -->
-    <div class="note-form-container">
-      <h2>{% if editing %}Editar Nota{% else %}Agregar Nueva Nota{% endif %}</h2>
-      <form method="POST" class="note-form">
-        {% csrf_token %}
-        
-        <div class="form-group">
-          <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
-          {{ form.title }}
-          {% if form.title.errors %}
-            <div class="error-message">{{ form.title.errors }}</div>
-          {% endif %}
-        </div>
-
-        <div class="form-group">
-          <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
-          {{ form.description }}
-          {% if form.description.errors %}
-            <div class="error-message">{{ form.description.errors }}</div>
-          {% endif %}
-        </div>
-
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary">
-            {% if editing %}💾 Guardar Cambios{% else %}➕ Agregar Nota{% endif %}
-          </button>
-          {% if editing %}
-            <a href="{% url 'project_notes' pk=project.pk %}" class="btn btn-secondary">Cancelar</a>
-          {% endif %}
-        </div>
-      </form>
-    </div>
-
-    <!-- Lista de notas -->
-    <div class="notes-list-container">
-      <h2>Historial de Notas ({{ notes.count }})</h2>
-      
-      {% if notes %}
-        <div class="notes-list">
-          {% for note in notes %}
-            <div class="note-card" data-note-id="{{ note.id }}">
-              <div class="note-header">
-                <h3 class="note-title">{{ note.title }}</h3>
-                <div class="note-meta">
-                  <span class="note-date">📅 {{ note.created|date:"d/m/Y H:i" }}</span>
-                  {% if note.updated != note.created %}
-                    <span class="note-updated" title="Última modificación">✏️ {{ note.updated|date:"d/m/Y H:i" }}</span>
-                  {% endif %}
-                </div>
-              </div>
-              
-              <div class="note-body">
-                <p class="note-description">{{ note.description|linebreaks }}</p>
-              </div>
-              
-              <div class="note-footer">
-                <span class="note-author">👤 {{ note.user.username }}</span>
-                <div class="note-actions">
-                  <a href="{% url 'edit_project_note' pk=project.pk note_id=note.id %}" class="btn-edit" title="Editar">
-                    ✏️ Editar
-                  </a>
-                  <button class="btn-delete" data-note-id="{{ note.id }}" title="Eliminar">
-                    🗑️ Eliminar
-                  </button>
-                </div>
-              </div>
+    <div class="dcol">
+      <div class="panel">
+        <div class="head"><h2>{% if editing %}Editar nota{% else %}Nueva nota{% endif %}</h2></div>
+        <div class="body">
+          <form method="POST" style="display:flex;flex-direction:column;gap:14px">
+            {% csrf_token %}
+            <div>
+              <label class="fl">{{ form.title.label }}</label>
+              {{ form.title|add_class:'std' }}
+              {% if form.title.errors %}<div style="color:var(--red);font-size:.72rem">{{ form.title.errors }}</div>{% endif %}
             </div>
-          {% endfor %}
+            <div>
+              <label class="fl">{{ form.description.label }}</label>
+              {{ form.description|add_class:'std' }}
+              {% if form.description.errors %}<div style="color:var(--red);font-size:.72rem">{{ form.description.errors }}</div>{% endif %}
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+              {% if editing %}<a href="{% url 'project_notes' pk=project.pk %}" class="btn btn-ghost btn-sm">Cancelar</a>{% endif %}
+              <button type="submit" class="btn btn-primary btn-sm">{% if editing %}💾 Guardar{% else %}➕ Agregar{% endif %}</button>
+            </div>
+          </form>
         </div>
-      {% else %}
-        <div class="empty-state">
-          <p>📋 Aún no hay notas para este proyecto.</p>
-          <p>Agrega la primera nota usando el formulario de arriba.</p>
-        </div>
-      {% endif %}
+      </div>
     </div>
   </div>
 
   <script>
-    // Script para eliminar notas con confirmación
-    document.addEventListener('DOMContentLoaded', function() {
-      const deleteButtons = document.querySelectorAll('.btn-delete');
-      
-      deleteButtons.forEach(button => {
-        button.addEventListener('click', function() {
-          const noteId = this.dataset.noteId;
-          const noteCard = this.closest('.note-card');
-          
-          if (confirm('¿Estás seguro de que deseas eliminar esta nota? Esta acción no se puede deshacer.')) {
-            // Obtener el token CSRF
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-            
-            // Hacer petición DELETE
-            fetch(`/project/{{ project.pk }}/notes/${noteId}/delete/`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-              }
-            })
-            .then(response => response.json())
-            .then(data => {
-              if (data.success) {
-                // Animar y eliminar la tarjeta
-                noteCard.style.opacity = '0';
-                noteCard.style.transform = 'translateX(-20px)';
-                setTimeout(() => {
-                  noteCard.remove();
-                  
-                  // Verificar si quedan notas
-                  const remainingNotes = document.querySelectorAll('.note-card');
-                  if (remainingNotes.length === 0) {
-                    location.reload(); // Recargar para mostrar el estado vacío
-                  }
-                }, 300);
-              } else {
-                alert('Error al eliminar la nota: ' + (data.error || 'Error desconocido'));
-              }
-            })
-            .catch(error => {
-              console.error('Error:', error);
-              alert('Error al eliminar la nota');
-            });
-          }
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('.btn-delete').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var noteId = this.dataset.noteId;
+          var noteCard = this.closest('.note-card');
+          if (!confirm('¿Eliminar esta nota? Esta acción no se puede deshacer.')) return;
+          var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+          fetch('/project/{{ project.pk }}/notes/' + noteId + '/delete/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
+          })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data.success) {
+              noteCard.style.opacity = '0';
+              setTimeout(function () {
+                noteCard.remove();
+                if (document.querySelectorAll('.note-card').length === 0) location.reload();
+              }, 250);
+            } else { toast('Error al eliminar la nota.'); }
+          })
+          .catch(function () { toast('Error al eliminar la nota.'); });
         });
       });
     });

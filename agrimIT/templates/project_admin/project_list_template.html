@@ -1,63 +1,90 @@
 {% extends 'base/base_template.html' %}
 {% load static %}
-{% block index %}
-<link rel="stylesheet" type="text/css" href="{% static 'css/project_list.css' %}" />
-<div id="galeria-work" class="galeria-work">
 
-  <div style="display: flex; justify-content: flex-end; padding: 0.5rem 1rem;">
-    <a href="{% url 'import_projects' %}" class="toggle-btn active">📥 Importar proyectos</a>
+{% block topbar %}
+  <div>
+    <h1>{{ list_title|default:"Proyectos" }}</h1>
+    {% if show_filters %}
+      <div class="sub">{{ active_count }} activos · {{ total_count }} totales</div>
+    {% elif search_query %}
+      <div class="sub">Resultados para "{{ search_query }}"</div>
+    {% endif %}
   </div>
+  <div class="ml-auto" style="display:flex;gap:8px;flex-wrap:wrap">
+    <a href="{% url 'import_projects' %}" class="btn btn-ghost"><img src="{% static 'img/import-icon.png' %}" alt="" class="btn-ico"> Importar</a>
+    <a href="{% url 'create' %}" class="btn btn-primary">+ Nuevo</a>
+  </div>
+{% endblock %}
 
-  <div class="projects-cont">
-    {% if not projects %}
-      <span style="font-weight: bold;">No se encontraron resultados</span>
-    {% else %}
-    {% for Project in projects %}
-    <div class="project" >
-      <a href="{% url 'projectview' pk=Project.pk %}">
-        
-        <div {% if Project.closed %} style="background-color:rgb(183, 239, 184);"{% endif %} class="cont-work">
-                <span class="project-title1">{{Project.type}}</span>
-                {% if Project.mens %}
-                  <h3>{{Project.mens}}</h3>
-                {% endif %}
-                
-                <div>
-                  <span style="width: 80%;">
-                    <h5>Partido: {{Project.partido}} </h5> 
-                    <h5>Partida: {{Project.partida}}</h5>
-                    <h5>Cliente: {{Project.client.name}}</h5>
-                    <h5>Dir: {{Project.direction}} {{Project.direction_number}}</h5>
-                    <h5>Fecha: {{Project.created|date:"d/m/Y" }}</h5>
-                  </span>
-                  <div style="display: flex; justify-content: end; align-items:flex-end; width: 100%;">
-                    <span style="font-weight: bold;">{{ Project.pk }} </span>
-                  </div>
-                  
-                </div>
-                
-        </div>
-      </a>
+{% block content %}
+  {% if show_filters %}
+    {% with est=estado|default:"activos" %}
+    <div class="toolbar">
+      <div class="chips">
+        <a href="{% url 'projects' %}?estado={{ est }}" class="{% if not active_type %}on{% endif %}">Todos</a>
+        <a href="{% url 'projectslisttype' type=1 %}?estado={{ est }}" class="{% if active_type == 1 %}on{% endif %}">Mensuras</a>
+        <a href="{% url 'projectslisttype' type=2 %}?estado={{ est }}" class="{% if active_type == 2 %}on{% endif %}">Est. Parcelarios</a>
+        <a href="{% url 'projectslisttype' type=3 %}?estado={{ est }}" class="{% if active_type == 3 %}on{% endif %}">Amojonamientos</a>
+        <a href="{% url 'projectslisttype' type=4 %}?estado={{ est }}" class="{% if active_type == 4 %}on{% endif %}">Relevamientos</a>
+        <a href="{% url 'projectslisttype' type=5 %}?estado={{ est }}" class="{% if active_type == 5 %}on{% endif %}">Legajos</a>
+      </div>
+      {% if active_type %}
+        {% url 'projectslisttype' type=active_type as base_url %}
+      {% else %}
+        {% url 'projects' as base_url %}
+      {% endif %}
+      <div class="seg ml-auto">
+        <a href="{{ base_url }}?estado=activos" class="{% if est == 'activos' %}on{% endif %}">Activos</a>
+        <a href="{{ base_url }}?estado=cerrados" class="{% if est == 'cerrados' %}on{% endif %}">Cerrados</a>
+        <a href="{{ base_url }}?estado=todos" class="{% if est == 'todos' %}on{% endif %}">Todos</a>
+      </div>
     </div>
-    {% endfor %}
-  
-  </div>    
-</div>
-{% if pages.num_pages > 1 %}
-<div class="pagination-cont" >
-  {% for page in pages.page_range %}
-   {% if request.GET.page|default:"1" == page|stringformat:"s" %} 
-   <a class="active" href="?page={{page}}">{{page}}</a>
-   {% else %}
-    <a href="?page={{page}}">{{page}}</a>
-   {% endif %}
-   
-  {% endfor %}
-</div>
-{% endif %}
+    {% endwith %}
+  {% endif %}
 
-{% endif %}
+  {% if projects %}
+    <div class="proj-grid">
+      {% for p in projects %}
+        <div class="pcard" onclick="window.location='{% url 'projectview' pk=p.pk %}'">
+          <div class="tt">
+            <span class="type">{{ p.type|default:"—" }}</span>
+            {% if p.closed %}
+              <span class="badge b-gray">Cerrado</span>
+            {% else %}
+              <span class="badge b-green">Activo</span>
+            {% endif %}
+          </div>
+          <div class="meta">
+            <b>{{ p.client.name|default:"Sin cliente" }}</b><br>
+            Partido: {{ p.partido|default:"—" }} · Partida: {{ p.partida|default:"—" }}<br>
+            {% if p.street %}{{ p.street }}{% if p.street_num %} N° {{ p.street_num }}{% endif %}<br>{% endif %}
+            📅 {{ p.created|date:"d/m/Y" }}
+          </div>
+          <div class="foot"><span>ID {{ p.pk }}</span></div>
+        </div>
+      {% endfor %}
+    </div>
 
-
-
+    {% if pages.num_pages > 1 %}
+      <div class="pagination">
+        {% if projects.has_previous %}
+          <a href="?page={{ projects.previous_page_number }}{% if estado %}&estado={{ estado }}{% endif %}">‹</a>
+        {% endif %}
+        {% for n in pages.page_range %}
+          <a href="?page={{ n }}{% if estado %}&estado={{ estado }}{% endif %}" class="{% if n == projects.number %}on{% endif %}">{{ n }}</a>
+        {% endfor %}
+        {% if projects.has_next %}
+          <a href="?page={{ projects.next_page_number }}{% if estado %}&estado={{ estado }}{% endif %}">›</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="panel">
+      <div class="body" style="text-align:center;padding:48px 20px;color:var(--text-3)">
+        <div style="font-size:2rem;margin-bottom:8px">▤</div>
+        <div style="font-weight:600;color:var(--text-2)">No hay proyectos para mostrar.</div>
+        <a href="{% url 'create' %}" class="btn btn-primary" style="margin-top:16px;display:inline-block">+ Crear el primero</a>
+      </div>
+    </div>
+  {% endif %}
 {% endblock %}

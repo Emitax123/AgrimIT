@@ -1,0 +1,102 @@
+{% load static formatting %}<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Factura — Proyecto #{{ project.pk }}</title>
+  <link rel="icon" href="{% static 'img/logo-cut.png' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/design-system.css' %}">
+  <style>
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);margin:0;padding:28px 16px}
+    .inv-wrap{max-width:760px;margin:0 auto}
+    @media print{
+      /* design-system.css oculta `body *` para el modal; en esta página
+         standalone hay que volver a mostrar todo. */
+      body *{visibility:visible}
+      body{background:#fff;padding:0}
+      .inv-wrap{max-width:none}
+      .invoice{box-shadow:none;border-radius:0;max-width:none}
+      .inv-tools{display:none}
+      @page{size:A4;margin:14mm}
+    }
+  </style>
+</head>
+<body>
+  <div class="inv-wrap">
+    <div class="invoice">
+      <div class="inv-tools">
+        <a href="{% url 'projectview' pk=project.pk %}" class="btn btn-ghost btn-sm">✕ Volver</a>
+        <button class="btn btn-primary btn-sm" onclick="window.print()">🖨 Imprimir</button>
+      </div>
+      <div class="inv-page">
+        <div class="inv-head">
+          <div class="studio" style="display:flex;gap:14px;align-items:flex-start">
+            <img src="{% static 'img/logo-cut.png' %}" alt="" style="width:44px;height:auto" onerror="this.style.display='none'">
+            <div>{{ studio.studio_name|default:"Estudio de Agrimensura" }}
+              <small>
+                {% if studio.professional_name %}{{ studio.professional_name }}{% if studio.license_number %} — Mat. {{ studio.license_number }}{% endif %}<br>{% endif %}
+                {% if studio.address %}{{ studio.address }}{% if studio.phone %} · {{ studio.phone }}{% endif %}<br>{% endif %}
+                {% if studio.email %}{{ studio.email }}{% endif %}
+              </small>
+            </div>
+          </div>
+          <div class="inv-num">
+            <span class="doc">Presupuesto / Recibo X</span>
+            <div class="nro">N° {{ doc_num }}</div>
+            <div class="fecha">Fecha: {{ fecha|date:"d/m/Y" }}</div>
+          </div>
+        </div>
+
+        <div class="inv-meta">
+          <div><h4>Cliente</h4>
+            <div class="box">
+              <b>{{ client.name|default:"—" }}</b><br>
+              Tel: {{ client.phone|default:"—" }}<br>
+              Titular: {{ project.titular_name|default:"—" }}
+            </div>
+          </div>
+          <div><h4>Trabajo</h4>
+            <div class="box">
+              <b>{{ project.type|default:"—" }}</b> — Proyecto #{{ project.pk }}<br>
+              Partido {{ project.partido|default:"—" }} · Partida {{ project.partida|default:"—" }}<br>
+              {% if project.street %}{{ project.street }}{% if project.street_num %} N° {{ project.street_num }}{% endif %}{% else %}—{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <table class="inv-table">
+          <thead><tr><th>Concepto</th><th style="text-align:right">Monto</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Honorarios profesionales — {{ project.type|default:"—" }}</td>
+              <td style="text-align:right">${{ estimated|pesos }}</td>
+            </tr>
+            {% for m in adv_movs %}
+            <tr>
+              <td>{{ m.description|default:"Pago recibido" }} ({{ m.created_at|date:"d/m/Y" }})</td>
+              <td style="text-align:right;color:var(--green)">−${{ m.amount|pesos }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <div class="inv-tot">
+          <table>
+            <tr><td>Subtotal</td><td style="text-align:right">${{ estimated|pesos }}</td></tr>
+            <tr><td>Pagos recibidos</td><td style="text-align:right">−${{ total_pagos|pesos }}</td></tr>
+            <tr class="total"><td>Saldo</td><td style="text-align:right">${{ saldo|pesos }}</td></tr>
+          </table>
+        </div>
+
+        <div class="inv-foot">
+          Documento no válido como factura oficial. Emitido a modo informativo por AgrimIT.<br>
+          {% if studio.payment_terms %}{{ studio.payment_terms }}{% else %}Forma de pago: efectivo / transferencia{% endif %}{% if studio.cbu %} — CBU {{ studio.cbu }}{% endif %}{% if studio.alias %} · Alias: {{ studio.alias }}{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

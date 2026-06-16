@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User
+from .models import User, StudioProfile
 
 
 @admin.register(User)
@@ -31,4 +31,16 @@ class UserAdmin(BaseUserAdmin):
         ('Additional Info', {
             'fields': ('first_name', 'last_name', 'email', 'phone_number')
         }),
+    )
+
+
+@admin.register(StudioProfile)
+class StudioProfileAdmin(admin.ModelAdmin):
+    """Edición de los datos del estudio que aparecen en la factura (REDESIGN §7.7)."""
+    list_display = ('user', 'studio_name', 'professional_name', 'license_number')
+    search_fields = ('user__username', 'studio_name', 'professional_name')
+    fieldsets = (
+        ('Estudio', {'fields': ('user', 'studio_name', 'professional_name', 'license_number')}),
+        ('Contacto', {'fields': ('address', 'phone', 'email')}),
+        ('Pago', {'fields': ('cbu', 'alias', 'payment_terms')}),
     )
