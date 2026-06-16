@@ -11,7 +11,7 @@
     {% endif %}
   </div>
   <div class="ml-auto" style="display:flex;gap:8px;flex-wrap:wrap">
-    <a href="{% url 'import_projects' %}" class="btn btn-ghost">📥 Importar</a>
+    <a href="{% url 'import_projects' %}" class="btn btn-ghost"><img src="{% static 'img/import-icon.png' %}" alt="" class="btn-ico"> Importar</a>
     <a href="{% url 'create' %}" class="btn btn-primary">+ Nuevo</a>
   </div>
 {% endblock %}

@@ -191,6 +191,9 @@ planes/
 design-mockups/
 docs/superpowers/
 
+# Carpeta de entrega de íconos (los assets servidos viven en agrimIT/.../static/img/)
+NewIcons/
+
 # Scripts de desarrollo/testing temporales (solo en la raiz del repo;
 # NO la suite real bajo tests/)
 /test_*.py

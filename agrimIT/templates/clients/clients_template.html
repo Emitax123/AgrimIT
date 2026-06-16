@@ -8,7 +8,7 @@
     <div class="sub">{{ clients|length }} registrados</div>
   </div>
   <div class="search ml-auto">
-    <span>🔍</span>
+    <img src="{% static 'img/search-icon.png' %}" alt="" class="search-ico" />
     <input id="client-filter" type="text" autocomplete="off" placeholder="Buscar cliente…">
   </div>
   <a href="{% url 'clientcreate' %}" class="btn btn-primary">+ Crear cliente</a>

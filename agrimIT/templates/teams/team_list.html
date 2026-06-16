@@ -18,15 +18,15 @@
 
   <div class="grid2">
     {% for team in owned_teams %}
-      <div class="panel">
+      <div class="panel team-card owner">
         <div class="head">
           <h2>⬡ {{ team.name }}</h2>
           <span class="badge b-blue">Admin</span>
         </div>
         <div class="body">
-          <div style="font-size:.84rem;color:var(--text-2);margin-bottom:12px">
-            {{ team.get_members_count }} miembro{{ team.get_members_count|pluralize }} ·
-            {{ team.get_shared_projects_count }} proyecto{{ team.get_shared_projects_count|pluralize }} compartido{{ team.get_shared_projects_count|pluralize }}
+          <div class="team-stats">
+            <span class="chip">⬡ {{ team.get_members_count }} miembro{{ team.get_members_count|pluralize }}</span>
+            <span class="chip">⇄ {{ team.get_shared_projects_count }} compartido{{ team.get_shared_projects_count|pluralize }}</span>
           </div>
           {% if team.description %}
             <p style="font-size:.84rem;color:var(--text-2);margin-bottom:14px">{{ team.description|truncatewords:20 }}</p>
@@ -41,15 +41,15 @@
     {% endfor %}
 
     {% for team in member_teams %}
-      <div class="panel">
+      <div class="panel team-card member">
         <div class="head">
           <h2>⬡ {{ team.name }}</h2>
           <span class="badge b-gray">Miembro</span>
         </div>
         <div class="body">
-          <div style="font-size:.84rem;color:var(--text-2);margin-bottom:12px">
-            {{ team.get_members_count }} miembro{{ team.get_members_count|pluralize }} ·
-            {{ team.get_shared_projects_count }} proyecto{{ team.get_shared_projects_count|pluralize }} compartido{{ team.get_shared_projects_count|pluralize }}
+          <div class="team-stats">
+            <span class="chip">⬡ {{ team.get_members_count }} miembro{{ team.get_members_count|pluralize }}</span>
+            <span class="chip">⇄ {{ team.get_shared_projects_count }} compartido{{ team.get_shared_projects_count|pluralize }}</span>
           </div>
           <div class="kv">
             <span class="k">Administrador</span>

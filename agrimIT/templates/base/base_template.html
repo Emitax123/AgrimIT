@@ -35,12 +35,12 @@
           <div class="label">General</div>
           <a href="{% url 'index' %}" class="{% if cur == 'index' %}active{% endif %}"><span class="ico">⌂</span> Inicio</a>
           <a href="{% url 'balance' %}" class="{% if cur == 'balance' %}active{% endif %}"><span class="ico">◔</span> Balances</a>
-          <a href="{% url 'accounting_display' %}" class="{% if cur == 'accounting_display' or cur == 'accform' %}active{% endif %}"><span class="ico">$</span> Cobranzas{% if receivables_count %} <span class="count">{{ receivables_count }}</span>{% endif %}</a>
+          <a href="{% url 'accounting_display' %}" class="{% if cur == 'accounting_display' or cur == 'accform' %}active{% endif %}"><span class="ico">$</span> Cobranzas</a>
 
           <div class="label">Gestión</div>
-          <a href="{% url 'projects' %}" class="{% if cur == 'projects' or cur == 'projectslisttype' or cur == 'projectslist' or cur == 'projectview' or cur == 'modification' or cur == 'fullmodification' or cur == 'duplicate' or cur == 'close' or cur == 'upload' or cur == 'download' or cur == 'deletefile' or cur == 'project_notes' %}active{% endif %}"><span class="ico">▤</span> Proyectos{% if project_count %} <span class="count">{{ project_count }}</span>{% endif %}</a>
+          <a href="{% url 'projects' %}" class="{% if cur == 'projects' or cur == 'projectslisttype' or cur == 'projectslist' or cur == 'projectview' or cur == 'modification' or cur == 'fullmodification' or cur == 'duplicate' or cur == 'close' or cur == 'upload' or cur == 'download' or cur == 'deletefile' or cur == 'project_notes' %}active{% endif %}"><span class="ico">▤</span> Proyectos</a>
           <a href="{% url 'create' %}" class="{% if cur == 'create' or cur == 'import_projects' %}active{% endif %}"><span class="ico">✚</span> Nuevo proyecto</a>
-          <a href="{% url 'clients' %}" class="{% if cur == 'clients' or cur == 'clientcreate' or cur == 'clientprojectcreate' or cur == 'deleteclient' %}active{% endif %}"><span class="ico">◉</span> Clientes{% if clients_count %} <span class="count">{{ clients_count }}</span>{% endif %}</a>
+          <a href="{% url 'clients' %}" class="{% if cur == 'clients' or cur == 'clientcreate' or cur == 'clientprojectcreate' or cur == 'deleteclient' %}active{% endif %}"><span class="ico">◉</span> Clientes</a>
           <a href="{% url 'history' %}" class="{% if cur == 'history' %}active{% endif %}"><span class="ico">↺</span> Historial</a>
 
           <div class="label">Colaboración</div>

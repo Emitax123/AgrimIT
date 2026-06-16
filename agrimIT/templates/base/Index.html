@@ -3,11 +3,11 @@
 
 {% block topbar %}
   <div>
-    <h1>Buen día, {{ request.user.first_name|default:request.user.username }} 👋</h1>
+    <h1>Buen día, {{ request.user.first_name|default:request.user.username }}</h1>
     <div class="sub">Resumen del estudio — {{ current_month_label }} {{ current_year }}</div>
   </div>
   <div class="search ml-auto" data-projects-url="{% url 'projects' %}">
-    <span>🔍</span>
+    <img src="{% static 'img/search-icon.png' %}" alt="" class="search-ico" />
     <input id="search-input" type="text" autocomplete="off" placeholder="Buscar proyecto, cliente, partida…" />
     <input type="hidden" id="project-link" data-url="{% url 'projectview' pk=0 %}" />
     <div id="results-cont" class="results-cont"></div>
