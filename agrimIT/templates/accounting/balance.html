@@ -189,6 +189,22 @@
         type: 'line', label: 'Neto acumulado', data: anual.neto_acum,
         borderColor: '#10b981', backgroundColor: '#10b981', tension: 0.35, pointRadius: 3,
       })
+      // ¿Hay algún dato distinto de cero? Si no, fijamos una escala por defecto
+      // para evitar que Chart.js genere un rango microscópico cerca de cero.
+      const dataMax = datasets
+        .flatMap((d) => d.data)
+        .reduce((m, n) => Math.max(m, Math.abs(Number(n) || 0)), 0)
+
+      // Formatea montos del eje sin notación científica y con escala adaptativa.
+      const fmtAxis = (v) => {
+        const n = Number(v) || 0
+        const a = Math.abs(n)
+        if (a < 1) return '$0'
+        if (a >= 1e6) return '$' + +(n / 1e6).toFixed(2) + 'M'
+        if (a >= 1e3) return '$' + +(n / 1e3).toFixed(1) + 'k'
+        return '$' + Math.round(n)
+      }
+
       new Chart(document.getElementById('chartAnual'), {
         data: { labels: anual.labels, datasets: datasets },
         options: {
@@ -200,7 +216,12 @@
           },
           scales: {
             x: { grid: { display: false } },
-            y: { grid: { color: '#eef1f6' }, ticks: { callback: (v) => '$' + (v / 1e6) + 'M' } },
+            y: {
+              beginAtZero: true,
+              suggestedMax: dataMax > 0 ? undefined : 100000,
+              grid: { color: '#eef1f6' },
+              ticks: { callback: fmtAxis },
+            },
           },
         },
       })
