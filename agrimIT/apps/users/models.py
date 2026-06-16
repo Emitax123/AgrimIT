@@ -16,3 +16,24 @@ class User(AbstractUser):
         verbose_name = 'Usuario'
         verbose_name_plural = 'Usuarios'
         ordering = ['username']
+
+
+class StudioProfile(models.Model):
+    """Datos del estudio para la factura no oficial (REDESIGN §7.7)."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='studio_profile')
+    studio_name = models.CharField(max_length=120, default="Estudio de Agrimensura", verbose_name='Nombre del estudio')
+    professional_name = models.CharField(max_length=120, blank=True, verbose_name='Profesional')
+    license_number = models.CharField(max_length=40, blank=True, verbose_name='Matrícula')
+    address = models.CharField(max_length=200, blank=True, verbose_name='Dirección')
+    phone = models.CharField(max_length=40, blank=True, verbose_name='Teléfono')
+    email = models.EmailField(blank=True, verbose_name='Email')
+    cbu = models.CharField(max_length=40, blank=True, verbose_name='CBU')
+    alias = models.CharField(max_length=40, blank=True, verbose_name='Alias')
+    payment_terms = models.TextField(blank=True, verbose_name='Forma de pago')
+
+    def __str__(self):
+        return f"{self.studio_name} ({self.user.username})"
+
+    class Meta:
+        verbose_name = 'Perfil del estudio'
+        verbose_name_plural = 'Perfiles del estudio'

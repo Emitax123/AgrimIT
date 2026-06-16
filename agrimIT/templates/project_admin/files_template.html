@@ -1,39 +1,29 @@
 {% extends 'base/base_template.html' %}
 {% load static %}
-{% block form %}
-  <div class="history-cont">
-    {% for i in files %}
-      <div class="history-item">
-        <a href="{{ i.files.url }}"><span>{{ i.filename }}</span></a>
-      </div>
-    {% endfor %}
-  </div>
 
-  <style>
-    .history-cont {
-      width: 40%;
-      margin-bottom: 30px;
-      border-radius: 20px;
-      color: black;
-      background-color: white;
-      padding: 40px 20px;
-      box-shadow: 2px 2px 10px black;
-    }
-    .history-item {
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid gray;
-      display: flex;
-      align-items: center;
-    }
-    .history-item a {
-      text-decoration: none;
-      color: black;
-    }
-    .history-item span {
-      margin-left: 60px;
-      margin-right: 20px;
-      font-weight: 600;
-    }
-  </style>
+{% block topbar %}
+  <div>
+    <h1>Archivos del proyecto</h1>
+    <div class="sub">Documentos adjuntos</div>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <div class="panel" style="max-width:680px">
+    {% if files %}
+      <table>
+        <thead><tr><th>Archivo</th><th style="text-align:right">Acción</th></tr></thead>
+        <tbody>
+          {% for i in files %}
+            <tr>
+              <td>📄 {{ i.get_filename }}</td>
+              <td style="text-align:right"><a href="{{ i.url }}" class="btn btn-ghost btn-sm">⇩ Descargar</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="body" style="text-align:center;padding:32px;color:var(--text-3)">Sin archivos adjuntos.</div>
+    {% endif %}
+  </div>
 {% endblock %}

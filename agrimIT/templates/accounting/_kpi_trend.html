@@ -1,0 +1,11 @@
+{% comment %}
+  Píldora de variación para un KPI de balance (§7.1).
+  Espera: k = dict del KPI (no_desglose, has_prev, good, up, delta_str), prev = label mes anterior.
+{% endcomment %}
+{% if k.no_desglose %}
+  <span class="trend t-flat">— por tipo</span>
+{% elif not k.has_prev %}
+  <span class="trend t-flat">— sin datos previos</span>
+{% else %}
+  <span class="trend {% if k.good %}t-up{% else %}t-down{% endif %}">{% if k.up %}▲{% else %}▼{% endif %} {{ k.delta_str }}% vs {{ prev }}</span>
+{% endif %}

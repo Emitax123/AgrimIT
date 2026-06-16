@@ -1,57 +1,55 @@
 {% extends 'base/base_template.html' %}
 {% load static %}
-{% block form %}
-  <div class="container-form" style="max-width: 820px; margin: 0 auto; padding: 1rem;">
-    <span class="form-title">Importar proyectos desde Excel</span>
 
-    <ol style="margin: 1rem 0; line-height: 1.6;">
-      <li>Descargá la plantilla Excel: trae la hoja <strong>Proyectos</strong> (para cargar) y la hoja <strong>Clientes</strong> (con el ID de cada cliente tuyo).</li>
-      <li>Completá una fila por proyecto en la hoja <strong>Proyectos</strong>. Solo <strong>tipo</strong> y <strong>cliente_id</strong> son obligatorios.</li>
-      <li>Copiá el <strong>cliente_id</strong> desde la hoja <strong>Clientes</strong>.</li>
-      <li>Guardá y subí el archivo (<code>.xlsx</code> o <code>.csv</code>). Se crean solo las filas válidas; las demás se reportan con su motivo, sin frenar el resto.</li>
-    </ol>
+{% block topbar %}
+  <div>
+    <h1>Importar proyectos</h1>
+    <div class="sub">Carga masiva desde Excel o CSV</div>
+  </div>
+{% endblock %}
 
-    <div style="background: #fff8e1; border: 1px solid #f0c36d; border-left: 5px solid #e0a800; border-radius: 6px; padding: 1rem 1.25rem; margin: 1.25rem 0;">
-      <p style="margin: 0 0 0.6rem; font-size: 1.05rem; font-weight: 700; color: #7a5b00;">⚠️ Valores admitidos (respetá estos textos exactos)</p>
-      <ul style="margin: 0; padding-left: 1.2rem; line-height: 1.8;">
-        <li>
-          <strong>tipo</strong> (obligatorio) — escribí exactamente uno de:
-          <div style="margin-top: 0.25rem;">
-            {% for v in tipo_values %}<code style="background:#fff; border:1px solid #e0c97a; border-radius:4px; padding:2px 6px; margin:2px; display:inline-block;">{{ v }}</code>{% endfor %}
+{% block content %}
+  <div class="panel" style="max-width:820px">
+    <div class="body">
+      <ol style="margin:0 0 1rem;line-height:1.7;color:var(--text-2);font-size:.88rem;padding-left:1.2rem">
+        <li>Descargá la plantilla Excel: trae la hoja <strong>Proyectos</strong> (para cargar) y la hoja <strong>Clientes</strong> (con el ID de cada cliente).</li>
+        <li>Completá una fila por proyecto. Solo <strong>tipo</strong> y <strong>cliente_id</strong> son obligatorios.</li>
+        <li>Copiá el <strong>cliente_id</strong> desde la hoja <strong>Clientes</strong>.</li>
+        <li>Subí el archivo (<code>.xlsx</code> o <code>.csv</code>). Se crean solo las filas válidas; las demás se reportan con su motivo.</li>
+      </ol>
+
+      <div style="background:var(--amber-soft);border:1px solid var(--amber);border-radius:10px;padding:14px 16px;margin:14px 0">
+        <p style="margin:0 0 .6rem;font-weight:700;color:#7a5b00">⚠️ Valores admitidos (textos exactos)</p>
+        <div style="font-size:.84rem;color:var(--text-2)">
+          <strong>tipo</strong> (obligatorio):
+          <div style="margin:4px 0 10px">
+            {% for v in tipo_values %}<span class="badge b-gray" style="margin:2px">{{ v }}</span>{% endfor %}
           </div>
-        </li>
-        <li style="margin-top: 0.5rem;">
-          <strong>tipo_mensura</strong> (opcional, solo cuando <code>tipo = Mensura</code>) — uno de:
-          <div style="margin-top: 0.25rem;">
-            {% for v in tipo_mens_values %}<code style="background:#fff; border:1px solid #e0c97a; border-radius:4px; padding:2px 6px; margin:2px; display:inline-block;">{{ v }}</code>{% endfor %}
+          <strong>tipo_mensura</strong> (opcional, solo si <code>tipo = Mensura</code>):
+          <div style="margin:4px 0 10px">
+            {% for v in tipo_mens_values %}<span class="badge b-gray" style="margin:2px">{{ v }}</span>{% endfor %}
           </div>
-        </li>
-        <li style="margin-top: 0.5rem;">
-          Los campos terminados en <strong>_num</strong> de la nomenclatura (chacra_num, parcela_num, etc.) admiten <strong>solo números</strong>.
-        </li>
-      </ul>
-    </div>
-
-    <div style="margin: 1rem 0;">
-      <a href="{% url 'import_projects_template' %}" class="toggle-btn active">⬇️ Descargar plantilla (Excel)</a>
-      {% if not clients %}
-        <p style="margin: 0.5rem 0 0; color: #c0392b;">No tenés clientes cargados todavía. Creá al menos un cliente antes de importar proyectos.</p>
-      {% endif %}
-    </div>
-
-    <form method="post" enctype="multipart/form-data" style="margin-top: 1.5rem;">
-      {% csrf_token %}
-      {% if form.file_field.errors %}
-        <div style="color: #c0392b; margin-bottom: 0.5rem;">
-          {{ form.file_field.errors|striptags }}
+          Los campos <strong>_num</strong> de la nomenclatura admiten solo números.
         </div>
-      {% endif %}
-      <div class="input-field" style="margin-bottom: 1rem;">
-        <label for="{{ form.file_field.id_for_label }}">{{ form.file_field.label }}</label>
-        {{ form.file_field }}
       </div>
-      <button type="submit" class="toggle-btn active">Subir e importar</button>
-      <a href="{% url 'projects' %}" class="toggle-btn" style="margin-left: 0.5rem;">Cancelar</a>
-    </form>
+
+      <div style="margin:1rem 0">
+        <a href="{% url 'import_projects_template' %}" class="btn btn-ghost">⬇️ Descargar plantilla (Excel)</a>
+        {% if not clients %}<p style="margin:.5rem 0 0;color:var(--red)">No tenés clientes cargados todavía. Creá al menos un cliente antes de importar.</p>{% endif %}
+      </div>
+
+      <form method="post" enctype="multipart/form-data" style="margin-top:1.2rem">
+        {% csrf_token %}
+        {% if form.file_field.errors %}<div style="color:var(--red);margin-bottom:.5rem">{{ form.file_field.errors|striptags }}</div>{% endif %}
+        <div style="margin-bottom:1rem">
+          <label class="fl">{{ form.file_field.label }}</label>
+          {{ form.file_field }}
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <a href="{% url 'projects' %}" class="btn btn-ghost">Cancelar</a>
+          <button type="submit" class="btn btn-primary">Subir e importar</button>
+        </div>
+      </form>
+    </div>
   </div>
 {% endblock %}

@@ -1,169 +1,235 @@
 {% extends 'base/base_template.html' %}
 {% load static %}
-{% block graph %}
-<link rel="stylesheet" type="text/css" href="{% static 'css/balance.css' %}" />
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<div class="balance-cont">
-{{ chart_data|json_script:'chart-data' }}
-<div style="display: none;" id="chartdatacont"></div>
-<div class="month-selector" >
-    <form name="month" action="{% url 'balance' %}" method="post">
-        {% csrf_token %}
-        <input id="date-input" name="date" type="month">
-        <button id="submit-date" class="toggle-btn active" type="submit">Hecho</button>
-    </form>
-</div>
-{% if non_exist %}
-    <p class="error-message">No existen registros del mes {{ month }}/{{ year }}</p>
-{% else %}
-<div class="board-container ">
-    <div class="board" >
-    </div>
-    <div class="charts">
-        <div class="chart1-cont">
-            <span>Ganancias por tipo</span>
-            <canvas id="myChart"></canvas>
-        </div>
-         <div class="chart2-cont">
-            <span>Ganancias anual</span>
-            <canvas id="myChart2"></canvas>
-        </div>
-    </div>
-</div>
-{% endif %}
 
-<div class="anual-data-cont">
-    <div class="monthly-summary">
-        <div class="top-title"><h2>{{year}} - Neto Anual $ {{neto_anual}} </h2></div>
-        {% for month in monthly_totals %}
-        {% with currentMonth=forloop.counter %}
-        <div class="month-data">
-            <div class="month-details title"><span>Mes</span><span>Proyectos</span><span>Ganancia Neta</span></div>
-            <div class="month-details"><span>{{month.month}} </span><span> {{month.project_count}} </span><span style="font-weight: bold;"> ${{ month.total_networth }}</span></div>
-           
-        </div>
-         {% endwith %}
-        {% endfor %}
+{% block topbar %}
+  <div>
+    <h1>Balances</h1>
+    <div class="sub">Resumen financiero del estudio</div>
+  </div>
+  <div class="ml-auto" style="display:flex;gap:8px;flex-wrap:wrap">
+    <a class="btn btn-ghost" href="{% url 'export_balance_xlsx' %}?year={{ year }}">⇩ Excel</a>
+    <a class="btn btn-ghost" href="{% url 'export_balance_pdf' %}?year={{ year }}" target="_blank">⇩ PDF</a>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <!-- Toolbar: navegación de mes + chips por tipo (§7.2/§7.5) -->
+  <div class="toolbar">
+    <div class="month-pick">
+      <a href="?year={{ prev_year }}&month={{ prev_month }}{% if tipo %}&tipo={{ tipo }}{% endif %}" title="Mes anterior">‹</a>
+      <span class="cur">{{ month }} {{ year }}</span>
+      {% if next_disabled %}
+        <a class="disabled" aria-disabled="true">›</a>
+      {% else %}
+        <a href="?year={{ next_year }}&month={{ next_month }}{% if tipo %}&tipo={{ tipo }}{% endif %}" title="Mes siguiente">›</a>
+      {% endif %}
     </div>
-</div>
+    <div class="chips ml-auto">
+      <a href="?year={{ year }}&month={{ month_number }}" class="{% if not tipo %}on{% endif %}">Todos los tipos</a>
+      <a href="?year={{ year }}&month={{ month_number }}&tipo=mensura" class="{% if tipo == 'mensura' %}on{% endif %}">Mensuras</a>
+      <a href="?year={{ year }}&month={{ month_number }}&tipo=est_parc" class="{% if tipo == 'est_parc' %}on{% endif %}">Est. Parc.</a>
+      <a href="?year={{ year }}&month={{ month_number }}&tipo=amoj" class="{% if tipo == 'amoj' %}on{% endif %}">Amojonam.</a>
+      <a href="?year={{ year }}&month={{ month_number }}&tipo=relev" class="{% if tipo == 'relev' %}on{% endif %}">Relevam.</a>
+      <a href="?year={{ year }}&month={{ month_number }}&tipo=leg" class="{% if tipo == 'leg' %}on{% endif %}">Legajos</a>
+    </div>
+  </div>
 
-<!-- charts/templates/chart.html -->
+  {% if non_exist %}
+    <div class="panel" style="margin-bottom:24px">
+      <div class="body" style="text-align:center;padding:28px 20px;color:var(--text-2)">
+        No existen registros del mes <strong>{{ month }} {{ year }}</strong>. Usá las flechas para navegar a otro período.
+      </div>
+    </div>
+  {% endif %}
 
-<script>
-// This script initializes the charts with embedded data
+  <!-- 4 KPIs comparativos (§7.1) — datos del mes seleccionado -->
+  {% if kpis %}
+  <div class="section-label">Del mes · {{ month }} {{ year }}</div>
+  <div class="kpis">
+    <div class="kpi">
+      <div class="top">
+        <span class="name">Ingresos</span>
+        <div class="icon" style="background:var(--green-soft);color:var(--green)">↑</div>
+      </div>
+      <div class="value">{% if kpis.ingresos.no_desglose %}—{% else %}${{ kpis.ingresos.value_fmt }}{% endif %}</div>
+      {% include 'accounting/_kpi_trend.html' with k=kpis.ingresos prev=kpis.prev_month_label %}
+    </div>
+
+    <div class="kpi">
+      <div class="top">
+        <span class="name">Gastos</span>
+        <div class="icon" style="background:var(--red-soft);color:var(--red)">↓</div>
+      </div>
+      <div class="value">{% if kpis.gastos.no_desglose %}—{% else %}${{ kpis.gastos.value_fmt }}{% endif %}</div>
+      {% include 'accounting/_kpi_trend.html' with k=kpis.gastos prev=kpis.prev_month_label %}
+    </div>
+
+    <div class="kpi">
+      <div class="top">
+        <span class="name">Neto</span>
+        <div class="icon" style="background:var(--primary-soft);color:var(--primary)">≡</div>
+      </div>
+      <div class="value">${{ kpis.neto.value_fmt }}</div>
+      {% include 'accounting/_kpi_trend.html' with k=kpis.neto prev=kpis.prev_month_label %}
+    </div>
+
+    <div class="kpi">
+      <div class="top">
+        <span class="name">Proyectos facturados</span>
+        <div class="icon" style="background:var(--violet-soft);color:var(--violet)">▤</div>
+      </div>
+      <div class="value">{{ kpis.facturados.value_fmt }}</div>
+      {% if kpis.facturados.has_prev %}
+        <span class="trend {% if kpis.facturados.good %}t-up{% else %}t-down{% endif %}">{% if kpis.facturados.up %}▲{% else %}▼{% endif %} {{ kpis.facturados.delta_str }} vs {{ kpis.prev_month_label }}</span>
+      {% else %}
+        <span class="trend t-flat">— sin cambios</span>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Gráfico anual + doughnut por tipo (§7.6) — datos del año completo -->
+  <div class="section-label">Del año {{ year }}</div>
+  <div class="grid2">
+    <div class="panel">
+      <div class="body">
+        <h2 style="font-size:.92rem;margin-bottom:3px">Evolución anual — Ingresos vs Gastos</h2>
+        <div style="font-size:.74rem;color:var(--text-3);margin-bottom:12px">La línea verde muestra el neto acumulado.</div>
+        <canvas id="chartAnual" height="135"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="body">
+        <h2 style="font-size:.92rem;margin-bottom:3px">Ganancias por tipo de trabajo</h2>
+        <div style="font-size:.74rem;color:var(--text-3);margin-bottom:12px">Click en la leyenda para filtrar categorías.</div>
+        <canvas id="chartTipo" height="135"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top 5 clientes + Detalle mensual (§7.6) -->
+  <div class="grid2">
+    <div class="panel">
+      <div class="head"><h2>Top 5 clientes — {{ year }}</h2><a href="{% url 'clients' %}">Ver todos →</a></div>
+      <table>
+        <thead><tr><th>#</th><th>Cliente</th><th>Proyectos</th><th>Facturado</th><th></th></tr></thead>
+        <tbody>
+          {% for c in top_clients %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>{{ c.name }}</td>
+              <td><span class="badge b-blue">{{ c.projects_count }}</span></td>
+              <td class="pos">${{ c.total_fmt }}</td>
+              <td><div class="bar-cell"><span class="bar"><i style="width:{{ c.pct }}%"></i></span></div></td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" style="color:var(--text-3)">Sin facturación registrada este año.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <div class="head"><h2>Detalle mensual — Neto anual <span class="pos">${{ neto_anual }}</span></h2></div>
+      <table>
+        <thead><tr><th>Mes</th><th>Proy.</th><th class="hide-m">Neto</th><th></th></tr></thead>
+        <tbody>
+          {% for m in monthly_totals %}
+            <tr>
+              <td>{{ m.month }}</td>
+              <td>{{ m.project_count }}</td>
+              <td class="hide-m {% if m.net_raw < 0 %}neg{% else %}pos{% endif %}">${{ m.total_networth }}</td>
+              <td><div class="bar-cell"><span class="bar"><i data-net="{{ m.net_raw }}" style="width:0%"></i></span></div></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  {{ chart_anual|json_script:"chart-anual" }}
+  {{ chart_tipo|json_script:"chart-tipo" }}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Chart references
-        let chart1, chart2;
-          function initializeCharts() {
-            try {
-                // Get the chart data from the embedded script tag
-                // Django's json_script creates a script tag with the specified ID
-                const chartData = JSON.parse(document.getElementById('chart-data').textContent);
-                
-                if (chartData && chartData.labels1 && chartData.values1 && chartData.labels2 && chartData.values2) {
-                    // Create charts with the embedded data
-                    createCharts(chartData);
-                } else {
-                    console.error('Incomplete embedded chart data:', chartData);
-                }
-            } catch (error) {
-                console.error('Error parsing embedded chart data:', error);
-                try {
-                    // Try getting chart data from the data-chart attribute as a fallback
-                    const chartDataContainer = document.getElementById('chart-data');
-                    if (chartDataContainer) {
-                        // No need to JSON.parse here as json_script already provides the script element
-                    }
-                } catch (fallbackError) {
-                    console.error('Error in fallback chart data retrieval:', fallbackError);
-                }
-            }
-        }
-        
-        function createCharts(data) {
-            // Circle chart (doughnut or pie)
-            const ctx = document.getElementById('myChart').getContext('2d');
-            
-            if (chart1) {
-                chart1.destroy(); // Destroy existing chart if it exists
-            }
-            
-            chart1 = new Chart(ctx, {
-                type: 'pie', // or 'doughnut'
-                data: {
-                    labels: data.labels2,
-                    datasets: [{
-                        label: data.label2,
-                        data: data.values2,
-                        backgroundColor: ['#2997D6', '#CB372B', '#2FCA06', '#F2C94C', '#9B51E0'],
-                        hoverOffset: 4
-                    }]
-                },
-                
-            });
-            
-            const ctxx = document.getElementById('myChart2').getContext('2d');
-            
-            if (chart2) {
-                chart2.destroy(); // Destroy existing chart if it exists
-            }
-            
-            // Bar Chart
+      if (typeof Chart === 'undefined') return
+      Chart.defaults.font.family = "'Inter',sans-serif"
+      Chart.defaults.color = '#5b6577'
+      const fmt = (v) => '$' + Number(v || 0).toLocaleString('es-AR')
 
-            chart2 = new Chart(ctxx, {
-                
-                type: 'bar',
-                data: {
-                    labels: data.labels1,
-                    datasets: [{
-                        label: '',
-                        data: data.values1,
-                        backgroundColor: '#6366F1',  // Rose
-                        hoverOffset: 4,
-                        hoverBackgroundColor: '#818CF8',
-                        hoverBorderColor: '#6366F1',
-                        hoverBorderWidth: 3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: false,
-                        },
-                        title: {
-                            display: false,
-                            text: data.label1
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false,                   // Hide vertical grid lines
-                                color: '#E5E7EB'                  // Grid line color
-                            },
-                            ticks: {
-                                maxRotation: 0,                   // Set text to horizontal
-                                minRotation: 0                    // Ensure text stays horizontal
-                            }
-                         }
-                    }
-                }
-                
-            });
-        }
-        
-        // Initialize charts when page loads
-        initializeCharts();
-        
-        // Handle submit button click - validate that date is not empty
-        document.getElementById('submit-date').addEventListener('click', (event) => {
-            const dateInput = document.getElementById('date-input');
-            if (dateInput.value === "") {
-                event.preventDefault();
-            }
-        });
-    });
-</script>
+      // --- Barras proporcionales del detalle mensual ---
+      const nets = Array.from(document.querySelectorAll('.bar i[data-net]'))
+      const maxNet = nets.reduce((m, el) => Math.max(m, Math.abs(parseFloat(el.dataset.net) || 0)), 0) || 1
+      nets.forEach((el) => {
+        const pct = Math.abs(parseFloat(el.dataset.net) || 0) / maxNet * 100
+        el.style.width = pct.toFixed(1) + '%'
+      })
+
+      // --- Gráfico anual (barras + línea neto acumulado) ---
+      const anual = JSON.parse(document.getElementById('chart-anual').textContent)
+      const datasets = []
+      if (anual.mode === 'tipo') {
+        datasets.push({
+          type: 'bar', label: 'Neto ' + (anual.tipo_label || ''), data: anual.ingresos,
+          backgroundColor: '#2d72ba', borderRadius: 6, maxBarThickness: 24,
+        })
+      } else {
+        datasets.push({
+          type: 'bar', label: 'Ingresos', data: anual.ingresos,
+          backgroundColor: '#2d72ba', borderRadius: 6, maxBarThickness: 24,
+        })
+        datasets.push({
+          type: 'bar', label: 'Gastos', data: anual.gastos,
+          backgroundColor: '#fda4af', borderRadius: 6, maxBarThickness: 24,
+        })
+      }
+      datasets.push({
+        type: 'line', label: 'Neto acumulado', data: anual.neto_acum,
+        borderColor: '#10b981', backgroundColor: '#10b981', tension: 0.35, pointRadius: 3,
+      })
+      new Chart(document.getElementById('chartAnual'), {
+        data: { labels: anual.labels, datasets: datasets },
+        options: {
+          responsive: true,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } },
+            tooltip: { callbacks: { label: (c) => ' ' + c.dataset.label + ': ' + fmt(c.parsed.y) } },
+          },
+          scales: {
+            x: { grid: { display: false } },
+            y: { grid: { color: '#eef1f6' }, ticks: { callback: (v) => '$' + (v / 1e6) + 'M' } },
+          },
+        },
+      })
+
+      // --- Doughnut por tipo de trabajo ---
+      const tipo = JSON.parse(document.getElementById('chart-tipo').textContent || 'null')
+      if (tipo && tipo.values && tipo.values.some((v) => v)) {
+        new Chart(document.getElementById('chartTipo'), {
+          type: 'doughnut',
+          data: {
+            labels: tipo.labels,
+            datasets: [{
+              data: tipo.values,
+              backgroundColor: ['#2d72ba', '#3498db', '#10b981', '#f59e0b', '#94a3b8'],
+              borderWidth: 3, borderColor: '#fff', hoverOffset: 10,
+            }],
+          },
+          options: {
+            cutout: '62%',
+            plugins: {
+              legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, padding: 12 } },
+              tooltip: { callbacks: { label: (c) => ' ' + c.label + ': ' + fmt(c.parsed) } },
+            },
+          },
+        })
+      } else {
+        const cv = document.getElementById('chartTipo')
+        if (cv) cv.outerHTML = '<div style="text-align:center;color:var(--text-3);font-size:.8rem;padding:36px 0">Sin datos por tipo este año.</div>'
+      }
+    })
+  </script>
 {% endblock %}

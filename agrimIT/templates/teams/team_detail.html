@@ -1,175 +1,123 @@
 {% extends 'base/base_template.html' %}
 {% load static %}
 
-{% block extra_css %}
-  <link rel="stylesheet" href="{% static 'css/teams.css' %}" />
+{% block topbar %}
+  <div>
+    <h1>⬡ {{ team.name }}</h1>
+    <div class="sub">
+      {% if is_owner %}Administrás este grupo{% else %}Sos miembro de este grupo{% endif %}
+    </div>
+  </div>
+  {% if is_owner %}
+    <div class="actions">
+      <a href="{% url 'team_edit' team.pk %}" class="btn btn-ghost btn-sm">Editar</a>
+      <a href="{% url 'team_delete' team.pk %}" class="btn btn-red btn-sm">Eliminar</a>
+    </div>
+  {% endif %}
 {% endblock %}
 
 {% block content %}
-  <div class="container">
-    <div class="fila">
-      <div class="team-detail-header">
-        <div class="team-title-section">
-          <h1>{{ team.name }}</h1>
-          {% if is_owner %}
-            <span class="team-badge owner-badge">Propietario</span>
-          {% else %}
-            <span class="team-badge member-badge">Miembro</span>
-          {% endif %}
-        </div>
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
 
-        {% if is_owner %}
-          <div class="team-header-actions">
-            <a href="{% url 'team_edit' team.pk %}" class="btn btn-edit">✏️ Editar</a>
-            <a href="{% url 'team_delete' team.pk %}" class="btn btn-danger">🗑️ Eliminar</a>
-          </div>
-        {% endif %}
-      </div>
-
-      {% if messages %}
-        <div class="messages-container">
-          {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-          {% endfor %}
-        </div>
-      {% endif %}
-
+  <div class="panel" style="margin-bottom:16px">
+    <div class="body">
       {% if team.description %}
-        <div class="team-description-box">
-          <h3>Descripción</h3>
-          <p>{{ team.description }}</p>
-        </div>
+        <p style="font-size:.88rem;color:var(--text-2);margin-bottom:12px">{{ team.description }}</p>
       {% endif %}
-
-      <!-- Información del Propietario -->
-      <div class="owner-info-box">
-        <h3>👤 Administrador del Grupo</h3>
-        <p>
-          <strong>{{ team.owner.get_full_name|default:team.owner.username }}</strong>
-        </p>
-        <p class="text-muted">Creado el {{ team.created|date:'d/m/Y' }}</p>
-      </div>
-
-      <!-- Miembros del Equipo -->
-      <div class="members-section">
-        <div class="section-header">
-          <h2>👥 Miembros del Grupo ({{ members.count }})</h2>
-          {% if is_owner and add_member_form %}
-            <button type="button" class="btn btn-primary" onclick="toggleAddMemberForm()">➕ Agregar Miembro</button>
-          {% endif %}
-        </div>
-
-        {% if is_owner and add_member_form %}
-          <div id="add-member-form" class="add-member-form" style="display: none;">
-            <form method="post" action="{% url 'team_add_member' team.pk %}">
-              {% csrf_token %}
-              <div class="form-inline-group">
-                <div class="form-field">
-                  <label for="{{ add_member_form.username.id_for_label }}">{{ add_member_form.username.label }}</label>
-                  {{ add_member_form.username }}
-                </div>
-                <div class="form-field">
-                  <label for="{{ add_member_form.role.id_for_label }}">{{ add_member_form.role.label }}</label>
-                  {{ add_member_form.role }}
-                </div>
-                <div class="form-actions-inline">
-                  <button type="submit" class="btn btn-success">Agregar</button>
-                  <button type="button" class="btn btn-secondary" onclick="toggleAddMemberForm()">Cancelar</button>
-                </div>
-              </div>
-            </form>
-          </div>
-        {% endif %}
-
-        {% if members %}
-          <div class="members-list">
-            {% for membership in members %}
-              <div class="member-card">
-                <div class="member-info">
-                  <div class="member-avatar">{{ membership.user.username|slice:':1'|upper }}</div>
-                  <div class="member-details">
-                    <h4>{{ membership.user.get_full_name|default:membership.user.username }}</h4>
-                    <p class="member-username">@{{ membership.user.username }}</p>
-                    <span class="role-badge role-{{ membership.role }}">{{ membership.get_role_display }}</span>
-                  </div>
-                </div>
-                <div class="member-meta">
-                  <p class="join-date">Desde {{ membership.joined_at|date:'d/m/Y' }}</p>
-                  {% if is_owner %}
-                    <form method="post" action="{% url 'team_remove_member' team.pk membership.pk %}" style="display: inline;">
-                      {% csrf_token %}
-                      <button type="submit" class="btn btn-remove" onclick="return confirm('¿Eliminar a {{ membership.user.username }} del grupo?')">✕ Remover</button>
-                    </form>
-                  {% endif %}
-                </div>
-              </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="empty-state">
-            <p>Este grupo no tiene miembros aún.</p>
-            {% if is_owner %}
-              <p class="hint">Usa el botón "Agregar Miembro" para comenzar.</p>
-            {% endif %}
-          </div>
-        {% endif %}
-      </div>
-
-      <!-- Proyectos Compartidos -->
-      <div class="shared-projects-section">
-        <div class="section-header">
-          <h2>📁 Proyectos Compartidos ({{ shared_projects.count }})</h2>
-        </div>
-
-        {% if shared_projects %}
-          <div class="projects-list">
-            {% for share in shared_projects %}
-              <div class="project-share-card">
-                <div class="project-share-info">
-                  <h4><a href="{% url 'projectview' share.project.pk %}">{{ share.project.type }} - {{ share.project.titular_name }}</a></h4>
-                  <div class="project-meta">
-                    <span class="meta-item"><strong>Cliente:</strong> {{ share.project.client.name }}</span>
-                    {% if share.project.partida %}
-                      <span class="meta-item"><strong>Partida:</strong> {{ share.project.partida }}</span>
-                    {% endif %}
-                    <span class="meta-item"><strong>Compartido por:</strong> {{ share.shared_by.username }}</span>
-                    <span class="meta-item text-muted">{{ share.shared_at|date:'d/m/Y H:i' }}</span>
-                  </div>
-                  {% if share.notes %}
-                    <p class="share-notes">📝 {{ share.notes }}</p>
-                  {% endif %}
-                </div>
-                {% if share.shared_by == user %}
-                  <div class="project-share-actions">
-                    <form method="post" action="{% url 'project_unshare' share.project.pk share.pk %}">
-                      {% csrf_token %}
-                      <button type="submit" class="btn btn-remove-small" onclick="return confirm('¿Dejar de compartir este proyecto?')">✕ Dejar de Compartir</button>
-                    </form>
-                  </div>
-                {% endif %}
-              </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="empty-state">
-            <p>No hay proyectos compartidos con este grupo aún.</p>
-            {% if is_owner %}
-              <p class="hint">Ve a cualquier proyecto y compártelo con este grupo.</p>
-            {% endif %}
-          </div>
-        {% endif %}
-      </div>
-
-      <div class="back-link">
-        <a href="{% url 'team_list' %}" class="btn btn-secondary">← Volver a Mis Grupos</a>
-      </div>
+      <div class="kv"><span class="k">Administrador</span><span class="v">{{ team.owner.get_full_name|default:team.owner.username }}</span></div>
+      <div class="kv"><span class="k">Creado</span><span class="v">{{ team.created|date:'d/m/Y' }}</span></div>
     </div>
   </div>
 
-  <script>
-    function toggleAddMemberForm() {
-      const form = document.getElementById('add-member-form')
-      form.style.display = form.style.display === 'none' ? 'block' : 'none'
-    }
-  </script>
+  <!-- Miembros -->
+  <div class="panel" style="margin-bottom:16px">
+    <div class="head">
+      <h2>Miembros del grupo ({{ members.count }})</h2>
+      {% if is_owner and add_member_form %}
+        <a class="head-action" onclick="toggleModForm('add-member-form')">+ Agregar miembro</a>
+      {% endif %}
+    </div>
+    <div class="body">
+      {% if is_owner and add_member_form %}
+        <form id="add-member-form" method="post" action="{% url 'team_add_member' team.pk %}" style="display:none;margin-bottom:18px">
+          {% csrf_token %}
+          <div class="fgrid">
+            <div>
+              <label class="fl" for="{{ add_member_form.username.id_for_label }}">{{ add_member_form.username.label }}</label>
+              {{ add_member_form.username }}
+            </div>
+            <div>
+              <label class="fl" for="{{ add_member_form.role.id_for_label }}">{{ add_member_form.role.label }}</label>
+              {{ add_member_form.role }}
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button type="submit" class="btn btn-primary btn-sm">Agregar</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="toggleModForm('add-member-form')">Cancelar</button>
+          </div>
+        </form>
+      {% endif %}
+
+      {% for membership in members %}
+        <div class="member-row">
+          <span class="avatar">{{ membership.user.username|slice:':2'|upper }}</span>
+          <div class="member-name">
+            <strong>{{ membership.user.get_full_name|default:membership.user.username }}</strong>
+            <div style="font-size:.74rem;color:var(--text-3)">@{{ membership.user.username }} · desde {{ membership.joined_at|date:'d/m/Y' }}</div>
+          </div>
+          <span class="badge {% if membership.role == 'member' %}b-violet{% else %}b-blue{% endif %}">{{ membership.get_role_display }}</span>
+          {% if is_owner %}
+            <form method="post" action="{% url 'team_remove_member' team.pk membership.pk %}" style="margin-left:8px">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-red btn-sm" onclick="return confirm('¿Eliminar a {{ membership.user.username }} del grupo?')">Remover</button>
+            </form>
+          {% endif %}
+        </div>
+      {% empty %}
+        <div class="empty">Este grupo no tiene miembros aún.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Proyectos compartidos -->
+  <div class="panel">
+    <div class="head"><h2>Proyectos compartidos ({{ shared_projects.count }})</h2></div>
+    <table>
+      <thead>
+        <tr>
+          <th>Proyecto</th>
+          <th>Cliente</th>
+          <th class="hide-m">Compartido por</th>
+          <th class="hide-m">Fecha</th>
+          {% if is_owner %}<th></th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for share in shared_projects %}
+          <tr>
+            <td><a href="{% url 'projectview' share.project.pk %}">{{ share.project.type }} #{{ share.project.pk }}</a></td>
+            <td>{{ share.project.client.name|default:'—' }}</td>
+            <td class="hide-m">{{ share.shared_by.username }}</td>
+            <td class="hide-m">{{ share.shared_at|date:'d/m/Y' }}</td>
+            {% if is_owner %}
+              <td>
+                {% if share.shared_by == user %}
+                  <form method="post" action="{% url 'project_unshare' share.project.pk share.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-red btn-sm" onclick="return confirm('¿Dejar de compartir este proyecto?')">Dejar de compartir</button>
+                  </form>
+                {% endif %}
+              </td>
+            {% endif %}
+          </tr>
+        {% empty %}
+          <tr><td colspan="{% if is_owner %}5{% else %}4{% endif %}" style="color:var(--text-3);font-weight:500">No hay proyectos compartidos con este grupo aún.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% endblock %}

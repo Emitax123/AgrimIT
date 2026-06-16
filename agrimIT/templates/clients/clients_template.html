@@ -1,57 +1,82 @@
 {% extends 'base/base_template.html' %}
 {% load static %}
-{% block form %}
-  <link rel="stylesheet" href="{% static 'css/clients.css' %}" />
-  <div class="create-client-cont">
-    <a href="{% url 'clientcreate' %}" class="toggle-btn">Crear cliente</a>
-  </div>
+{% load formatting %}
 
-  <div class="client-list-cont">
-    {% for client in clients %}
-      <div class="client-container">
-        <div>
-          <span>{{ client.name }}</span>
-          <small style="color: #888; margin-left: 6px;">ID: {{ client.id }}</small>
-        </div>
-
-        <div class="client-buttons">
-          <div>
-            <a href="{% url 'projectslist' pk=client.pk %}" class="toggle-btn active">Ver proyectos</a>
-          </div>
-          <div>
-            <a href="{% url 'clientprojectcreate' pk=client.pk %}" class="toggle-btn active">Crear proyecto</a>
-          </div>
-          <div>
-            <a href="{% url 'deleteclient' pk=client.pk %}" class="toggle-btn red">Eliminar cliente</a>
-          </div>
-        </div>
-      </div>
-    {% endfor %}
+{% block topbar %}
+  <div>
+    <h1>Clientes</h1>
+    <div class="sub">{{ clients|length }} registrados</div>
   </div>
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      // Find all delete buttons
-      const deleteButtons = document.querySelectorAll('a.red')
-    
-      // Add click event listener to each delete button
-      deleteButtons.forEach(function (button) {
-        button.addEventListener('click', function (event) {
-          // Prevent default action (navigation)
-          event.preventDefault()
-    
-          // Get the client name from the parent container
-          const clientContainer = this.closest('.client-container')
-          const clientName = clientContainer.querySelector('span').textContent
-    
-          // Show confirmation dialog
-          const confirmed = confirm(`¿Está seguro que desea eliminar al cliente "${clientName}"? Esta accion borra todos los proyectos asociados al cliente.`)
-    
-          // If confirmed, navigate to the delete URL
-          if (confirmed) {
-            window.location.href = this.getAttribute('href')
-          }
-        })
-      })
-    })
-  </script>
+  <div class="search ml-auto">
+    <span>🔍</span>
+    <input id="client-filter" type="text" autocomplete="off" placeholder="Buscar cliente…">
+  </div>
+  <a href="{% url 'clientcreate' %}" class="btn btn-primary">+ Crear cliente</a>
+{% endblock %}
+
+{% block content %}
+  {% if clients %}
+  <div class="panel">
+    <table id="clients-table">
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th class="hide-m">Teléfono</th>
+          <th>Proyectos</th>
+          <th class="hide-m">Facturado {{ current_year }}</th>
+          <th style="text-align:right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for client in clients %}
+          <tr data-name="{{ client.name|lower }}">
+            <td>{{ client.name }}{% if client.flag %} <span class="badge b-violet">fijo</span>{% endif %}</td>
+            <td class="hide-m">{{ client.phone|default:"—" }}</td>
+            <td><span class="badge b-blue">{{ client.projects_count }}</span></td>
+            <td class="hide-m">${{ client.facturado_year|pesos }}</td>
+            <td style="text-align:right;white-space:nowrap">
+              <a href="{% url 'projectslist' pk=client.pk %}" class="btn btn-ghost btn-sm">Ver proyectos</a>
+              <a href="{% url 'clientprojectcreate' pk=client.pk %}" class="btn btn-ghost btn-sm">+ Proyecto</a>
+              <a href="{% url 'deleteclient' pk=client.pk %}" class="btn btn-red btn-sm js-del-client">Eliminar</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="panel">
+    <div class="body" style="text-align:center;padding:48px 20px;color:var(--text-3)">
+      <div style="font-size:2rem;margin-bottom:8px">◉</div>
+      <div style="font-weight:600;color:var(--text-2)">Aún no hay clientes.</div>
+      <a href="{% url 'clientcreate' %}" class="btn btn-primary" style="margin-top:16px;display:inline-block">+ Crear el primero</a>
+    </div>
+  </div>
+  {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Filtro local de filas
+  (function () {
+    var input = document.getElementById('client-filter');
+    if (!input) return;
+    input.addEventListener('input', function () {
+      var q = input.value.trim().toLowerCase();
+      document.querySelectorAll('#clients-table tbody tr').forEach(function (tr) {
+        tr.style.display = tr.getAttribute('data-name').indexOf(q) !== -1 ? '' : 'none';
+      });
+    });
+  })();
+  // Confirmación de borrado (mantiene confirm nativo en destructivas)
+  document.querySelectorAll('a.js-del-client').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      var name = a.closest('tr').querySelector('td').textContent.trim();
+      if (confirm('¿Eliminar al cliente "' + name + '"? Esta acción borra todos los proyectos asociados.')) {
+        window.location.href = a.getAttribute('href');
+      }
+    });
+  });
+</script>
 {% endblock %}

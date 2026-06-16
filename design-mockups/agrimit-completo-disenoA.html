@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgrimIT — Muestra completa · Diseño A</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6fa; --surface:#ffffff; --border:#e6e9f0;
+  --text:#1a2233; --text-2:#5b6577; --text-3:#9aa3b5;
+  --primary:#2d72ba; --primary-dark:#235c96; --primary-soft:#eaf2fa;
+  --sb-bg:#2d72ba; --sb-bg2:#1d4f85;
+  --green:#10b981; --green-soft:#ecfdf5;
+  --red:#ef4444; --red-soft:#fef2f2;
+  --amber:#f59e0b; --amber-soft:#fffbeb;
+  --violet:#8b5cf6; --violet-soft:#f5f3ff;
+  --radius:14px; --shadow:0 1px 3px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
+  --shadow-lg:0 12px 24px -8px rgba(16,24,40,.12);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+a{text-decoration:none;color:inherit}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit}
+
+/* ============ SIDEBAR (azul AgrimIT) ============ */
+.layout{display:flex;min-height:100vh}
+.sidebar{width:240px;background:linear-gradient(180deg,var(--sb-bg),var(--sb-bg2));
+  display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:50;transition:transform .25s ease}
+.sidebar .brand{display:flex;align-items:center;gap:11px;padding:20px 18px 16px;font-weight:800;
+  font-size:1.18rem;color:#fff;letter-spacing:-.01em}
+.brand .mark{width:40px;height:40px;border-radius:10px;background:#fff;display:grid;place-items:center;flex-shrink:0;
+  box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.brand .mark img{width:26px;height:auto;display:block}
+.snav{flex:1;padding:8px 12px;overflow-y:auto}
+.snav .label{font-size:.66rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.55);padding:14px 10px 6px}
+.snav a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;color:rgba(255,255,255,.82);
+  font-size:.9rem;font-weight:500;margin-bottom:2px;transition:all .15s;cursor:pointer}
+.snav a:hover{background:rgba(255,255,255,.12);color:#fff}
+.snav a.active{background:#fff;color:var(--primary);font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.snav a .ico{width:20px;text-align:center;font-size:1rem}
+.snav a .count{margin-left:auto;background:rgba(255,255,255,.18);border-radius:99px;padding:1px 8px;font-size:.72rem;color:#fff}
+.snav a.active .count{background:var(--primary-soft);color:var(--primary)}
+.sidebar .foot{padding:14px 20px;border-top:1px solid rgba(255,255,255,.16);display:flex;align-items:center;gap:10px;
+  font-size:.85rem;color:#fff}
+.sidebar .foot .sub-line{font-size:.72rem;color:rgba(255,255,255,.6)}
+.sidebar .foot .sub-line .link-out{color:#cfe3f7;cursor:pointer}
+.avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#3498db,#1d4f85);color:#fff;
+  display:grid;place-items:center;font-weight:700;font-size:.8rem;flex-shrink:0}
+
+/* ============ MAIN ============ */
+.main{flex:1;margin-left:240px;padding:24px clamp(16px,3vw,40px);max-width:1500px}
+.topbar{display:flex;align-items:center;gap:14px;margin-bottom:24px;flex-wrap:wrap}
+.topbar h1{font-size:1.4rem;font-weight:700}
+.topbar .sub{color:var(--text-2);font-size:.85rem;margin-top:2px}
+.search{display:flex;align-items:center;gap:8px;background:var(--surface);
+  border:1px solid var(--border);border-radius:10px;padding:8px 14px;min-width:240px;box-shadow:var(--shadow)}
+.search input{border:none;outline:none;background:none;font-size:.875rem;flex:1;color:var(--text)}
+.btn{border:none;border-radius:10px;padding:9px 16px;font-size:.85rem;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:7px}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark);box-shadow:var(--shadow-lg)}
+.btn-ghost{background:var(--surface);border:1px solid var(--border);color:var(--text-2)}
+.btn-ghost:hover{color:var(--text);border-color:var(--text-3)}
+.btn-green{background:var(--green);color:#fff}
+.btn-green:hover{background:#059669}
+.btn-red{background:var(--red-soft);color:var(--red)}
+.btn-red:hover{background:#fee2e2}
+.btn-sm{padding:6px 12px;font-size:.78rem;border-radius:8px}
+.hamb{display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:1.1rem}
+.ml-auto{margin-left:auto}
+
+/* ============ KPI ============ */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:16px;margin-bottom:24px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;
+  box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden}
+.kpi:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.kpi .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.kpi .name{font-size:.8rem;font-weight:600;color:var(--text-2)}
+.kpi .icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:1.05rem}
+.kpi .value{font-size:1.6rem;font-weight:800;letter-spacing:-.02em}
+.trend{display:inline-flex;align-items:center;gap:4px;font-size:.74rem;font-weight:600;border-radius:99px;padding:2px 9px;margin-top:8px}
+.t-up{background:var(--green-soft);color:var(--green)}
+.t-down{background:var(--red-soft);color:var(--red)}
+.t-flat{background:var(--bg);color:var(--text-2)}
+
+/* ============ PANELS / TABLES ============ */
+.grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:24px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.panel .head{display:flex;align-items:center;justify-content:space-between;padding:15px 20px;border-bottom:1px solid var(--border);gap:10px;flex-wrap:wrap}
+.panel .head h2{font-size:.95rem;font-weight:700}
+.panel .head a{font-size:.8rem;color:var(--primary);font-weight:600;cursor:pointer}
+.panel .body{padding:18px 20px}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{text-align:left;padding:10px 18px;color:var(--text-3);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;font-weight:600;border-bottom:1px solid var(--border)}
+td{padding:11px 18px;border-bottom:1px solid var(--border);color:var(--text-2)}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:background .12s}
+tbody tr.click{cursor:pointer}
+tbody tr.click:hover{background:var(--primary-soft)}
+td:first-child{font-weight:600;color:var(--text)}
+.badge{display:inline-block;border-radius:99px;padding:3px 10px;font-size:.71rem;font-weight:600;white-space:nowrap}
+.b-green{background:var(--green-soft);color:#047857}
+.b-gray{background:var(--bg);color:var(--text-2)}
+.b-amber{background:var(--amber-soft);color:#b45309}
+.b-blue{background:var(--primary-soft);color:var(--primary)}
+.b-red{background:var(--red-soft);color:var(--red)}
+.b-violet{background:var(--violet-soft);color:var(--violet)}
+.bar-cell{display:flex;align-items:center;gap:10px}
+.bar{height:7px;border-radius:99px;background:var(--primary-soft);flex:1;max-width:130px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#2d72ba,#3498db);border-radius:99px}
+.pos{color:var(--green);font-weight:700}
+.neg{color:var(--red);font-weight:600}
+
+/* ============ TOOLBAR / FILTROS ============ */
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:3px;box-shadow:var(--shadow);flex-wrap:wrap}
+.seg button{border:none;background:none;padding:7px 14px;border-radius:8px;font-size:.81rem;font-weight:600;color:var(--text-2)}
+.seg button.on{background:var(--primary);color:#fff}
+.month-pick{display:flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:4px 6px;box-shadow:var(--shadow)}
+.month-pick button{border:none;background:none;font-size:1rem;color:var(--text-2);padding:4px 9px;border-radius:6px}
+.month-pick button:hover{background:var(--bg)}
+.month-pick .cur{font-weight:700;font-size:.86rem;min-width:125px;text-align:center}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chips button{border:1px solid var(--border);background:var(--surface);border-radius:99px;
+  padding:5px 13px;font-size:.78rem;font-weight:600;color:var(--text-2);transition:all .15s}
+.chips button.on{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
+input.std,select.std,textarea.std{width:100%;border:1px solid var(--border);border-radius:10px;padding:10px 13px;
+  font-size:.87rem;color:var(--text);background:var(--surface);outline:none;transition:border .15s}
+input.std:focus,select.std:focus,textarea.std:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+label.fl{display:block;font-size:.76rem;font-weight:600;color:var(--text-2);margin:0 0 5px 2px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+
+/* ============ PROYECTOS GRID ============ */
+.proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:14px}
+.pcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;
+  box-shadow:var(--shadow);cursor:pointer;transition:all .15s;position:relative}
+.pcard:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:#c7d4f0}
+.pcard .tt{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.pcard .type{font-weight:700;font-size:.95rem}
+.pcard .meta{font-size:.8rem;color:var(--text-2);line-height:1.65}
+.pcard .meta b{color:var(--text);font-weight:600}
+.pcard .foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;
+  padding-top:10px;border-top:1px solid var(--border);font-size:.74rem;color:var(--text-3)}
+.pagination{display:flex;gap:6px;justify-content:center;margin-top:20px}
+.pagination button{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);
+  background:var(--surface);font-weight:600;color:var(--text-2);font-size:.83rem}
+.pagination button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* ============ DETALLE PROYECTO ============ */
+.detail-head{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.detail-head .back{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  width:38px;height:38px;display:grid;place-items:center;font-size:1.05rem;color:var(--text-2)}
+.detail-head h1{font-size:1.35rem;font-weight:800}
+.detail-head .tags{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;align-items:center}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.dgrid{display:grid;grid-template-columns:1.05fr 1.6fr;gap:16px;align-items:start}
+.dcol{display:flex;flex-direction:column;gap:16px}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed var(--border);font-size:.85rem}
+.kv:last-child{border:none}
+.kv .k{color:var(--text-3);font-weight:500}
+.kv .v{font-weight:600;text-align:right}
+.nomen{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:9px}
+.nomen .cell{background:var(--bg);border-radius:9px;padding:8px 10px}
+.nomen .cell .k{font-size:.65rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);font-weight:600}
+.nomen .cell .v{font-size:.86rem;font-weight:700;margin-top:2px}
+.fin-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:.86rem}
+.fin-row:last-child{border:none}
+.fin-row .amt{font-weight:700}
+.fin-row .edit{font-size:.72rem;color:var(--primary);cursor:pointer;font-weight:600;margin-left:10px}
+.saldo-box{background:linear-gradient(135deg,#eff4ff,#f5f3ff);border-radius:11px;padding:14px 16px;
+  display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.saldo-box .amt{font-size:1.25rem;font-weight:800;color:var(--primary)}
+.movs li{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:.83rem;list-style:none}
+.movs li:last-child{border:none}
+.movs .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;font-size:.8rem}
+.movs .amt{margin-left:auto;font-weight:700}
+
+/* ============ HISTORIAL ============ */
+.tl{position:relative;padding-left:26px}
+.tl::before{content:'';position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:var(--border)}
+.tl-item{position:relative;padding:0 0 18px}
+.tl-item::before{content:'';position:absolute;left:-23px;top:5px;width:11px;height:11px;border-radius:50%;
+  background:var(--surface);border:3px solid var(--primary)}
+.tl-item.gr::before{border-color:var(--green)}
+.tl-item.am::before{border-color:var(--amber)}
+.tl-item .when{font-size:.72rem;color:var(--text-3);font-weight:600}
+.tl-item .what{font-size:.87rem;margin-top:2px}
+.tl-month{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--text-3);margin:6px 0 14px}
+
+/* ============ AGING / COBRANZAS ============ */
+.aging{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.age-box{border-radius:12px;padding:14px;border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow)}
+.age-box .lbl{font-size:.72rem;font-weight:600;color:var(--text-2)}
+.age-box .amt{font-size:1.15rem;font-weight:800;margin-top:5px}
+.age-box .n{font-size:.7rem;color:var(--text-3);margin-top:3px}
+.age-ok{border-top:3px solid var(--green)}
+.age-warn{border-top:3px solid var(--amber)}
+.age-bad{border-top:3px solid #f97316}
+.age-crit{border-top:3px solid var(--red)}
+
+/* ============ MODAL FACTURA ============ */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:90;
+  align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 14px}
+.modal-bg.open{display:flex}
+.invoice{background:#fff;border-radius:16px;max-width:760px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.3);overflow:hidden}
+.inv-tools{display:flex;gap:10px;justify-content:flex-end;padding:14px 22px;background:var(--bg);border-bottom:1px solid var(--border)}
+.inv-page{padding:38px 44px}
+.inv-head{display:flex;justify-content:space-between;gap:20px;border-bottom:3px solid var(--primary);padding-bottom:18px}
+.inv-head .studio{font-size:1.3rem;font-weight:800}
+.inv-head .studio small{display:block;font-size:.78rem;color:var(--text-2);font-weight:500;margin-top:4px;line-height:1.5}
+.inv-num{text-align:right}
+.inv-num .doc{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--primary);
+  background:var(--primary-soft);padding:4px 12px;border-radius:99px}
+.inv-num .nro{font-size:1.05rem;font-weight:800;margin-top:8px}
+.inv-num .fecha{font-size:.8rem;color:var(--text-2);margin-top:3px}
+.inv-meta{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:20px 0}
+.inv-meta h4{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:6px}
+.inv-meta .box{background:var(--bg);border-radius:10px;padding:12px 14px;font-size:.84rem;line-height:1.7}
+.inv-table{margin:8px 0 0}
+.inv-table th{background:var(--bg);padding:9px 14px;border:none;border-radius:0}
+.inv-table td{padding:11px 14px}
+.inv-tot{display:flex;justify-content:flex-end;margin-top:14px}
+.inv-tot table{width:280px;font-size:.86rem}
+.inv-tot td{padding:6px 10px;border:none}
+.inv-tot tr.total td{border-top:2px solid var(--text);font-size:1rem;font-weight:800;padding-top:10px}
+.inv-foot{margin-top:28px;padding-top:14px;border-top:1px dashed var(--border);
+  font-size:.72rem;color:var(--text-3);text-align:center;line-height:1.7}
+
+/* ============ TOAST DEMO ============ */
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a2233;color:#fff;
+  padding:11px 22px;border-radius:99px;font-size:.82rem;font-weight:600;z-index:99;transition:transform .3s;box-shadow:var(--shadow-lg)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.demo-note{position:fixed;bottom:14px;right:14px;background:#1a2233;color:#fff;font-size:.7rem;
+  padding:6px 13px;border-radius:99px;opacity:.85;z-index:80}
+
+.view{display:none}
+.view.on{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ============ RESPONSIVE ============ */
+.overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:40}
+@media(max-width:1100px){.grid,.grid2,.dgrid{grid-template-columns:1fr}}
+@media(max-width:860px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:none;box-shadow:var(--shadow-lg)}
+  .overlay.show{display:block}
+  .main{margin-left:0;padding:16px}
+  .hamb{display:block}
+  .search{min-width:0;flex:1}
+  .topbar h1{font-size:1.12rem}
+  .actions{margin-left:0;width:100%}
+  th.hide-m,td.hide-m{display:none}
+  .inv-page{padding:24px 18px}
+  .inv-meta{grid-template-columns:1fr}
+}
+
+/* ============ PRINT (solo factura) ============ */
+@media print{
+  body *{visibility:hidden}
+  .modal-bg,.modal-bg *{visibility:visible}
+  .modal-bg{position:absolute;inset:0;padding:0;background:#fff;display:block!important}
+  .invoice{box-shadow:none;border-radius:0;max-width:none}
+  .inv-tools{display:none}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="mark"><img src="../agrimIT/agrimIT/static/img/logo-cut.png" alt="AgrimIT" onerror="this.parentElement.textContent='▲'"></div>
+      AgrimIT
+    </div>
+    <nav class="snav">
+      <div class="label">General</div>
+      <a data-view="dash" class="active"><span class="ico">⌂</span> Inicio</a>
+      <a data-view="bal"><span class="ico">◔</span> Balances</a>
+      <a data-view="cob"><span class="ico">$</span> Cobranzas <span class="count">5</span></a>
+      <div class="label">Gestión</div>
+      <a data-view="proj"><span class="ico">▤</span> Proyectos <span class="count">32</span></a>
+      <a data-view="form"><span class="ico">✚</span> Nuevo proyecto</a>
+      <a data-view="cli"><span class="ico">◉</span> Clientes <span class="count">58</span></a>
+      <a data-view="hist"><span class="ico">↺</span> Historial</a>
+      <div class="label">Colaboración</div>
+      <a data-view="teams"><span class="ico">⬡</span> Grupos</a>
+    </nav>
+    <div class="foot">
+      <div class="avatar">EM</div>
+      <div><strong>Emanuel</strong><div class="sub-line">Agrimensor · <span class="link-out">Salir</span></div></div>
+    </div>
+  </aside>
+  <div class="overlay" id="overlay"></div>
+
+  <main class="main">
+
+  <!-- ================= INICIO ================= -->
+  <section class="view on" id="view-dash">
+    <div class="topbar">
+      <button class="hamb">☰</button>
+      <div><h1>Buen día, Emanuel 👋</h1><div class="sub">Resumen del estudio — junio 2026</div></div>
+      <div class="search ml-auto">🔍 <input placeholder="Buscar proyecto, cliente, partida…"></div>
+      <button class="btn btn-primary" onclick="go('form')">+ Nuevo proyecto</button>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="top"><span class="name">Proyectos activos</span><div class="icon" style="background:var(--primary-soft);color:var(--primary)">▤</div></div>
+        <div class="value">32</div><span class="trend t-up">▲ +4 este mes</span></div>
+      <div class="kpi"><div class="top"><span class="name">Ingresos del mes</span><div class="icon" style="background:var(--green-soft);color:var(--green)">$</div></div>
+        <div class="value">$4.280.500</div><span class="trend t-up">▲ 12,4% vs mayo</span></div>
+      <div class="kpi" style="cursor:pointer" onclick="go('cob')"><div class="top"><span class="name">Por cobrar</span><div class="icon" style="background:var(--amber-soft);color:var(--amber)">⧗</div></div>
+        <div class="value">$1.150.000</div><span class="trend t-down">5 cobros pendientes →</span></div>
+      <div class="kpi"><div class="top"><span class="name">Clientes</span><div class="icon" style="background:var(--violet-soft);color:var(--violet)">◉</div></div>
+        <div class="value">58</div><span class="trend t-flat">— sin cambios</span></div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="head"><h2>Proyectos recientes</h2><a onclick="go('proj')">Ver todos →</a></div>
+        <table>
+          <thead><tr><th>Proyecto</th><th>Cliente</th><th class="hide-m">Partida</th><th>Avance</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr class="click" onclick="go('det')"><td>Mensura</td><td>González, M.</td><td class="hide-m">104532</td>
+              <td><div class="bar-cell"><div class="bar"><i style="width:80%"></i></div>80%</div></td><td><span class="badge b-green">Activo</span></td></tr>
+            <tr class="click" onclick="go('det')"><td>Est. Parcelario</td><td>Ferreyra SRL</td><td class="hide-m">98841</td>
+              <td><div class="bar-cell"><div class="bar"><i style="width:45%"></i></div>45%</div></td><td><span class="badge b-green">Activo</span></td></tr>
+            <tr class="click" onclick="go('det')"><td>Amojonamiento</td><td>Paz, Rodrigo</td><td class="hide-m">112004</td>
+              <td><div class="bar-cell"><div class="bar"><i style="width:100%"></i></div>100%</div></td><td><span class="badge b-gray">Cerrado</span></td></tr>
+            <tr class="click" onclick="go('det')"><td>Relevamiento</td><td>Municipio V.M.</td><td class="hide-m">—</td>
+              <td><div class="bar-cell"><div class="bar"><i style="width:20%"></i></div>20%</div></td><td><span class="badge b-amber">En espera</span></td></tr>
+            <tr class="click" onclick="go('det')"><td>Legajo</td><td>Sosa, Carina</td><td class="hide-m">87455</td>
+              <td><div class="bar-cell"><div class="bar"><i style="width:60%"></i></div>60%</div></td><td><span class="badge b-green">Activo</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <div class="head"><h2>Actividad reciente</h2></div>
+        <ul class="movs" style="padding:6px 20px 12px">
+          <li><div class="ic" style="background:var(--green-soft)">💰</div><div>Cobro <b>$350.000</b> — Mensura González<div style="font-size:.7rem;color:var(--text-3)">hace 2 horas</div></div></li>
+          <li><div class="ic" style="background:var(--primary-soft)">📄</div><div>Nuevo: <b>Est. Parcelario</b> — Ferreyra SRL<div style="font-size:.7rem;color:var(--text-3)">ayer</div></div></li>
+          <li><div class="ic" style="background:var(--violet-soft)">👥</div><div><b>J. Medina</b> comentó en proyecto compartido<div style="font-size:.7rem;color:var(--text-3)">ayer</div></div></li>
+          <li><div class="ic" style="background:var(--amber-soft)">⏰</div><div>Vence presentación Catastro — <b>98841</b><div style="font-size:.7rem;color:var(--text-3)">en 3 días</div></div></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PROYECTOS ================= -->
+  <section class="view" id="view-proj">
+    <div class="topbar">
+      <button class="hamb">☰</button>
+      <div><h1>Proyectos</h1><div class="sub">32 activos · 117 totales</div></div>
+      <div class="ml-auto" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost">📥 Importar</button>
+        <button class="btn btn-primary" onclick="go('form')">+ Nuevo</button>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="chips" id="typeChips">
+        <button class="on">Todos</button><button>Mensuras</button><button>Est. Parcelarios</button>
+        <button>Amojonamientos</button><button>Relevamientos</button><button>Legajos</button>
+      </div>
+      <div class="seg ml-auto">
+        <button class="on">Activos</button><button>Cerrados</button><button>Todos</button>
+      </div>
+    </div>
+
+    <div class="proj-grid">
+      <div class="pcard" onclick="go('det')">
+        <div class="tt"><span class="type">Mensura</span><span class="badge b-green">Activo</span></div>
+        <div class="meta"><b>González, María</b><br>Partido: La Plata · Partida: 104532<br>Av. 7 N° 1234<br>📅 12/05/2026</div>
+        <div class="foot"><span>ID 117</span><span class="bar-cell" style="width:90px"><span class="bar"><i style="width:80%"></i></span></span></div>
+      </div>
+      <div class="pcard" onclick="go('det')">
+        <div class="tt"><span class="type">Est. Parcelario</span><span class="badge b-green">Activo</span></div>
+        <div class="meta"><b>Ferreyra SRL</b><br>Partido: Berisso · Partida: 98841<br>Calle 122 N° 870<br>📅 02/06/2026</div>
+        <div class="foot"><span>ID 116</span><span class="bar-cell" style="width:90px"><span class="bar"><i style="width:45%"></i></span></span></div>
+      </div>
+      <div class="pcard" onclick="go('det')">
+        <div class="tt"><span class="type">Amojonamiento</span><span class="badge b-gray">Cerrado</span></div>
+        <div class="meta"><b>Paz, Rodrigo</b><br>Partido: Ensenada · Partida: 112004<br>Calle 43 N° 522<br>📅 18/04/2026</div>
+        <div class="foot"><span>ID 112</span><span class="bar-cell" style="width:90px"><span class="bar"><i style="width:100%"></i></span></span></div>
+      </div>
+      <div class="pcard" onclick="go('det')">
+        <div class="tt"><span class="type">Relevamiento</span><span class="badge b-amber">En espera</span></div>
+        <div class="meta"><b>Municipio V.M.</b><br>Partido: Villa María · Partida: —<br>Zona rural NE<br>📅 28/05/2026</div>
+        <div class="foot"><span>ID 115</span><span class="bar-cell" style="width:90px"><span class="bar"><i style="width:20%"></i></span></span></div>
+      </div>
+      <div class="pcard" onclick="go('det')">
+        <div class="tt"><span class="type">Legajo</span><span class="badge b-green">Activo</span></div>
+        <div class="meta"><b>Sosa, Carina</b><br>Partido: La Plata · Partida: 87455<br>Calle 60 N° 3105<br>📅 22/05/2026</div>
+        <div class="foot"><span>ID 114</span><span class="bar-cell" style="width:90px"><span class="bar"><i style="width:60%"></i></span></span></div>
+      </div>
+      <div class="pcard" onclick="go('det')">
+        <div class="tt"><span class="type">Mensura</span><span class="badge b-green">Activo</span></div>
+        <div class="meta"><b>Iglesias, Hnos.</b><br>Partido: Magdalena · Partida: 45112<br>Ruta 11 km 42<br>📅 15/05/2026</div>
+        <div class="foot"><span>ID 113</span><span class="bar-cell" style="width:90px"><span class="bar"><i style="width:35%"></i></span></span></div>
+      </div>
+    </div>
+
+    <div class="pagination">
+      <button class="on">1</button><button>2</button><button>3</button><button>4</button><button>›</button>
+    </div>
+  </section>
+
+  <!-- ================= DETALLE PROYECTO ================= -->
+  <section class="view" id="view-det">
+    <div class="detail-head">
+      <button class="hamb">☰</button>
+      <a class="back" onclick="go('proj')">←</a>
+      <div>
+        <h1>Mensura — González, María</h1>
+        <div class="tags">
+          <span class="badge b-green">Activo</span>
+          <span class="badge b-blue">ID 117</span>
+          <span class="badge b-gray">Creado 12/05/2026</span>
+          <span class="badge b-violet">Trámite N° 88452</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-ghost btn-sm">📝 Notas</button>
+        <button class="btn btn-ghost btn-sm">👥 Compartir</button>
+        <button class="btn btn-ghost btn-sm">📋 Duplicar</button>
+        <button class="btn btn-ghost btn-sm" onclick="openInvoice()">🧾 Factura</button>
+        <button class="btn btn-green btn-sm">✓ Terminar</button>
+        <button class="btn btn-red btn-sm">Eliminar</button>
+      </div>
+    </div>
+
+    <div class="dgrid">
+      <div class="dcol">
+        <div class="panel">
+          <div class="head"><h2>Cliente y titular</h2><a>Editar</a></div>
+          <div class="body">
+            <div class="kv"><span class="k">Cliente</span><span class="v">González, María</span></div>
+            <div class="kv"><span class="k">Teléfono</span><span class="v">221 555-0143</span></div>
+            <div class="kv"><span class="k">Titular</span><span class="v">González, Roberto</span></div>
+            <div class="kv"><span class="k">Tel. titular</span><span class="v">221 555-8821</span></div>
+            <div class="kv"><span class="k">Contacto</span><span class="v">Est. Jurídico Vega</span></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="head"><h2>Finanzas</h2><a onclick="go('cob')">Ver movimientos →</a></div>
+          <div class="body">
+            <div class="fin-row"><span>Presupuesto<span class="edit">Modificar</span></span><span class="amt">$850.000</span></div>
+            <div class="fin-row"><span>Cobrado<span class="edit">+ Nuevo mov.</span></span><span class="amt pos">$500.000</span></div>
+            <div class="fin-row"><span>Gastos</span><span class="amt neg">−$74.500</span></div>
+            <div class="saldo-box"><span style="font-weight:600;font-size:.85rem">Saldo a cobrar</span><span class="amt">$350.000</span></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="head"><h2>Archivo adjunto</h2></div>
+          <div class="body" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <span style="font-size:1.4rem">📄</span>
+            <div style="flex:1;font-size:.83rem"><b>plano_mensura_v3.pdf</b><div style="color:var(--text-3);font-size:.72rem">2,4 MB · subido 04/06</div></div>
+            <button class="btn btn-ghost btn-sm">⇩ Descargar</button>
+            <button class="btn btn-red btn-sm">Eliminar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dcol">
+        <div class="panel">
+          <div class="head"><h2>Nomenclatura catastral</h2><a>Modificación completa →</a></div>
+          <div class="body">
+            <div class="nomen">
+              <div class="cell"><div class="k">Partido</div><div class="v">La Plata</div></div>
+              <div class="cell"><div class="k">Partida</div><div class="v">104532</div></div>
+              <div class="cell"><div class="k">Circuns.</div><div class="v">VI</div></div>
+              <div class="cell"><div class="k">Sección</div><div class="v">B</div></div>
+              <div class="cell"><div class="k">Fracción</div><div class="v">2 — a</div></div>
+              <div class="cell"><div class="k">Quinta</div><div class="v">—</div></div>
+              <div class="cell"><div class="k">Chacra</div><div class="v">14</div></div>
+              <div class="cell"><div class="k">Manzana</div><div class="v">31 — b</div></div>
+              <div class="cell"><div class="k">Parcela</div><div class="v">12 — c</div></div>
+              <div class="cell"><div class="k">Subparcela</div><div class="v">—</div></div>
+              <div class="cell"><div class="k">Inscripción</div><div class="v">Matrícula</div></div>
+            </div>
+            <div style="margin-top:14px;background:var(--bg);border-radius:10px;padding:10px 14px;font-size:.84rem">
+              📍 <b>Av. 7 N° 1234</b> · Piso — · Depto — · La Plata
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="head"><h2>Movimientos del proyecto</h2><a>+ Nuevo movimiento</a></div>
+          <ul class="movs" style="padding:6px 20px 12px">
+            <li><div class="ic" style="background:var(--green-soft)">↑</div><div><b>Anticipo</b><div style="font-size:.7rem;color:var(--text-3)">12/05/2026 · "Seña inicial"</div></div><span class="amt pos">$300.000</span></li>
+            <li><div class="ic" style="background:var(--green-soft)">↑</div><div><b>Pago parcial</b><div style="font-size:.7rem;color:var(--text-3)">02/06/2026 · "2da cuota"</div></div><span class="amt pos">$200.000</span></li>
+            <li><div class="ic" style="background:var(--red-soft)">↓</div><div><b>Gasto</b><div style="font-size:.7rem;color:var(--text-3)">28/05/2026 · "Tasa Catastro"</div></div><span class="amt neg">−$46.000</span></li>
+            <li><div class="ic" style="background:var(--red-soft)">↓</div><div><b>Gasto</b><div style="font-size:.7rem;color:var(--text-3)">30/05/2026 · "Viáticos"</div></div><span class="amt neg">−$28.500</span></li>
+          </ul>
+        </div>
+
+        <div class="panel">
+          <div class="head"><h2>Compartido con</h2><a>Gestionar</a></div>
+          <div class="body" style="display:flex;gap:10px;flex-wrap:wrap">
+            <span class="badge b-violet" style="padding:7px 14px">⬡ Estudio Centro — por emanuel, 20/05</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= NUEVO PROYECTO ================= -->
+  <section class="view" id="view-form">
+    <div class="topbar">
+      <button class="hamb">☰</button>
+      <div><h1>Nuevo proyecto</h1><div class="sub">Los campos con * son obligatorios</div></div>
+    </div>
+
+    <div class="panel" style="max-width:880px">
+      <div class="body" style="display:flex;flex-direction:column;gap:22px">
+        <div>
+          <label class="fl">Tipo de trabajo *</label>
+          <div class="chips">
+            <button class="on">Mensura</button><button>Est. Parcelario</button><button>Amojonamiento</button>
+            <button>Relevamiento</button><button>Legajo</button>
+          </div>
+        </div>
+        <div class="fgrid">
+          <div><label class="fl">Cliente *</label><select class="std"><option>Seleccionar…</option><option>González, María</option><option>Ferreyra SRL</option><option>+ Crear nuevo cliente</option></select></div>
+          <div><label class="fl">Presupuesto</label><input class="std" type="number" placeholder="$ 0"></div>
+          <div><label class="fl">N° de trámite</label><input class="std" type="number" placeholder="—"></div>
+        </div>
+        <div>
+          <div style="font-size:.83rem;font-weight:700;margin-bottom:10px;color:var(--text-2)">NOMENCLATURA</div>
+          <div class="fgrid">
+            <div><label class="fl">Partido</label><input class="std" placeholder="La Plata"></div>
+            <div><label class="fl">Partida</label><input class="std" placeholder="104532"></div>
+            <div><label class="fl">Circunscripción</label><input class="std"></div>
+            <div><label class="fl">Sección</label><input class="std"></div>
+            <div><label class="fl">Fracción (N°/letra)</label><input class="std"></div>
+            <div><label class="fl">Quinta (N°/letra)</label><input class="std"></div>
+            <div><label class="fl">Chacra (N°/letra)</label><input class="std"></div>
+            <div><label class="fl">Manzana (N°/letra)</label><input class="std"></div>
+            <div><label class="fl">Parcela (N°/letra)</label><input class="std"></div>
+            <div><label class="fl">Subparcela</label><input class="std"></div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:.83rem;font-weight:700;margin-bottom:10px;color:var(--text-2)">UBICACIÓN</div>
+          <div class="fgrid">
+            <div style="grid-column:span 2"><label class="fl">Calle</label><input class="std" placeholder="Av. 7"></div>
+            <div><label class="fl">Altura</label><input class="std"></div>
+            <div><label class="fl">Piso / Depto</label><input class="std"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+          <button class="btn btn-ghost" onclick="go('proj')">Cancelar</button>
+          <button class="btn btn-primary" onclick="toast('Proyecto creado (demo)');go('det')">Crear proyecto</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CLIENTES ================= -->
+  <section class="view" id="view-cli">
+    <div class="topbar">
+      <button class="hamb">☰</button>
+      <div><h1>Clientes</h1><div class="sub">58 registrados</div></div>
+      <div class="search ml-auto">🔍 <input placeholder="Buscar cliente…"></div>
+      <button class="btn btn-primary">+ Crear cliente</button>
+    </div>
+
+    <div class="panel">
+      <table>
+        <thead><tr><th>Cliente</th><th class="hide-m">Teléfono</th><th>Proyectos</th><th class="hide-m">Facturado 2026</th><th style="text-align:right">Acciones</th></tr></thead>
+        <tbody>
+          <tr><td>González, María</td><td class="hide-m">221 555-0143</td><td><span class="badge b-blue">3</span></td><td class="hide-m">$1.420.000</td>
+            <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="go('proj')">Ver proyectos</button> <button class="btn btn-ghost btn-sm" onclick="go('form')">+ Proyecto</button> <button class="btn btn-red btn-sm">Eliminar</button></td></tr>
+          <tr><td>Ferreyra SRL <span class="badge b-violet">fijo</span></td><td class="hide-m">221 482-1100</td><td><span class="badge b-blue">7</span></td><td class="hide-m">$2.860.000</td>
+            <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="go('proj')">Ver proyectos</button> <button class="btn btn-ghost btn-sm" onclick="go('form')">+ Proyecto</button> <button class="btn btn-red btn-sm">Eliminar</button></td></tr>
+          <tr><td>Paz, Rodrigo</td><td class="hide-m">221 633-9870</td><td><span class="badge b-blue">1</span></td><td class="hide-m">$310.000</td>
+            <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="go('proj')">Ver proyectos</button> <button class="btn btn-ghost btn-sm" onclick="go('form')">+ Proyecto</button> <button class="btn btn-red btn-sm">Eliminar</button></td></tr>
+          <tr><td>Municipio V.M. <span class="badge b-violet">fijo</span></td><td class="hide-m">353 461-2000</td><td><span class="badge b-blue">5</span></td><td class="hide-m">$1.980.000</td>
+            <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="go('proj')">Ver proyectos</button> <button class="btn btn-ghost btn-sm" onclick="go('form')">+ Proyecto</button> <button class="btn btn-red btn-sm">Eliminar</button></td></tr>
+          <tr><td>Sosa, Carina</td><td class="hide-m">221 415-7733</td><td><span class="badge b-blue">2</span></td><td class="hide-m">$640.000</td>
+            <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="go('proj')">Ver proyectos</button> <button class="btn btn-ghost btn-sm" onclick="go('form')">+ Proyecto</button> <button class="btn btn-red btn-sm">Eliminar</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= BALANCES ================= -->
+  <section class="view" id="view-bal">
+    <div class="topbar">
+      <button class="hamb">☰</button>
+      <div><h1>Balances</h1><div class="sub">Resumen financiero del estudio</div></div>
+      <div class="ml-auto" style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="toast('Exportando a Excel… (demo)')">⇩ Excel</button>
+        <button class="btn btn-ghost" onclick="toast('Generando PDF… (demo)')">⇩ PDF</button>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="seg"><button class="on">Mes</button><button>Trimestre</button><button>Año</button></div>
+      <div class="month-pick">
+        <button id="prevM">‹</button><span class="cur" id="curM">Junio 2026</span><button id="nextM">›</button>
+      </div>
+      <div class="chips" id="balChips">
+        <button class="on">Todos los tipos</button><button>Mensuras</button><button>Est. Parc.</button>
+        <button>Amojonam.</button><button>Relevam.</button><button>Legajos</button>
+      </div>
+    </div>
+
+    <!-- Punto 1: KPIs comparativos -->
+    <div class="kpis">
+      <div class="kpi"><div class="top"><span class="name">Ingresos</span><div class="icon" style="background:var(--green-soft);color:var(--green)">↑</div></div>
+        <div class="value">$4.280.500</div><span class="trend t-up">▲ 12,4% vs mayo</span></div>
+      <div class="kpi"><div class="top"><span class="name">Gastos</span><div class="icon" style="background:var(--red-soft);color:var(--red)">↓</div></div>
+        <div class="value">$1.310.200</div><span class="trend t-down">▲ 3,1% vs mayo</span></div>
+      <div class="kpi"><div class="top"><span class="name">Neto</span><div class="icon" style="background:var(--primary-soft);color:var(--primary)">≡</div></div>
+        <div class="value">$2.970.300</div><span class="trend t-up">▲ 17,2% vs mayo</span></div>
+      <div class="kpi"><div class="top"><span class="name">Proyectos facturados</span><div class="icon" style="background:var(--violet-soft);color:var(--violet)">▤</div></div>
+        <div class="value">9</div><span class="trend t-up">▲ +2 vs mayo</span></div>
+    </div>
+
+    <div class="grid2">
+      <div class="panel" style="grid-column:span 1">
+        <div class="body">
+          <h2 style="font-size:.92rem;margin-bottom:3px">Evolución anual — Ingresos vs Gastos</h2>
+          <div style="font-size:.74rem;color:var(--text-3);margin-bottom:12px">La línea verde muestra el neto acumulado.</div>
+          <canvas id="chartAnual" height="135"></canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="body">
+          <h2 style="font-size:.92rem;margin-bottom:3px">Ganancias por tipo de trabajo</h2>
+          <div style="font-size:.74rem;color:var(--text-3);margin-bottom:12px">Punto 6: click en la leyenda para filtrar categorías.</div>
+          <canvas id="chartTipo" height="135"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <!-- Punto 7: Top clientes -->
+      <div class="panel">
+        <div class="head"><h2>Top 5 clientes — 2026</h2><a onclick="go('cli')">Ver todos →</a></div>
+        <table>
+          <thead><tr><th>#</th><th>Cliente</th><th>Proyectos</th><th>Facturado</th><th></th></tr></thead>
+          <tbody id="topCli"></tbody>
+        </table>
+      </div>
+      <!-- Detalle mensual -->
+      <div class="panel">
+        <div class="head"><h2>Detalle mensual — Neto anual <span class="pos">$14.870.300</span></h2><a onclick="toast('Exportando… (demo)')">⇩</a></div>
+        <table>
+          <thead><tr><th>Mes</th><th>Proy.</th><th class="hide-m">Ingresos</th><th>Neto</th><th></th></tr></thead>
+          <tbody id="tbodyMeses"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= COBRANZAS ================= -->
+  <section class="view" id="view-cob">
+    <div class="topbar">
+      <button class="hamb">☰</button>
+      <div><h1>Cobranzas</h1><div class="sub">Movimientos y cuentas por cobrar</div></div>
+      <div class="ml-auto" style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="toast('Exportando a Excel… (demo)')">⇩ Excel</button>
+        <button class="btn btn-primary">+ Nuevo movimiento</button>
+      </div>
+    </div>
+
+    <!-- Punto 4: Aging de cuentas por cobrar -->
+    <div class="panel" style="margin-bottom:16px">
+      <div class="head"><h2>Cuentas por cobrar — $1.150.000 en 5 proyectos</h2></div>
+      <div class="body">
+        <div class="aging">
+          <div class="age-box age-ok"><div class="lbl">Al día (&lt; 30 días)</div><div class="amt">$350.000</div><div class="n">1 proyecto</div></div>
+          <div class="age-box age-warn"><div class="lbl">30 – 60 días</div><div class="amt">$420.000</div><div class="n">2 proyectos</div></div>
+          <div class="age-box age-bad"><div class="lbl">60 – 90 días</div><div class="amt">$230.000</div><div class="n">1 proyecto</div></div>
+          <div class="age-box age-crit"><div class="lbl">+90 días</div><div class="amt">$150.000</div><div class="n">1 proyecto</div></div>
+        </div>
+        <table>
+          <thead><tr><th>Proyecto</th><th>Cliente</th><th class="hide-m">Último cobro</th><th>Saldo</th><th>Antigüedad</th><th style="text-align:right"></th></tr></thead>
+          <tbody>
+            <tr class="click" onclick="go('det')"><td>Mensura #117</td><td>González, M.</td><td class="hide-m">02/06/2026</td><td class="neg">$350.000</td><td><span class="badge b-green">8 días</span></td>
+              <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openInvoice()">🧾 Factura</button></td></tr>
+            <tr class="click" onclick="go('det')"><td>Est. Parc. #116</td><td>Ferreyra SRL</td><td class="hide-m">28/04/2026</td><td class="neg">$270.000</td><td><span class="badge b-amber">43 días</span></td>
+              <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openInvoice()">🧾 Factura</button></td></tr>
+            <tr class="click" onclick="go('det')"><td>Legajo #114</td><td>Sosa, Carina</td><td class="hide-m">22/04/2026</td><td class="neg">$150.000</td><td><span class="badge b-amber">49 días</span></td>
+              <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openInvoice()">🧾 Factura</button></td></tr>
+            <tr class="click" onclick="go('det')"><td>Mensura #113</td><td>Iglesias, Hnos.</td><td class="hide-m">15/03/2026</td><td class="neg">$230.000</td><td><span class="badge" style="background:#fff7ed;color:#c2410c">87 días</span></td>
+              <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openInvoice()">🧾 Factura</button></td></tr>
+            <tr class="click" onclick="go('det')"><td>Relevam. #108</td><td>Municipio V.M.</td><td class="hide-m">02/02/2026</td><td class="neg">$150.000</td><td><span class="badge b-red">128 días</span></td>
+              <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openInvoice()">🧾 Factura</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Movimientos -->
+    <div class="panel">
+      <div class="head">
+        <h2>Movimientos</h2>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input class="std" type="date" value="2026-05-01" style="width:auto;padding:6px 10px;font-size:.8rem">
+          <span style="color:var(--text-3);font-size:.8rem">a</span>
+          <input class="std" type="date" value="2026-06-10" style="width:auto;padding:6px 10px;font-size:.8rem">
+          <button class="btn btn-ghost btn-sm">Filtrar</button>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Proyecto</th><th class="hide-m">Cliente</th><th>Movimiento</th><th>Monto</th><th>Fecha</th></tr></thead>
+        <tbody>
+          <tr class="click" onclick="go('det')"><td>#117 Mensura</td><td class="hide-m">González, M.</td><td><span class="badge b-green">Anticipo</span></td><td class="pos">$300.000</td><td>12/05/2026</td></tr>
+          <tr class="click" onclick="go('det')"><td>#117 Mensura</td><td class="hide-m">González, M.</td><td><span class="badge b-green">Pago parcial</span></td><td class="pos">$200.000</td><td>02/06/2026</td></tr>
+          <tr class="click" onclick="go('det')"><td>#116 Est. Parc.</td><td class="hide-m">Ferreyra SRL</td><td><span class="badge b-red">Gasto</span></td><td class="neg">−$52.000</td><td>30/05/2026</td></tr>
+          <tr class="click" onclick="go('det')"><td>#114 Legajo</td><td class="hide-m">Sosa, C.</td><td><span class="badge b-green">Anticipo</span></td><td class="pos">$180.000</td><td>22/05/2026</td></tr>
+          <tr class="click" onclick="go('det')"><td>#117 Mensura</td><td class="hide-m">González, M.</td><td><span class="badge b-amber">Modificación</span></td><td class="neg">−$46.000</td><td>28/05/2026</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= HISTORIAL ================= -->
+  <section class="view" id="view-hist">
+    <div class="topbar">
+      <button class="hamb">☰</button>
+      <div><h1>Historial</h1><div class="sub">Actividad del estudio</div></div>
+      <div class="seg ml-auto"><button class="on">Todo</button><button>Proyectos</button><button>Clientes</button><button>Cobros</button></div>
+    </div>
+
+    <div class="panel" style="max-width:760px"><div class="body">
+      <div class="tl-month">Junio 2026</div>
+      <div class="tl">
+        <div class="tl-item gr"><div class="when">02/06/2026</div><div class="what">Cobro registrado <b>$200.000</b> — Mensura #117 (González)</div></div>
+        <div class="tl-item"><div class="when">02/06/2026</div><div class="what">Nuevo proyecto <b>Est. Parcelario #116</b> — Ferreyra SRL</div></div>
+        <div class="tl-item am"><div class="when">01/06/2026</div><div class="what">Modificación de presupuesto en <b>Legajo #114</b></div></div>
+      </div>
+      <div class="tl-month" style="margin-top:18px">Mayo 2026</div>
+      <div class="tl">
+        <div class="tl-item gr"><div class="when">22/05/2026</div><div class="what">Anticipo <b>$180.000</b> — Legajo #114 (Sosa)</div></div>
+        <div class="tl-item"><div class="when">22/05/2026</div><div class="what">Nuevo proyecto <b>Legajo #114</b> — Sosa, Carina</div></div>
+        <div class="tl-item"><div class="when">15/05/2026</div><div class="what">Nuevo proyecto <b>Mensura #113</b> — Iglesias Hnos.</div></div>
+        <div class="tl-item gr"><div class="when">12/05/2026</div><div class="what">Anticipo <b>$300.000</b> — Mensura #117 (González)</div></div>
+        <div class="tl-item"><div class="when">12/05/2026</div><div class="what">Nuevo proyecto <b>Mensura #117</b> — González, María</div></div>
+        <div class="tl-item am"><div class="when">05/05/2026</div><div class="what">Cliente nuevo: <b>Sosa, Carina</b></div></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ================= GRUPOS ================= -->
+  <section class="view" id="view-teams">
+    <div class="topbar">
+      <button class="hamb">☰</button>
+      <div><h1>Grupos</h1><div class="sub">Trabajo colaborativo entre estudios</div></div>
+      <button class="btn btn-primary ml-auto">+ Crear grupo</button>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <div class="head"><h2>⬡ Estudio Centro</h2><span class="badge b-blue">Admin</span></div>
+        <div class="body">
+          <div style="font-size:.84rem;color:var(--text-2);margin-bottom:12px">3 miembros · 4 proyectos compartidos</div>
+          <div style="display:flex;gap:6px;margin-bottom:14px">
+            <div class="avatar">EM</div><div class="avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">JM</div><div class="avatar" style="background:linear-gradient(135deg,#8b5cf6,#2563eb)">LR</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm">Ver detalle</button>
+            <button class="btn btn-ghost btn-sm">Invitar miembro</button>
+            <button class="btn btn-red btn-sm">Eliminar</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="head"><h2>⬡ Catastro Norte</h2><span class="badge b-gray">Miembro</span></div>
+        <div class="body">
+          <div style="font-size:.84rem;color:var(--text-2);margin-bottom:12px">5 miembros · 2 proyectos compartidos</div>
+          <div style="display:flex;gap:6px;margin-bottom:14px">
+            <div class="avatar" style="background:linear-gradient(135deg,#10b981,#f59e0b)">PA</div><div class="avatar">EM</div>
+            <div class="avatar" style="background:linear-gradient(135deg,#ef4444,#8b5cf6)">CV</div>
+            <div class="avatar" style="background:var(--bg);color:var(--text-2)">+2</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm">Ver detalle</button>
+            <button class="btn btn-ghost btn-sm">Salir del grupo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="head"><h2>Proyectos compartidos conmigo</h2></div>
+      <table>
+        <thead><tr><th>Proyecto</th><th>Dueño</th><th class="hide-m">Grupo</th><th>Compartido</th><th>Permiso</th></tr></thead>
+        <tbody>
+          <tr class="click" onclick="go('det')"><td>Mensura #88</td><td>J. Medina</td><td class="hide-m">Estudio Centro</td><td>14/05/2026</td><td><span class="badge b-blue">Lectura</span></td></tr>
+          <tr class="click" onclick="go('det')"><td>Amojonam. #91</td><td>L. Robles</td><td class="hide-m">Estudio Centro</td><td>20/05/2026</td><td><span class="badge b-violet">Edición</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  </main>
+</div>
+
+<!-- ================= MODAL FACTURA NO OFICIAL ================= -->
+<div class="modal-bg" id="invoiceModal">
+  <div class="invoice">
+    <div class="inv-tools">
+      <button class="btn btn-ghost btn-sm" onclick="closeInvoice()">✕ Cerrar</button>
+      <button class="btn btn-ghost btn-sm" onclick="toast('Descargando PDF… (demo)')">⇩ PDF</button>
+      <button class="btn btn-primary btn-sm" onclick="window.print()">🖨 Imprimir</button>
+    </div>
+    <div class="inv-page">
+      <div class="inv-head">
+        <div class="studio" style="display:flex;gap:14px;align-items:flex-start">
+          <img src="../agrimIT/agrimIT/static/img/logo-cut.png" alt="" style="width:44px;height:auto" onerror="this.style.display='none'">
+          <div>Estudio de Agrimensura
+            <small>Agrim. Emanuel B. — Mat. CPA 1234<br>Calle 50 N° 825, La Plata · 221 555-0000<br>emanuelb918@gmail.com</small>
+          </div>
+        </div>
+        <div class="inv-num">
+          <span class="doc">Presupuesto / Recibo X</span>
+          <div class="nro">N° 0117-2026</div>
+          <div class="fecha">Fecha: 10/06/2026</div>
+        </div>
+      </div>
+
+      <div class="inv-meta">
+        <div><h4>Cliente</h4>
+          <div class="box"><b>González, María</b><br>Tel: 221 555-0143<br>Titular: González, Roberto</div></div>
+        <div><h4>Trabajo</h4>
+          <div class="box"><b>Mensura</b> — Proyecto #117<br>Partido La Plata · Partida 104532<br>Av. 7 N° 1234, La Plata</div></div>
+      </div>
+
+      <table class="inv-table">
+        <thead><tr><th>Concepto</th><th style="text-align:right">Monto</th></tr></thead>
+        <tbody>
+          <tr><td>Honorarios profesionales — Mensura</td><td style="text-align:right">$850.000</td></tr>
+          <tr><td>Anticipo recibido (12/05/2026)</td><td style="text-align:right;color:var(--green)">−$300.000</td></tr>
+          <tr><td>Pago parcial (02/06/2026)</td><td style="text-align:right;color:var(--green)">−$200.000</td></tr>
+        </tbody>
+      </table>
+
+      <div class="inv-tot">
+        <table>
+          <tr><td>Subtotal</td><td style="text-align:right">$850.000</td></tr>
+          <tr><td>Pagos recibidos</td><td style="text-align:right">−$500.000</td></tr>
+          <tr class="total"><td>Saldo</td><td style="text-align:right">$350.000</td></tr>
+        </table>
+      </div>
+
+      <div class="inv-foot">
+        Documento no válido como factura oficial. Emitido a modo informativo por AgrimIT.<br>
+        Forma de pago: efectivo / transferencia — CBU 0000003100000000000000 · Alias: estudio.agrim
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="demo-note">Muestra completa · datos de ejemplo</div>
+
+<script>
+// ===== Navegación =====
+function go(v){
+  document.querySelectorAll('.snav a[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+  const t=document.getElementById('view-'+v);if(t)t.classList.add('on');
+  closeSide();window.scrollTo({top:0});
+  if(v==='bal')setTimeout(initCharts,50);
+}
+document.querySelectorAll('.snav a[data-view]').forEach(a=>a.addEventListener('click',()=>go(a.dataset.view)));
+
+// ===== Sidebar móvil =====
+const sb=document.getElementById('sidebar'),ov=document.getElementById('overlay');
+function closeSide(){sb.classList.remove('open');ov.classList.remove('show')}
+document.querySelectorAll('.hamb').forEach(b=>b.addEventListener('click',()=>{sb.classList.add('open');ov.classList.add('show')}));
+ov.addEventListener('click',closeSide);
+
+// ===== Chips y segmentos (visual) =====
+document.querySelectorAll('.chips').forEach(g=>g.querySelectorAll('button').forEach(b=>b.onclick=e=>{
+  if(g.id==='typeChips'||g.id==='balChips'||g.closest('#view-form')){
+    g.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  }
+}));
+document.querySelectorAll('.seg').forEach(g=>g.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  g.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+}));
+
+// ===== Selector de mes (punto 3) =====
+const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+let mIdx=5;
+const pm=document.getElementById('prevM'),nm=document.getElementById('nextM');
+if(pm)pm.onclick=()=>{mIdx=(mIdx+11)%12;document.getElementById('curM').textContent=meses[mIdx]+' 2026'};
+if(nm)nm.onclick=()=>{mIdx=(mIdx+1)%12;document.getElementById('curM').textContent=meses[mIdx]+' 2026'};
+
+// ===== Datos =====
+const ingresos=[2100,2450,2900,3100,3805,4280].map(v=>v*1000);
+const gastos=[800,920,1050,990,1270,1310].map(v=>v*1000);
+const neto=ingresos.map((v,i)=>v-gastos[i]);
+let acum=0;const netoAcum=neto.map(v=>acum+=v);
+const fmt=v=>'$'+v.toLocaleString('es-AR');
+const proys=[5,6,7,7,8,9];
+
+// Tabla mensual
+let html='';
+for(let i=0;i<6;i++){
+  const pct=Math.round(neto[i]/Math.max(...neto)*100);
+  html+=`<tr><td>${meses[i]}</td><td>${proys[i]}</td><td class="hide-m">${fmt(ingresos[i])}</td><td class="pos">${fmt(neto[i])}</td>
+  <td><div class="bar-cell"><div class="bar"><i style="width:${pct}%"></i></div></div></td></tr>`;
+}
+document.getElementById('tbodyMeses').innerHTML=html;
+
+// Top 5 clientes (punto 7)
+const top=[['Ferreyra SRL',7,2860000],['Municipio V.M.',5,1980000],['González, María',3,1420000],['Iglesias, Hnos.',2,890000],['Sosa, Carina',2,640000]];
+const maxF=top[0][2];
+document.getElementById('topCli').innerHTML=top.map((c,i)=>
+  `<tr><td>${i+1}</td><td>${c[0]}</td><td><span class="badge b-blue">${c[1]}</span></td><td class="pos">${fmt(c[2])}</td>
+  <td><div class="bar-cell"><div class="bar"><i style="width:${Math.round(c[2]/maxF*100)}%"></i></div></div></td></tr>`).join('');
+
+// ===== Charts =====
+Chart.defaults.font.family="'Inter',sans-serif";
+Chart.defaults.color='#5b6577';
+let c1,c2,chartsInit=false;
+function initCharts(){
+  if(chartsInit)return;chartsInit=true;
+  c1=new Chart(document.getElementById('chartAnual'),{
+    data:{labels:meses.map(m=>m.slice(0,3)).slice(0,6).concat(['Jul','Ago','Sep','Oct','Nov','Dic']),
+      datasets:[
+        {type:'bar',label:'Ingresos',data:ingresos,backgroundColor:'#2d72ba',borderRadius:6,maxBarThickness:24},
+        {type:'bar',label:'Gastos',data:gastos,backgroundColor:'#fda4af',borderRadius:6,maxBarThickness:24},
+        {type:'line',label:'Neto acumulado',data:netoAcum,borderColor:'#10b981',backgroundColor:'#10b981',tension:.35,pointRadius:3}
+      ]},
+    options:{responsive:true,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8}},
+        tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.parsed.y)}`}}},
+      scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},ticks:{callback:v=>'$'+(v/1e6)+'M'}}}}
+  });
+  c2=new Chart(document.getElementById('chartTipo'),{
+    type:'doughnut',
+    data:{labels:['Mensuras','Est. Parcelarios','Amojonamientos','Relevamientos','Legajos'],
+      datasets:[{data:[38,24,15,13,10],backgroundColor:['#2d72ba','#3498db','#10b981','#f59e0b','#94a3b8'],
+        borderWidth:3,borderColor:'#fff',hoverOffset:10}]},
+    options:{cutout:'62%',plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,padding:12}},
+      tooltip:{callbacks:{label:c=>` ${c.label}: ${c.parsed}%`}}}}
+  });
+}
+
+// ===== Factura =====
+function openInvoice(){document.getElementById('invoiceModal').classList.add('open')}
+function closeInvoice(){document.getElementById('invoiceModal').classList.remove('open')}
+document.getElementById('invoiceModal').addEventListener('click',e=>{if(e.target.id==='invoiceModal')closeInvoice()});
+
+// ===== Toast =====
+let toastT;
+function toast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2200);
+}
+</script>
+</body>
+</html>

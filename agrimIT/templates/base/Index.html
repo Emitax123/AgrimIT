@@ -1,53 +1,142 @@
 {% extends 'base/base_template.html' %}
 {% load static %}
-{% block form %}
-  <link rel="stylesheet" href="{% static 'css/index.css' %}" />
-  <div class="index-container">
-    <div class="card-cont">
-      <a href="{% url 'projects' %}">
-        <div class="card projects">
-          <span class="title">Proyectos Activos</span>
-          <span class="content">{{ project_count }}</span>
-        </div>
-      </a>
-      <a href="{% url 'clients' %}">
-        <div class="card clients">
-          <span class="title">Clientes</span>
-          <span class="content">{{ clients_count }}</span>
-        </div>
-      </a>
-      <a href="{% url 'balance' %}">
-        <div class="card income">
-          <span class="title">Ingresos</span>
-          <span class="content">${{ net_income }}</span>
-        </div>
-      </a>
+
+{% block topbar %}
+  <div>
+    <h1>Buen día, {{ request.user.first_name|default:request.user.username }} 👋</h1>
+    <div class="sub">Resumen del estudio — {{ current_month_label }} {{ current_year }}</div>
+  </div>
+  <div class="search ml-auto" data-projects-url="{% url 'projects' %}">
+    <span>🔍</span>
+    <input id="search-input" type="text" autocomplete="off" placeholder="Buscar proyecto, cliente, partida…" />
+    <input type="hidden" id="project-link" data-url="{% url 'projectview' pk=0 %}" />
+    <div id="results-cont" class="results-cont"></div>
+  </div>
+  <a href="{% url 'create' %}" class="btn btn-primary">+ Nuevo proyecto</a>
+{% endblock %}
+
+{% block content %}
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi">
+      <div class="top">
+        <span class="name">Proyectos activos</span>
+        <div class="icon" style="background:var(--primary-soft);color:var(--primary)">▤</div>
+      </div>
+      <div class="value">{{ project_count }}</div>
+      {% if new_this_month %}
+        <span class="trend t-up">▲ +{{ new_this_month }} este mes</span>
+      {% else %}
+        <span class="trend t-flat">— sin altas este mes</span>
+      {% endif %}
     </div>
 
-    <div class="projects-cont">
-      <span class="title">Proyectos Recientes</span>
-      <div class="project-list">
-        <ul>
-          <li class="header">
-            <span>Projecto</span><span>Cliente</span><span>Partida</span><span>Estado</span>
-          </li>
-          {% for p in projects %}
-            <li class="project">
-              <a href="{% url 'projectview' p.pk %}">
-                <span>{{ p.type }}</span> <span>{{ p.client.name }}</span><span>{{ p.partida }}</span><span>
-                  {% if p.closed %}
-                    Cerrado
-                  {% else %}
-                    Activo
-                  {% endif %}
-                </span>
-              </a>
-            </li>
-          {% endfor %}
-        </ul>
+    <div class="kpi">
+      <div class="top">
+        <span class="name">Ingresos del mes</span>
+        <div class="icon" style="background:var(--green-soft);color:var(--green)">$</div>
       </div>
+      <div class="value">${{ income_current_fmt }}</div>
+      {% if income_up is None %}
+        <span class="trend t-flat">— sin datos previos</span>
+      {% elif income_up %}
+        <span class="trend t-up">▲ {{ income_delta_str }}% vs {{ prev_month_label }}</span>
+      {% else %}
+        <span class="trend t-down">▼ {{ income_delta_str }}% vs {{ prev_month_label }}</span>
+      {% endif %}
+    </div>
 
-      <a class="link" href="{% url 'projects' %}">Ver todos</a>
+    <a href="{% url 'accounting_display' %}" class="kpi" style="display:block">
+      <div class="top">
+        <span class="name">Por cobrar</span>
+        <div class="icon" style="background:var(--amber-soft);color:var(--amber)">⧗</div>
+      </div>
+      <div class="value">${{ receivables_total_fmt }}</div>
+      {% if receivables_count %}
+        <span class="trend t-down">{{ receivables_count }} cobros pendientes →</span>
+      {% else %}
+        <span class="trend t-flat">— sin pendientes</span>
+      {% endif %}
+    </a>
+
+    <div class="kpi">
+      <div class="top">
+        <span class="name">Clientes</span>
+        <div class="icon" style="background:var(--violet-soft);color:var(--violet)">◉</div>
+      </div>
+      <div class="value">{{ clients_total }}</div>
+      <span class="trend t-flat">— total registrados</span>
+    </div>
+  </div>
+
+  <!-- Grid: recientes + actividad -->
+  <div class="grid">
+    <div class="panel">
+      <div class="head">
+        <h2>Proyectos recientes</h2>
+        <a href="{% url 'projects' %}">Ver todos →</a>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Proyecto</th>
+            <th>Cliente</th>
+            <th class="hide-m">Partida</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in projects %}
+            <tr class="click" onclick="window.location='{% url 'projectview' pk=p.pk %}'">
+              <td>{{ p.type }}</td>
+              <td>{{ p.client.name|default:"—" }}</td>
+              <td class="hide-m">{{ p.partida|default:"—" }}</td>
+              <td>
+                {% if p.closed %}
+                  <span class="badge b-gray">Cerrado</span>
+                {% else %}
+                  <span class="badge b-green">Activo</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" style="color:var(--text-3);font-weight:500">Aún no hay proyectos.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <div class="head"><h2>Actividad reciente</h2></div>
+      <ul class="movs" style="padding:6px 20px 12px">
+        {% for e in recent_events %}
+          <li>
+            {% if e.type == 'newp' %}
+              <div class="ic" style="background:var(--primary-soft)">📄</div>
+            {% elif e.type == 'modp' %}
+              <div class="ic" style="background:var(--amber-soft)">📝</div>
+            {% elif e.type == 'file_add' %}
+              <div class="ic" style="background:var(--primary-soft)">📎</div>
+            {% elif e.type == 'newc' %}
+              <div class="ic" style="background:var(--violet-soft)">👤</div>
+            {% elif e.type == 'deletep' or e.type == 'deletec' or e.type == 'file_del' %}
+              <div class="ic" style="background:var(--red-soft)">🗑️</div>
+            {% else %}
+              <div class="ic" style="background:var(--bg)">•</div>
+            {% endif %}
+            <div>
+              {% if e.project_id %}
+                <a href="{% url 'projectview' pk=e.project_id %}">{{ e.msg }}</a>
+              {% else %}
+                {{ e.msg }}
+              {% endif %}
+              <div style="font-size:.7rem;color:var(--text-3)">hace {{ e.time|timesince }}</div>
+            </div>
+          </li>
+        {% empty %}
+          <li style="color:var(--text-3)">Sin actividad reciente.</li>
+        {% endfor %}
+      </ul>
     </div>
   </div>
 {% endblock %}

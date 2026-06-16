@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgrimIT — Propuesta A · Claro con Sidebar</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6fa; --surface:#ffffff; --border:#e6e9f0;
+  --text:#1a2233; --text-2:#5b6577; --text-3:#9aa3b5;
+  --primary:#2563eb; --primary-soft:#eff4ff;
+  --green:#10b981; --green-soft:#ecfdf5;
+  --red:#ef4444; --red-soft:#fef2f2;
+  --amber:#f59e0b; --amber-soft:#fffbeb;
+  --violet:#8b5cf6; --violet-soft:#f5f3ff;
+  --radius:14px; --shadow:0 1px 3px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
+  --shadow-lg:0 12px 24px -8px rgba(16,24,40,.12);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+a{text-decoration:none;color:inherit}
+button{font-family:inherit;cursor:pointer}
+
+/* ============ SIDEBAR ============ */
+.layout{display:flex;min-height:100vh}
+.sidebar{width:240px;background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:50;transition:transform .25s ease}
+.sidebar .brand{display:flex;align-items:center;gap:10px;padding:20px 20px 16px;font-weight:800;font-size:1.15rem}
+.brand .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#2563eb,#7c3aed);
+  display:grid;place-items:center;color:#fff;font-size:1rem}
+.snav{flex:1;padding:8px 12px;overflow-y:auto}
+.snav .label{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);padding:14px 10px 6px}
+.snav a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;color:var(--text-2);
+  font-size:.9rem;font-weight:500;margin-bottom:2px;transition:all .15s}
+.snav a:hover{background:var(--bg);color:var(--text)}
+.snav a.active{background:var(--primary-soft);color:var(--primary);font-weight:600}
+.snav a .ico{width:20px;text-align:center;font-size:1rem}
+.snav a .count{margin-left:auto;background:var(--bg);border-radius:99px;padding:1px 8px;font-size:.72rem;color:var(--text-2)}
+.sidebar .foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;font-size:.85rem}
+.avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#10b981,#2563eb);color:#fff;
+  display:grid;place-items:center;font-weight:700;font-size:.8rem}
+
+/* ============ MAIN ============ */
+.main{flex:1;margin-left:240px;padding:24px clamp(16px,3vw,40px);max-width:1500px}
+.topbar{display:flex;align-items:center;gap:14px;margin-bottom:24px;flex-wrap:wrap}
+.topbar h1{font-size:1.4rem;font-weight:700}
+.topbar .sub{color:var(--text-2);font-size:.85rem;margin-top:2px}
+.search{margin-left:auto;display:flex;align-items:center;gap:8px;background:var(--surface);
+  border:1px solid var(--border);border-radius:10px;padding:8px 14px;min-width:240px;box-shadow:var(--shadow)}
+.search input{border:none;outline:none;background:none;font-family:inherit;font-size:.875rem;flex:1;color:var(--text)}
+.btn{border:none;border-radius:10px;padding:9px 16px;font-size:.85rem;font-weight:600;transition:all .15s}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:#1d4ed8;box-shadow:var(--shadow-lg)}
+.btn-ghost{background:var(--surface);border:1px solid var(--border);color:var(--text-2)}
+.btn-ghost:hover{color:var(--text);border-color:var(--text-3)}
+.hamb{display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:1.1rem}
+
+/* ============ KPI CARDS ============ */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;
+  box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s;cursor:pointer;position:relative;overflow:hidden}
+.kpi:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.kpi .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.kpi .name{font-size:.8rem;font-weight:600;color:var(--text-2)}
+.kpi .icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:1.05rem}
+.kpi .value{font-size:1.65rem;font-weight:800;letter-spacing:-.02em}
+.kpi .trend{display:inline-flex;align-items:center;gap:4px;font-size:.75rem;font-weight:600;
+  border-radius:99px;padding:2px 9px;margin-top:8px}
+.t-up{background:var(--green-soft);color:var(--green)}
+.t-down{background:var(--red-soft);color:var(--red)}
+.t-flat{background:var(--bg);color:var(--text-2)}
+
+/* ============ PANELS / TABLE ============ */
+.grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:24px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.panel .head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+.panel .head h2{font-size:.95rem;font-weight:700}
+.panel .head a{font-size:.8rem;color:var(--primary);font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{text-align:left;padding:10px 20px;color:var(--text-3);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;font-weight:600;border-bottom:1px solid var(--border)}
+td{padding:12px 20px;border-bottom:1px solid var(--border);color:var(--text-2)}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:background .12s;cursor:pointer}
+tbody tr:hover{background:var(--primary-soft)}
+td:first-child{font-weight:600;color:var(--text)}
+.badge{display:inline-block;border-radius:99px;padding:3px 10px;font-size:.72rem;font-weight:600}
+.b-green{background:var(--green-soft);color:#047857}
+.b-gray{background:var(--bg);color:var(--text-2)}
+.b-amber{background:var(--amber-soft);color:#b45309}
+.b-blue{background:var(--primary-soft);color:var(--primary)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:.8rem}
+.dot{width:8px;height:8px;border-radius:50%}
+
+/* activity */
+.activity{padding:8px 20px 14px;list-style:none}
+.activity li{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);font-size:.83rem}
+.activity li:last-child{border:none}
+.activity .when{color:var(--text-3);font-size:.72rem;margin-top:2px}
+.activity .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex-shrink:0;font-size:.85rem}
+
+/* ============ BALANCE VIEW ============ */
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:3px;box-shadow:var(--shadow)}
+.seg button{border:none;background:none;padding:7px 16px;border-radius:8px;font-size:.83rem;font-weight:600;color:var(--text-2)}
+.seg button.on{background:var(--primary);color:#fff}
+.month-pick{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:5px 8px;box-shadow:var(--shadow)}
+.month-pick button{border:none;background:none;font-size:1rem;color:var(--text-2);padding:4px 8px;border-radius:6px}
+.month-pick button:hover{background:var(--bg)}
+.month-pick .cur{font-weight:700;font-size:.88rem;min-width:130px;text-align:center}
+.bal-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;margin-bottom:16px}
+.chart-box{padding:18px 20px}
+.chart-box h3{font-size:.9rem;font-weight:700;margin-bottom:4px}
+.chart-box .hint{font-size:.75rem;color:var(--text-3);margin-bottom:12px}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.months-table .pos{color:var(--green);font-weight:700}
+.bar-cell{display:flex;align-items:center;gap:10px}
+.bar-cell .bar{height:7px;border-radius:99px;background:var(--primary-soft);flex:1;max-width:140px;overflow:hidden}
+.bar-cell .bar i{display:block;height:100%;background:linear-gradient(90deg,#2563eb,#7c3aed);border-radius:99px}
+
+.view{display:none}
+.view.on{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.demo-note{position:fixed;bottom:14px;right:14px;background:#1a2233;color:#fff;font-size:.72rem;
+  padding:7px 14px;border-radius:99px;opacity:.85;z-index:99}
+
+/* ============ RESPONSIVE ============ */
+.overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:40}
+@media(max-width:1100px){
+  .grid,.bal-grid{grid-template-columns:1fr}
+}
+@media(max-width:860px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:none;box-shadow:var(--shadow-lg)}
+  .overlay.show{display:block}
+  .main{margin-left:0;padding:16px}
+  .hamb{display:block}
+  .search{min-width:0;flex:1}
+  .topbar h1{font-size:1.15rem}
+  th:nth-child(3),td:nth-child(3){display:none}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="mark">▲</div> AgrimIT</div>
+    <nav class="snav">
+      <div class="label">General</div>
+      <a href="#" class="active" data-view="dash"><span class="ico">⌂</span> Inicio</a>
+      <a href="#" data-view="bal"><span class="ico">◔</span> Balances</a>
+      <div class="label">Gestión</div>
+      <a href="#"><span class="ico">▤</span> Proyectos <span class="count">32</span></a>
+      <a href="#"><span class="ico">◉</span> Clientes <span class="count">58</span></a>
+      <a href="#"><span class="ico">✚</span> Nuevo proyecto</a>
+      <a href="#"><span class="ico">↺</span> Historial</a>
+      <div class="label">Colaboración</div>
+      <a href="#"><span class="ico">⬡</span> Grupos</a>
+      <a href="#"><span class="ico">⇄</span> Compartidos</a>
+    </nav>
+    <div class="foot">
+      <div class="avatar">EM</div>
+      <div><strong>Emanuel</strong><div style="font-size:.72rem;color:var(--text-3)">Agrimensor</div></div>
+    </div>
+  </aside>
+  <div class="overlay" id="overlay"></div>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ============ VISTA DASHBOARD ============ -->
+    <section class="view on" id="view-dash">
+      <div class="topbar">
+        <button class="hamb" id="hamb">☰</button>
+        <div>
+          <h1>Buen día, Emanuel 👋</h1>
+          <div class="sub">Resumen de tu estudio — junio 2026</div>
+        </div>
+        <div class="search">🔍 <input placeholder="Buscar proyecto, cliente, partida…"></div>
+        <button class="btn btn-primary">+ Nuevo proyecto</button>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi">
+          <div class="top"><span class="name">Proyectos activos</span>
+            <div class="icon" style="background:var(--primary-soft);color:var(--primary)">▤</div></div>
+          <div class="value">32</div>
+          <span class="trend t-up">▲ +4 este mes</span>
+        </div>
+        <div class="kpi">
+          <div class="top"><span class="name">Ingresos del mes</span>
+            <div class="icon" style="background:var(--green-soft);color:var(--green)">$</div></div>
+          <div class="value">$4.280.500</div>
+          <span class="trend t-up">▲ 12,4% vs mayo</span>
+        </div>
+        <div class="kpi">
+          <div class="top"><span class="name">Por cobrar</span>
+            <div class="icon" style="background:var(--amber-soft);color:var(--amber)">⧗</div></div>
+          <div class="value">$1.150.000</div>
+          <span class="trend t-down">▼ 5 cobros pendientes</span>
+        </div>
+        <div class="kpi">
+          <div class="top"><span class="name">Clientes</span>
+            <div class="icon" style="background:var(--violet-soft);color:var(--violet)">◉</div></div>
+          <div class="value">58</div>
+          <span class="trend t-flat">— sin cambios</span>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <div class="head"><h2>Proyectos recientes</h2><a href="#">Ver todos →</a></div>
+          <table>
+            <thead><tr><th>Proyecto</th><th>Cliente</th><th>Partida</th><th>Avance</th><th>Estado</th></tr></thead>
+            <tbody>
+              <tr><td>Mensura</td><td>González, M.</td><td>104532</td>
+                <td><div class="bar-cell"><div class="bar"><i style="width:80%"></i></div>80%</div></td>
+                <td><span class="badge b-green">Activo</span></td></tr>
+              <tr><td>Est. Parcelario</td><td>Ferreyra SRL</td><td>98841</td>
+                <td><div class="bar-cell"><div class="bar"><i style="width:45%"></i></div>45%</div></td>
+                <td><span class="badge b-green">Activo</span></td></tr>
+              <tr><td>Amojonamiento</td><td>Paz, Rodrigo</td><td>112004</td>
+                <td><div class="bar-cell"><div class="bar"><i style="width:100%"></i></div>100%</div></td>
+                <td><span class="badge b-gray">Cerrado</span></td></tr>
+              <tr><td>Relevamiento</td><td>Municipio V.M.</td><td>—</td>
+                <td><div class="bar-cell"><div class="bar"><i style="width:20%"></i></div>20%</div></td>
+                <td><span class="badge b-amber">En espera</span></td></tr>
+              <tr><td>Legajo</td><td>Sosa, Carina</td><td>87455</td>
+                <td><div class="bar-cell"><div class="bar"><i style="width:60%"></i></div>60%</div></td>
+                <td><span class="badge b-green">Activo</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <div class="head"><h2>Actividad reciente</h2></div>
+          <ul class="activity">
+            <li><div class="ic" style="background:var(--green-soft)">💰</div>
+              <div>Cobro registrado <strong>$350.000</strong> — Mensura González<div class="when">hace 2 horas</div></div></li>
+            <li><div class="ic" style="background:var(--primary-soft)">📄</div>
+              <div>Nuevo proyecto: <strong>Est. Parcelario</strong> — Ferreyra SRL<div class="when">ayer</div></div></li>
+            <li><div class="ic" style="background:var(--violet-soft)">👥</div>
+              <div><strong>J. Medina</strong> comentó en proyecto compartido<div class="when">ayer</div></div></li>
+            <li><div class="ic" style="background:var(--amber-soft)">⏰</div>
+              <div>Vence presentación en Catastro — <strong>Partida 98841</strong><div class="when">en 3 días</div></div></li>
+            <li><div class="ic" style="background:var(--bg)">✓</div>
+              <div>Proyecto cerrado: Amojonamiento Paz<div class="when">hace 4 días</div></div></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VISTA BALANCES ============ -->
+    <section class="view" id="view-bal">
+      <div class="topbar">
+        <button class="hamb" id="hamb2">☰</button>
+        <div>
+          <h1>Balances</h1>
+          <div class="sub">Resumen financiero del estudio</div>
+        </div>
+        <button class="btn btn-ghost" style="margin-left:auto">⇩ Exportar Excel</button>
+        <button class="btn btn-ghost">⇩ PDF</button>
+      </div>
+
+      <div class="toolbar">
+        <div class="seg">
+          <button class="on" data-per="mes">Mes</button>
+          <button data-per="tri">Trimestre</button>
+          <button data-per="anio">Año</button>
+        </div>
+        <div class="month-pick">
+          <button id="prevM">‹</button>
+          <span class="cur" id="curM">Junio 2026</span>
+          <button id="nextM">›</button>
+        </div>
+        <span class="chip" style="margin-left:auto;color:var(--text-2)">
+          <span class="dot" style="background:var(--green)"></span> Comparando contra mayo 2026
+        </span>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi">
+          <div class="top"><span class="name">Ingresos</span>
+            <div class="icon" style="background:var(--green-soft);color:var(--green)">↑</div></div>
+          <div class="value" id="kIng">$4.280.500</div>
+          <span class="trend t-up">▲ 12,4%</span>
+        </div>
+        <div class="kpi">
+          <div class="top"><span class="name">Gastos</span>
+            <div class="icon" style="background:var(--red-soft);color:var(--red)">↓</div></div>
+          <div class="value">$1.310.200</div>
+          <span class="trend t-down">▲ 3,1%</span>
+        </div>
+        <div class="kpi">
+          <div class="top"><span class="name">Neto</span>
+            <div class="icon" style="background:var(--primary-soft);color:var(--primary)">≡</div></div>
+          <div class="value">$2.970.300</div>
+          <span class="trend t-up">▲ 17,2%</span>
+        </div>
+        <div class="kpi">
+          <div class="top"><span class="name">Proyectos facturados</span>
+            <div class="icon" style="background:var(--violet-soft);color:var(--violet)">▤</div></div>
+          <div class="value">9</div>
+          <span class="trend t-up">▲ +2 vs mayo</span>
+        </div>
+      </div>
+
+      <div class="bal-grid">
+        <div class="panel chart-box">
+          <h3>Evolución anual — Ingresos vs Gastos</h3>
+          <div class="hint">Pasá el mouse por las barras para el detalle. La línea muestra el neto acumulado.</div>
+          <canvas id="chartAnual" height="120"></canvas>
+        </div>
+        <div class="panel chart-box">
+          <h3>Ganancias por tipo de trabajo</h3>
+          <div class="hint">Click en la leyenda para filtrar.</div>
+          <canvas id="chartTipo" height="180"></canvas>
+        </div>
+      </div>
+
+      <div class="panel months-table">
+        <div class="head"><h2>Detalle mensual 2026 — Neto anual <span style="color:var(--green)">$14.870.300</span></h2><a href="#">Descargar ⇩</a></div>
+        <table>
+          <thead><tr><th>Mes</th><th>Proyectos</th><th>Ingresos</th><th>Gastos</th><th>Neto</th><th></th></tr></thead>
+          <tbody id="tbodyMeses"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="demo-note">Propuesta A · mockup con datos de ejemplo</div>
+
+<script>
+// ----- Navegación entre vistas -----
+document.querySelectorAll('[data-view]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    e.preventDefault();
+    document.querySelectorAll('[data-view]').forEach(x=>x.classList.remove('active'));
+    a.classList.add('active');
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+    document.getElementById('view-'+a.dataset.view).classList.add('on');
+    closeSide();
+  });
+});
+
+// ----- Sidebar móvil -----
+const sb=document.getElementById('sidebar'),ov=document.getElementById('overlay');
+function closeSide(){sb.classList.remove('open');ov.classList.remove('show')}
+['hamb','hamb2'].forEach(id=>{
+  const b=document.getElementById(id);
+  if(b)b.addEventListener('click',()=>{sb.classList.add('open');ov.classList.add('show')});
+});
+ov.addEventListener('click',closeSide);
+
+// ----- Selector de mes -----
+const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+let mIdx=5;
+document.getElementById('prevM').onclick=()=>{mIdx=(mIdx+11)%12;render()};
+document.getElementById('nextM').onclick=()=>{mIdx=(mIdx+1)%12;render()};
+function render(){document.getElementById('curM').textContent=meses[mIdx]+' 2026'}
+
+// ----- Segmento periodo (visual) -----
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.seg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+});
+
+// ----- Datos de ejemplo -----
+const ingresos=[2100,2450,2900,3100,3805,4280,0,0,0,0,0,0].map(v=>v*1000);
+const gastos=[800,920,1050,990,1270,1310,0,0,0,0,0,0].map(v=>v*1000);
+const neto=ingresos.map((v,i)=>v-gastos[i]);
+let acum=0;const netoAcum=neto.map(v=>acum+=v);
+const fmt=v=>'$'+v.toLocaleString('es-AR');
+
+// ----- Tabla mensual -----
+const tb=document.getElementById('tbodyMeses');
+const proys=[5,6,7,7,8,9];
+let html='';
+for(let i=0;i<6;i++){
+  const pct=Math.round(neto[i]/Math.max(...neto)*100);
+  html+=`<tr><td>${meses[i]}</td><td>${proys[i]}</td><td>${fmt(ingresos[i])}</td><td style="color:var(--red)">${fmt(gastos[i])}</td>
+  <td class="pos">${fmt(neto[i])}</td>
+  <td><div class="bar-cell"><div class="bar"><i style="width:${pct}%"></i></div></div></td></tr>`;
+}
+tb.innerHTML=html;
+
+// ----- Charts -----
+Chart.defaults.font.family="'Inter',sans-serif";
+Chart.defaults.color='#5b6577';
+
+new Chart(document.getElementById('chartAnual'),{
+  data:{labels:meses.map(m=>m.slice(0,3)),
+    datasets:[
+      {type:'bar',label:'Ingresos',data:ingresos,backgroundColor:'#2563eb',borderRadius:6,maxBarThickness:26},
+      {type:'bar',label:'Gastos',data:gastos,backgroundColor:'#fda4af',borderRadius:6,maxBarThickness:26},
+      {type:'line',label:'Neto acumulado',data:netoAcum,borderColor:'#10b981',backgroundColor:'#10b981',
+        tension:.35,pointRadius:3,yAxisID:'y'}
+    ]},
+  options:{responsive:true,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8}},
+      tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.parsed.y)}`}}},
+    scales:{x:{grid:{display:false}},y:{grid:{color:'#eef1f6'},ticks:{callback:v=>'$'+(v/1e6)+'M'}}}}
+});
+
+new Chart(document.getElementById('chartTipo'),{
+  type:'doughnut',
+  data:{labels:['Mensuras','Est. Parcelarios','Amojonamientos','Relevamientos','Legajos'],
+    datasets:[{data:[38,24,15,13,10],
+      backgroundColor:['#2563eb','#8b5cf6','#10b981','#f59e0b','#94a3b8'],
+      borderWidth:3,borderColor:'#fff',hoverOffset:10}]},
+  options:{cutout:'62%',plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,padding:14}},
+    tooltip:{callbacks:{label:c=>` ${c.label}: ${c.parsed}%`}}}}
+});
+</script>
+</body>
+</html>

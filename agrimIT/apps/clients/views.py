@@ -1,7 +1,9 @@
 
 from django.db import DatabaseError, transaction
+from django.db.models import Count, Sum, Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 import logging
 logger = logging.getLogger(__name__)
 from apps.clients.models import Client
@@ -114,9 +116,23 @@ def clients_view(request: HttpRequest) -> HttpResponse:
             return render(request, 'clients/clients_template.html', {'error': 'Error creating client.'}) 
     else:
         try:
-            clients = Client.objects.filter(user=request.user).only('id', 'name', 'phone').order_by('name')
+            year = timezone.now().year
+            clients = (
+                Client.objects.filter(user=request.user)
+                .annotate(
+                    projects_count=Count('project', distinct=True),
+                    facturado_year=Sum(
+                        'project__account__movements__amount',
+                        filter=Q(
+                            project__account__movements__movement_type='ADV',
+                            project__account__movements__created_at__year=year,
+                        ),
+                    ),
+                )
+                .order_by('name')
+            )
 
-            context = {'clients': clients}
+            context = {'clients': clients, 'current_year': year}
             return render (request, 'clients/clients_template.html', context)
         except DatabaseError as e:
             logger.error(f"Database error while fetching clients: {str(e)}")
