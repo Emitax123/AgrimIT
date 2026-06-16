@@ -178,13 +178,18 @@ crash_*.txt
 newrelic.ini
 .newrelic.yml
 
-# Readmes.md (archivos de análisis temporales)
+# Documentación de planificación / guías orientadas a Claude.
+# Solo dev local (una sola PC): NO versionar. README.md SÍ se versiona.
 SECURITY_MIDDLEWARE.md
 SECURITY_ANALYSIS_FINAL.md
-README.md
-RAILWAY_LOGGING_GUIDE.md
-CBV_GUIDE.md
 RAILWAY_DEPLOYMENT_NOTES.md
+CBV_GUIDE.md
+REDESIGN.md
+ANALISIS_Y_TAREAS.md
+*_GUIDE.md
+planes/
+design-mockups/
+docs/superpowers/
 
 # Scripts de desarrollo/testing temporales (solo en la raiz del repo;
 # NO la suite real bajo tests/)
